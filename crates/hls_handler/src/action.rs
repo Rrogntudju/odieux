@@ -1,6 +1,6 @@
 use std::time::Duration;
 use url::Url;
-use url_serde;
+use serde::{Serialize, Deserialize}
 
 use super::StreamId;
 
