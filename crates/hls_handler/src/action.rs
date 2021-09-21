@@ -9,7 +9,7 @@ use super::StreamId;
 pub enum Action {
     FetchData {
         action_id: ActionId,
-        #[serde(with = "url_serde")] url: Url,
+        url: Url,
     },
     SetTimeout {
         action_id: ActionId,

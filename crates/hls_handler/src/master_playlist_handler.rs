@@ -1,8 +1,11 @@
 use hls_m3u8::MasterPlaylist;
 use url::Url;
 
+#[macro_use]
+use trackable::{track, track_assert_some, track_panic};
+
 use {Error, ErrorKind, Result};
-use super::{Action, ActionFactory, ActionId, MediaPlaylistHandler};
+use super::{action::{Action, ActionId}, MediaPlaylistHandler};
 
 #[derive(Debug)]
 pub struct MasterPlaylistHandler {
