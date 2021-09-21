@@ -5,6 +5,4 @@ edition = "2018"
 
 
 [dependencies]
-mpegts = "0.1"
-rodio = { version = "0.14", default-features = false, features = ["symphonia-aac"] }
-hls_m3u8 = "0.4"
+rodio = { git = "https://github.com/RustAudio/rodio.git", default-features = false, features = ["symphonia-aac"] }

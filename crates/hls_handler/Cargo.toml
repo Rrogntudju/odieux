@@ -1,0 +1,9 @@
+[package]
+name = "hls_handler"
+version = "0.1.0"
+edition = "2018"
+
+
+[dependencies]
+mpeg2ts = "0.1"
+hls_m3u8 = "0.4"
