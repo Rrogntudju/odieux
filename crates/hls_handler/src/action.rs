@@ -1,6 +1,6 @@
+use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use url::Url;
-use serde::{Serialize, Deserialize}
 
 use super::StreamId;
 
@@ -67,9 +67,6 @@ impl ActionFactory {
     pub fn set_timeout(&mut self, duration: Duration) -> Action {
         let action_id = self.next_action_id.next();
         let duration = (duration.as_secs() * 1000) as u32 + duration.subsec_nanos() / 1_000_000;
-        Action::SetTimeout {
-            action_id,
-            duration,
-        }
+        Action::SetTimeout { action_id, duration }
     }
 }

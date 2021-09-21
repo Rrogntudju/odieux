@@ -1,16 +1,14 @@
-use url::Url;
-
-#[macro_use]
-use trackable::track;
-
-//pub use crate::action::{Action, ActionFactory, ActionId};
-pub use self::master_playlist_handler::MasterPlaylistHandler;
-pub use self::media_playlist_handler::MediaPlaylistHandler;
-
 mod action;
+mod error;
 mod master_playlist_handler;
 mod media_playlist_handler;
 
+#[macro_use]
+use trackable::track;
+use action::{Action, ActionFactory, ActionId};
+use master_playlist_handler::MasterPlaylistHandler;
+use media_playlist_handler::MediaPlaylistHandler;
+use url::Url;
 use Result;
 
 pub type StreamId = u8;
@@ -55,12 +53,7 @@ impl HlsPlayer {
         }
     }
 
-    pub fn handle_data(
-        &mut self,
-        action_id: ActionId,
-        data: &[u8],
-        fetch_duration_ms: u32,
-    ) -> Result<()> {
+    pub fn handle_data(&mut self, action_id: ActionId, data: &[u8], fetch_duration_ms: u32) -> Result<()> {
         match *self {
             HlsPlayer::NotStarted => Ok(()),
             HlsPlayer::MasterPlaylist(ref mut x) => {
@@ -80,4 +73,3 @@ impl HlsPlayer {
         }
     }
 }
-

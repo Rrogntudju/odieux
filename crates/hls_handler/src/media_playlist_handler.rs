@@ -1,14 +1,14 @@
+use hls_m3u8::MediaPlaylist;
+use mpeg2ts::ts::TsPacketReader;
 use std::cmp;
 use std::collections::VecDeque;
 use std::time::Duration;
-use hls_m3u8::MediaPlaylist;
-use mpeg2ts::ts::TsPacketReader;
 use url::Url;
 
 #[macro_use]
 use trackable::track;
 
-use super::{Action, ActionFactory, ActionId};
+use crate::action::{Action, ActionFactory, ActionId};
 
 type SequenceNumber = u64;
 
@@ -45,11 +45,7 @@ impl MediaPlaylistHandler {
         }
     }
 
-    pub fn with_m3u8(
-        action_factory: ActionFactory,
-        media_playlist_url: Url,
-        m3u8: &str,
-    ) -> Result<Self> {
+    pub fn with_m3u8(action_factory: ActionFactory, media_playlist_url: Url, m3u8: &str) -> Result<Self> {
         let mut this = Self::new(action_factory, media_playlist_url);
         let _ = this.next_action();
         track!(this.handle_playlist(m3u8, 0))?;
@@ -65,20 +61,14 @@ impl MediaPlaylistHandler {
     }
 
     pub fn handle_timeout(&mut self, _action_id: ActionId) -> Result<()> {
-        let action = self.action_factory
-            .fetch_data(self.media_playlist_url.clone());
+        let action = self.action_factory.fetch_data(self.media_playlist_url.clone());
         let action_id = action.id();
         self.action_queue.push_back(action);
         self.fetch_playlist_action_id = action_id;
         Ok(())
     }
 
-    pub fn handle_data(
-        &mut self,
-        action_id: ActionId,
-        data: &[u8],
-        fetch_duration_ms: u32,
-    ) -> Result<()> {
+    pub fn handle_data(&mut self, action_id: ActionId, data: &[u8], fetch_duration_ms: u32) -> Result<()> {
         if action_id == self.fetch_playlist_action_id {
             use std::str;
 
@@ -93,10 +83,7 @@ impl MediaPlaylistHandler {
     fn handle_playlist(&mut self, m3u8: &str, fetch_duration_ms: u32) -> Result<()> {
         let playlist: MediaPlaylist = track!(m3u8.parse())?;
         let media_sequence = playlist.media_sequence_tag().map_or(0, |t| t.seq_num());
-        while self.segment_queue
-            .front()
-            .map_or(false, |x| x.0 < media_sequence)
-        {
+        while self.segment_queue.front().map_or(false, |x| x.0 < media_sequence) {
             self.segment_queue.pop_front();
         }
 
@@ -115,8 +102,7 @@ impl MediaPlaylistHandler {
 
             let segment_url = track!(self.parse_segment_url(segment.uri()))?;
             let ongoing = if self.segment_queue.is_empty() {
-                self.action_queue
-                    .push_back(self.action_factory.fetch_data(segment_url.clone()));
+                self.action_queue.push_back(self.action_factory.fetch_data(segment_url.clone()));
                 true
             } else {
                 false
@@ -141,8 +127,7 @@ impl MediaPlaylistHandler {
             polling_interval /= 2;
         }
 
-        self.action_queue
-            .push_back(self.action_factory.set_timeout(polling_interval));
+        self.action_queue.push_back(self.action_factory.set_timeout(polling_interval));
         Ok(())
     }
 
@@ -153,8 +138,7 @@ impl MediaPlaylistHandler {
             }
         }
         if let Some((_, _, url)) = self.segment_queue.pop_front() {
-            self.action_queue
-                .push_back(self.action_factory.fetch_data(url));
+            self.action_queue.push_back(self.action_factory.fetch_data(url));
         }
 
         let fmp4_segments = track!(mpeg2_ts::to_fmp4(TsPacketReader::new(ts_segment)))?;
@@ -175,11 +159,9 @@ impl MediaPlaylistHandler {
     }
 
     fn parse_segment_url(&self, segment_url: &str) -> Result<Url> {
-        track!(
-            Url::options()
-                .base_url(Some(&self.media_playlist_url))
-                .parse(segment_url)
-                .map_err(Error::from)
-        )
+        track!(Url::options()
+            .base_url(Some(&self.media_playlist_url))
+            .parse(segment_url)
+            .map_err(Error::from))
     }
 }
