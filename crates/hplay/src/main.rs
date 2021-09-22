@@ -6,7 +6,7 @@ use std::time::Duration;
 use rodio::{Decoder, OutputStream, Sink};
 use rodio::source::{SineWave, Source};
 
-let (_stream, stream_handle) = OutputStream::try_default().unwrap();
+let (_, stream_handle) = OutputStream::try_default().unwrap();
 let sink = Sink::try_new(&stream_handle).unwrap();
 
 // Add a dummy source of the sake of the example.
