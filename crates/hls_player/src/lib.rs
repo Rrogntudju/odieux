@@ -1,5 +1,5 @@
 mod hls_handler;
-struct HlsPlayer {}
+
 
 #[cfg(test)]
 mod tests {

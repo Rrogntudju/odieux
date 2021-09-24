@@ -26,15 +26,15 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
         }
     };
 
-    let masterPl = match MasterPlaylist::try_from(response.as_str().unwrap_or_default()).context("Validation de MasterPlayList") {
-        Ok(mpl) => mpl,
+    let master = match MasterPlaylist::try_from(response.as_str().unwrap_or_default()).context("Validation de MasterPlayList") {
+        Ok(master) => master,
         Err(e) => {
             tx.send(Err(e)).unwrap_or_default();
             return;
         }
     };
 
-    let vs = match masterPl.audio_streams().max_by_key(|vs| vs.bandwidth()) {
+    let vs = match master.audio_streams().max_by_key(|vs| vs.bandwidth()) {
         // Select stream with maximum bitrate
         Some(vs) => vs,
         None => {
@@ -44,7 +44,7 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
     };
 
     let media_url = match vs {
-        VariantStream::ExtXStreamInf { uri: uri, .. } => uri,
+        VariantStream::ExtXStreamInf { uri, .. } => uri,
         _ => {
             tx.send(Err(anyhow!("DOH!: ExtXIFrame"))).unwrap_or_default();
             return;
@@ -63,8 +63,8 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
         }
     };
 
-    let mediaPl = match MediaPlaylist::try_from(response.as_str().unwrap_or_default()).context("Validation de MediaPlayList") {
-        Ok(mpl) => mpl,
+    let media = match MediaPlaylist::try_from(response.as_str().unwrap_or_default()).context("Validation de MediaPlayList") {
+        Ok(media) => media,
         Err(e) => {
             tx.send(Err(e)).unwrap_or_default();
             return;
