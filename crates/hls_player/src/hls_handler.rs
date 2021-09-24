@@ -1,5 +1,6 @@
 use anyhow::{anyhow, Context, Result};
 use decrypt_aes128::decrypt_aes128;
+use hls_m3u8::tags::VariantStream;
 use hls_m3u8::{MasterPlaylist, MediaPlaylist};
 use minreq;
 use mpeg2ts::ts::payload::Bytes;
@@ -13,7 +14,7 @@ const TIME_OUT: u64 = 10;
 const BOUND: usize = 2;
 
 fn handle_hls(url: Url, tx: SyncSender<Message>) {
-    let response = match minreq::get(url).with_timeout(TIME_OUT).send().context("Téléchargement de MasterPlayList") {
+    let response = match minreq::get(url.as_str()).with_timeout(TIME_OUT).send().context("Téléchargement de MasterPlayList") {
         Ok(response) => response,
         Err(e) => {
             tx.send(Err(e)).unwrap_or_default();
@@ -29,7 +30,21 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
         }
     };
 
-    let vs = masterPl.audio_streams().max_by_key(|vs| vs.bandwidth());  // Select stream with maximum bitrate
+    let vs = match masterPl.audio_streams().max_by_key(|vs| vs.bandwidth()) {  // Select stream with maximum bitrate
+        Some(vs) => vs,
+        None => {
+            tx.send(Err(anyhow!("Pas de stream audio dans {}", url.as_str()))).unwrap_or_default();
+            return;
+        }
+    };
+
+    let media_url = match vs {
+        VariantStream::ExtXStreamInf { uri: uri, .. } =>  uri,
+        _ =>  {
+            tx.send(Err(anyhow!("DOH!: ExtXIFrame"))).unwrap_or_default();
+            return;
+        }
+    };
 }
 
 pub fn start(url: &str) -> Result<Receiver<Message>> {
