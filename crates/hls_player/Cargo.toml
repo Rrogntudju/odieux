@@ -11,4 +11,5 @@ hls_m3u8 = "0.4"
 url = "2"
 anyhow = "1"
 decrypt_aes128 = {path = "../decrypt_aes128"}
+minreq = { version = "2", features = ["https"] }
  
