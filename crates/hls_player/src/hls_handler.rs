@@ -12,20 +12,10 @@ fn handle_hls(url: Url, tx: SyncSender<Box<Vec<u8>>>) {
 
 }
 
-struct HlsHandler {
-   sender: Option<SyncSender<Box<Vec<u8>>>>
-}
+pub fn start(url: &str) -> Result<Receiver<Box<Vec<u8>>>> {
+    let master_url = Url::try_from(url).context("Validation de l'url MasterPlaylist")?;
+    let (tx, rx) = sync_channel::<Box<Vec<u8>>>(2);
+    thread::spawn(move || handle_hls(master_url, tx));
 
-impl HlsHandler {
-    fn new() -> Self {
-        HlsHandler { sender: None }
-    }
-
-    fn start(&mut self, url: &str) -> Result<Receiver<Box<Vec<u8>>>> {
-        let master_url = Url::try_from(url).context("Validation de l'url MasterPlaylist")?;
-        let (tx, rx) = sync_channel::<Box<Vec<u8>>>(2);
-        thread::spawn(move || handle_hls(master_url, tx));
-
-        Ok(rx)
-    }
+    Ok(rx)
 }
