@@ -1,0 +1,14 @@
+[package]
+name = "hls_handler"
+version = "0.1.0"
+authors = ["Rrogntudju"]
+edition = "2018"
+
+[dependencies]
+mpeg2ts = "0.1"
+hls_m3u8 = "0.4"
+url = "2"
+anyhow = "1"
+decrypt_aes128 = {path = "../decrypt_aes128"}
+minreq = { version = "2", features = ["https"] }
+ 

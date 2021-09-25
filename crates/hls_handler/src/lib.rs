@@ -1,6 +1,4 @@
-use anyhow::{anyhow, Context, Result};
-use hls_handler;
-
+mod hls_handler;
 
 #[cfg(test)]
 mod tests {
