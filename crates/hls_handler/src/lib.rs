@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Context, Result};
 use decrypt_aes128::decrypt_aes128;
-use hls_m3u8::tags::{VariantStream, ExtXKey};
+use hls_m3u8::tags::VariantStream;
 use hls_m3u8::{MasterPlaylist, MediaPlaylist, Decryptable};
 use hls_m3u8::types::EncryptionMethod;
 use minreq;
@@ -110,8 +110,17 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
                     return;
                 }
             };
+
+            match decrypt_aes128(key, iv, segment_response) {
+                Ok(s) => s.as_bytes(),
+                Err(e) => {
+                    tx.send(Err(e)).unwrap_or_default();
+                    return;
+            }
+
+            
         };
-    }
+    };
 }
 
 pub fn start(url: &str) -> Result<Receiver<Message>> {
