@@ -1,7 +1,8 @@
 use anyhow::{anyhow, Context, Result};
 use decrypt_aes128::decrypt_aes128;
-use hls_m3u8::tags::VariantStream;
-use hls_m3u8::{MasterPlaylist, MediaPlaylist};
+use hls_m3u8::tags::{VariantStream, ExtXKey};
+use hls_m3u8::{MasterPlaylist, MediaPlaylist, Decryptable};
+use hls_m3u8::types::EncryptionMethod;
 use minreq;
 use mpeg2ts::ts::payload::Bytes;
 use std::convert::TryFrom;
@@ -34,8 +35,8 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
         }
     };
 
+    // Select the stream with maximum bitrate
     let vs = match master.audio_streams().max_by_key(|vs| vs.bandwidth()) {
-        // Select stream with maximum bitrate
         Some(vs) => vs,
         None => {
             tx.send(Err(anyhow!("Pas de stream audio dans {}", url.as_str()))).unwrap_or_default();
@@ -71,6 +72,26 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
         }
     };
 
+    for (_, segment) in media.segments {
+        let response = match minreq::get(segment.uri().as_ref())
+            .with_timeout(TIME_OUT)
+            .send()
+            .context(format!("get {}", segment.uri().as_ref()))
+        {
+            Ok(response) => response,
+            Err(e) => {
+                tx.send(Err(e)).unwrap_or_default();
+                return;
+            }
+        };
+
+        let keys = segment.keys();
+        let decrypted = if keys.is_empty() {
+            response.as_bytes()
+        } else {
+            let key = keys.iter().find(|k| k.method == EncryptionMethod::Aes128);
+        };
+    }
 }
 
 pub fn start(url: &str) -> Result<Receiver<Message>> {
@@ -80,7 +101,6 @@ pub fn start(url: &str) -> Result<Receiver<Message>> {
 
     Ok(rx)
 }
-
 
 #[cfg(test)]
 mod tests {

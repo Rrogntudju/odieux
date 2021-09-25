@@ -12,7 +12,7 @@ pub fn decrypt_aes128(key: &[u8], iv: &[u8], data: &[u8]) -> Result<Vec<u8>> {
 }
 
 #[test]
-fn test_demo_decrypt() {
+fn test_decrypt() {
     let key = "4567890123456789".as_bytes();
     let iv = "1234567890123456".as_bytes();
     let data = [
