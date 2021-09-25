@@ -20,14 +20,14 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
         .send()
         .context(format!("get {}", url.as_str()))
     {
-        Ok(response) => response,
+        Ok(response) => response.as_str().unwrap_or_default(),
         Err(e) => {
             tx.send(Err(e)).unwrap_or_default();
             return;
         }
     };
 
-    let master = match MasterPlaylist::try_from(response.as_str().unwrap_or_default()).context("Validation de MasterPlayList") {
+    let master = match MasterPlaylist::try_from(response).context("Validation de MasterPlayList") {
         Ok(master) => master,
         Err(e) => {
             tx.send(Err(e)).unwrap_or_default();
@@ -57,14 +57,14 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
         .send()
         .context(format!("get {}", media_url.as_ref()))
     {
-        Ok(response) => response,
+        Ok(response) => response.as_str().unwrap_or_default(),
         Err(e) => {
             tx.send(Err(e)).unwrap_or_default();
             return;
         }
     };
 
-    let media = match MediaPlaylist::try_from(response.as_str().unwrap_or_default()).context("Validation de MediaPlayList") {
+    let media = match MediaPlaylist::try_from(response).context("Validation de MediaPlayList") {
         Ok(media) => media,
         Err(e) => {
             tx.send(Err(e)).unwrap_or_default();
@@ -72,24 +72,44 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
         }
     };
 
-    for (_, segment) in media.segments {
-        let response = match minreq::get(segment.uri().as_ref())
+    for (_, media_segment) in media.segments {
+        let segment_response = match minreq::get(media_segment.uri().as_ref())
             .with_timeout(TIME_OUT)
             .send()
-            .context(format!("get {}", segment.uri().as_ref()))
+            .context(format!("get {}", media_segment.uri().as_ref()))
         {
-            Ok(response) => response,
+            Ok(response) => response.as_bytes(),
             Err(e) => {
                 tx.send(Err(e)).unwrap_or_default();
                 return;
             }
         };
 
-        let keys = segment.keys();
+        let keys = media_segment.keys();
         let decrypted = if keys.is_empty() {
-            response.as_bytes()
+            segment_response
         } else {
             let key = keys.iter().find(|k| k.method == EncryptionMethod::Aes128);
+            
+            let (uri, iv) = match key {
+                Some(key) => (key.uri(), key.iv),
+                None => {
+                    tx.send(Err(anyhow!("Le segment n'est pas chiffré avec AES-128"))).unwrap_or_default();
+                    return;
+                }
+            };
+
+            let key = match minreq::get(uri.as_ref())
+                .with_timeout(TIME_OUT)
+                .send()
+                .context(format!("get {}", uri.as_ref()))
+            {
+                Ok(response) => response.as_bytes(),
+                Err(e) => {
+                    tx.send(Err(e)).unwrap_or_default();
+                    return;
+                }
+            };
         };
     }
 }
