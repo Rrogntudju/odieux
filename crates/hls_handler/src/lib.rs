@@ -36,7 +36,7 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
         }
     };
 
-    // Select the stream with maximum bitrate
+    // Select the audio stream with maximum bitrate
     let vs = match master.audio_streams().max_by_key(|vs| vs.bandwidth()) {
         Some(vs) => vs,
         None => {
@@ -91,7 +91,7 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
         let keys = media_segment.keys();
 
         let decrypted = if keys.is_empty() {
-            segment_response
+            segment_response.to_owned()
         } else {
             let key = keys.iter().find(|k| k.method == EncryptionMethod::Aes128);
             
@@ -104,14 +104,18 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
             };
 
             let key = match cache.get(&uri) {
-                Some(key) => key,
+                Some(key) => key.to_owned(),
                 None => {
-                    match minreq::get(uri.as_ref())
+                    match minreq::get(&uri)
                         .with_timeout(TIME_OUT)
                         .send()
-                        .context(format!("get {}", uri.as_ref()))
+                        .context(format!("get {}", &uri))
                     {
-                        Ok(response) => &response.into_bytes(),
+                        Ok(response) => { 
+                            let response = response.into_bytes(); 
+                            cache.insert(uri.clone(), response.clone()); 
+                            response
+                        }
                         Err(e) => {
                             tx.send(Err(e)).unwrap_or_default();
                             return;
@@ -120,15 +124,21 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
                 }
             };
             
-            cache.insert(uri, *key);
+            let iv = match iv {
+                Some(iv) => iv,
+                None => {
+                    tx.send(Err(anyhow!("Initialization Vector manquant"))).unwrap_or_default();
+                    return;
+                }
+            };
 
-            match decrypt_aes128(key, iv, segment_response) {
-                Ok(s) => s.as_bytes(),
+            match decrypt_aes128(&key, &iv, segment_response) {
+                Ok(s) => s,
                 Err(e) => {
                     tx.send(Err(e)).unwrap_or_default();
                     return;
+                }
             }
-            
         };
     };
 }
