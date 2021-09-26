@@ -21,14 +21,14 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
         .send()
         .context(format!("get {}", url.as_str()))
     {
-        Ok(response) => response.as_str().unwrap_or_default(),
+        Ok(response) => response.as_str().unwrap_or_default().to_owned(),
         Err(e) => {
             tx.send(Err(e)).unwrap_or_default();
             return;
         }
     };
 
-    let master = match MasterPlaylist::try_from(response).context("Validation de MasterPlayList") {
+    let master = match MasterPlaylist::try_from(response.as_str()).context("Validation de MasterPlayList") {
         Ok(master) => master,
         Err(e) => {
             tx.send(Err(e)).unwrap_or_default();
@@ -58,14 +58,14 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
         .send()
         .context(format!("get {}", media_url.as_ref()))
     {
-        Ok(response) => response.as_str().unwrap_or_default(),
+        Ok(response) => response.as_str().unwrap_or_default().to_owned(),
         Err(e) => {
             tx.send(Err(e)).unwrap_or_default();
             return;
         }
     };
 
-    let media = match MediaPlaylist::try_from(response).context("Validation de MediaPlayList") {
+    let media = match MediaPlaylist::try_from(response.as_str()).context("Validation de MediaPlayList") {
         Ok(media) => media,
         Err(e) => {
             tx.send(Err(e)).unwrap_or_default();
@@ -81,7 +81,7 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
             .send()
             .context(format!("get {}", media_segment.uri().as_ref()))
         {
-            Ok(response) => response.as_bytes(),
+            Ok(response) => response.into_bytes(),
             Err(e) => {
                 tx.send(Err(e)).unwrap_or_default();
                 return;
@@ -91,7 +91,7 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
         let keys = media_segment.keys();
 
         let decrypted = if keys.is_empty() {
-            segment_response.to_owned()
+            segment_response
         } else {
             let key = keys.iter().find(|k| k.method == EncryptionMethod::Aes128);
             
@@ -132,7 +132,7 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
                 }
             };
 
-            match decrypt_aes128(&key, &iv, segment_response) {
+            match decrypt_aes128(&key, &iv, &segment_response) {
                 Ok(s) => s,
                 Err(e) => {
                     tx.send(Err(e)).unwrap_or_default();
