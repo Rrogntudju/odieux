@@ -5,6 +5,7 @@ use hls_m3u8::{MasterPlaylist, MediaPlaylist, Decryptable};
 use hls_m3u8::types::EncryptionMethod;
 use minreq;
 use mpeg2ts::ts::payload::Bytes;
+use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::thread;
@@ -72,6 +73,8 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
         }
     };
 
+    let mut cache: HashMap<String, Vec<u8>> = HashMap::new(); 
+    
     for (_, media_segment) in media.segments {
         let segment_response = match minreq::get(media_segment.uri().as_ref())
             .with_timeout(TIME_OUT)
@@ -86,30 +89,38 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
         };
 
         let keys = media_segment.keys();
+
         let decrypted = if keys.is_empty() {
             segment_response
         } else {
             let key = keys.iter().find(|k| k.method == EncryptionMethod::Aes128);
             
             let (uri, iv) = match key {
-                Some(key) => (key.uri(), key.iv),
+                Some(key) => (key.uri().as_ref().to_string(), key.iv.to_slice()),
                 None => {
                     tx.send(Err(anyhow!("Le segment n'est pas chiffré avec AES-128"))).unwrap_or_default();
                     return;
                 }
             };
 
-            let key = match minreq::get(uri.as_ref())
-                .with_timeout(TIME_OUT)
-                .send()
-                .context(format!("get {}", uri.as_ref()))
-            {
-                Ok(response) => response.as_bytes(),
-                Err(e) => {
-                    tx.send(Err(e)).unwrap_or_default();
-                    return;
+            let key = match cache.get(&uri) {
+                Some(key) => key,
+                None => {
+                    match minreq::get(uri.as_ref())
+                        .with_timeout(TIME_OUT)
+                        .send()
+                        .context(format!("get {}", uri.as_ref()))
+                    {
+                        Ok(response) => &response.into_bytes(),
+                        Err(e) => {
+                            tx.send(Err(e)).unwrap_or_default();
+                            return;
+                        }
+                    }
                 }
             };
+            
+            cache.insert(uri, *key);
 
             match decrypt_aes128(key, iv, segment_response) {
                 Ok(s) => s.as_bytes(),
@@ -117,7 +128,6 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
                     tx.send(Err(e)).unwrap_or_default();
                     return;
             }
-
             
         };
     };
