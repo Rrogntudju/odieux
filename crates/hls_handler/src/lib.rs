@@ -4,7 +4,7 @@ use hls_m3u8::tags::VariantStream;
 use hls_m3u8::{MasterPlaylist, MediaPlaylist, Decryptable};
 use hls_m3u8::types::EncryptionMethod;
 use minreq;
-use mpeg2ts::ts::payload::Bytes;
+use mpeg2ts::ts::TsPacketReader ;
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
@@ -13,7 +13,7 @@ use url::Url;
 
 type Message = Result<Box<Vec<u8>>>;
 const TIME_OUT: u64 = 10;
-const BOUND: usize = 2;
+const BOUND: usize = 3;
 
 fn handle_hls(url: Url, tx: SyncSender<Message>) {
     let response = match minreq::get(url.as_str())
@@ -113,7 +113,7 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
                     {
                         Ok(response) => { 
                             let response = response.into_bytes(); 
-                            cache.insert(uri.clone(), response.clone()); 
+                            cache.insert(uri, response.clone()); 
                             response
                         }
                         Err(e) => {
@@ -140,6 +140,9 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
                 }
             }
         };
+        
+        let reader = TsPacketReader::new(decrypted.as_slice());
+        reader.
     };
 }
 
