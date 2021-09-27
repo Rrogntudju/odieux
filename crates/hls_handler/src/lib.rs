@@ -1,10 +1,10 @@
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, Context, Result, Error};
 use decrypt_aes128::decrypt_aes128;
 use hls_m3u8::tags::VariantStream;
 use hls_m3u8::{MasterPlaylist, MediaPlaylist, Decryptable};
 use hls_m3u8::types::EncryptionMethod;
 use minreq;
-use mpeg2ts::ts::TsPacketReader ;
+use mpeg2ts::ts::{TsPacketReader, ReadTsPacket};
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
@@ -22,7 +22,7 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
         .context(format!("get {}", url.as_str()))
     {
         Ok(response) => response.as_str().unwrap_or_default().to_owned(),
-        Err(e) => {
+        Err(e) => { 
             tx.send(Err(e)).unwrap_or_default();
             return;
         }
@@ -141,8 +141,22 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
             }
         };
         
-        let reader = TsPacketReader::new(decrypted.as_slice());
-        reader.
+        let mut ts = TsPacketReader::new(decrypted.as_slice());
+        let mut stream: Vec<u8> = Vec::new();
+        loop {
+            let packet = match ts.read_ts_packet().context("Lecture d'un paquet TS") {
+                Ok(p) => {
+                    match p {
+                        Some(p) => p,
+                        None => break,
+                    }
+                },
+                Err(e) => {
+                    tx.send(Err(e)).unwrap_or_default();
+                    break;
+                },
+            };
+        }
     };
 }
 
