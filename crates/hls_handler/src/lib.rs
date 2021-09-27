@@ -182,8 +182,12 @@ pub fn start(url: &str) -> Result<Receiver<Message>> {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+    
     #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
+    fn ohdio() {
+        let rx = start("url").unwrap(); 
+        let stream = rx.recv();
+        assert!(stream.is_ok());
     }
 }
