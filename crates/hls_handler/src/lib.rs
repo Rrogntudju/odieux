@@ -4,7 +4,7 @@ use hls_m3u8::tags::VariantStream;
 use hls_m3u8::{MasterPlaylist, MediaPlaylist, Decryptable};
 use hls_m3u8::types::EncryptionMethod;
 use minreq;
-use mpeg2ts::ts::{TsPacketReader, ReadTsPacket};
+use mpeg2ts::ts::{TsPacketReader, ReadTsPacket, TsPayload};
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
@@ -145,10 +145,10 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
         let mut stream: Vec<u8> = Vec::new();
         loop {
             let packet = match ts.read_ts_packet().context("Lecture d'un paquet TS") {
-                Ok(p) => {
-                    match p {
-                        Some(p) => p,
-                        None => break,
+                Ok(packet) => {
+                    match packet {
+                        Some(packet) => packet,
+                        None => break,  // End of packets
                     }
                 },
                 Err(e) => {
@@ -156,7 +156,27 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
                     break;
                 },
             };
+
+            let pes = match packet.payload {
+                Some(payload) => {
+                    match payload {
+                        TsPayload::Pes(pes) => pes,
+                        _ => {
+                            tx.send(Err(anyhow!("Pas de paquet PES"))).unwrap_or_default();
+                            return;
+                        }
+                    }
+                },
+                None => {
+                    tx.send(Err(anyhow!("Pas de payload"))).unwrap_or_default();
+                    return;
+                }
+            };
+
+            stream.copy_from_slice(&pes.data[..]);
         }
+
+        tx.send(Ok(Box::new(stream))).unwrap_or_default();
     };
 }
 
