@@ -1,10 +1,10 @@
-use anyhow::{anyhow, Context, Result, Error};
+use anyhow::{anyhow, Context, Result};
 use decrypt_aes128::decrypt_aes128;
 use hls_m3u8::tags::VariantStream;
-use hls_m3u8::{MasterPlaylist, MediaPlaylist, Decryptable};
 use hls_m3u8::types::EncryptionMethod;
+use hls_m3u8::{Decryptable, MasterPlaylist, MediaPlaylist};
 use minreq;
-use mpeg2ts::ts::{TsPacketReader, ReadTsPacket, TsPayload};
+use mpeg2ts::ts::{ReadTsPacket, TsPacketReader, TsPayload};
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
@@ -22,7 +22,7 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
         .context(format!("get {}", url.as_str()))
     {
         Ok(response) => response.as_str().unwrap_or_default().to_owned(),
-        Err(e) => { 
+        Err(e) => {
             tx.send(Err(e)).unwrap_or_default();
             return;
         }
@@ -73,8 +73,8 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
         }
     };
 
-    let mut cache: HashMap<String, Vec<u8>> = HashMap::new(); 
-    
+    let mut cache: HashMap<String, Vec<u8>> = HashMap::new();
+
     for (_, media_segment) in media.segments {
         let segment_response = match minreq::get(media_segment.uri().as_ref())
             .with_timeout(TIME_OUT)
@@ -94,7 +94,7 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
             segment_response
         } else {
             let key = keys.iter().find(|k| k.method == EncryptionMethod::Aes128);
-            
+
             let (uri, iv) = match key {
                 Some(key) => (key.uri().as_ref().to_string(), key.iv.to_slice()),
                 None => {
@@ -105,25 +105,19 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
 
             let key = match cache.get(&uri) {
                 Some(key) => key.to_owned(),
-                None => {
-                    match minreq::get(&uri)
-                        .with_timeout(TIME_OUT)
-                        .send()
-                        .context(format!("get {}", &uri))
-                    {
-                        Ok(response) => { 
-                            let response = response.into_bytes(); 
-                            cache.insert(uri, response.clone()); 
-                            response
-                        }
-                        Err(e) => {
-                            tx.send(Err(e)).unwrap_or_default();
-                            return;
-                        }
+                None => match minreq::get(&uri).with_timeout(TIME_OUT).send().context(format!("get {}", &uri)) {
+                    Ok(response) => {
+                        let response = response.into_bytes();
+                        cache.insert(uri, response.clone());
+                        response
                     }
-                }
+                    Err(e) => {
+                        tx.send(Err(e)).unwrap_or_default();
+                        return;
+                    }
+                },
             };
-            
+
             let iv = match iv {
                 Some(iv) => iv,
                 None => {
@@ -133,14 +127,14 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
             };
 
             match decrypt_aes128(&key, &iv, &segment_response) {
-                Ok(s) => s,
+                Ok(decrypted) => decrypted,
                 Err(e) => {
                     tx.send(Err(e)).unwrap_or_default();
                     return;
                 }
             }
         };
-        
+
         let mut ts = TsPacketReader::new(decrypted.as_slice());
         let mut stream: Vec<u8> = Vec::new();
         loop {
@@ -148,23 +142,21 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
                 Ok(packet) => {
                     match packet {
                         Some(packet) => packet,
-                        None => break,  // End of packets
+                        None => break, // End of packets
                     }
-                },
+                }
                 Err(e) => {
                     tx.send(Err(e)).unwrap_or_default();
                     break;
-                },
+                }
             };
 
             let pes = match packet.payload {
-                Some(payload) => {
-                    match payload {
-                        TsPayload::Pes(pes) => pes,
-                        _ => {
-                            tx.send(Err(anyhow!("Pas de paquet PES"))).unwrap_or_default();
-                            return;
-                        }
+                Some(payload) => match payload {
+                    TsPayload::Pes(pes) => pes,
+                    _ => {
+                        tx.send(Err(anyhow!("Pas de paquet PES"))).unwrap_or_default();
+                        return;
                     }
                 },
                 None => {
@@ -177,7 +169,7 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
         }
 
         tx.send(Ok(Box::new(stream))).unwrap_or_default();
-    };
+    }
 }
 
 pub fn start(url: &str) -> Result<Receiver<Message>> {
