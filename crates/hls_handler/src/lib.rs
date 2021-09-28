@@ -15,11 +15,7 @@ const TIME_OUT: u64 = 10;
 const BOUND: usize = 3;
 
 fn get(url: &str) -> Result<Vec<u8>> {
-    match minreq::get(url)
-        .with_timeout(TIME_OUT)
-        .send()
-        .context(format!("get {}", url))
-    {
+    match minreq::get(url).with_timeout(TIME_OUT).send().context(format!("get {}", url)) {
         Ok(response) => {
             if response.status_code == 200 {
                 Ok(response.into_bytes())
