@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Context, Result};
 use decrypt_aes128::decrypt_aes128;
 use hls_m3u8::tags::VariantStream;
-use hls_m3u8::types::EncryptionMethod;
+use hls_m3u8::types::{Codecs, EncryptionMethod};
 use hls_m3u8::{Decryptable, MasterPlaylist, MediaPlaylist};
 use mpeg2ts::ts::{ReadTsPacket, TsPacketReader, TsPayload};
 use std::collections::HashMap;
@@ -44,11 +44,16 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
         }
     };
 
-    // Select the audio stream with the highest bitrate
-    let vs = match master.audio_streams().max_by_key(|vs| vs.bandwidth()) {
+    // Select the mp4a.40.2 audio stream with the highest bitrate
+    let vs = match master
+        .variant_streams
+        .iter()
+        .filter(|vs| vs.codecs().unwrap()[0] == "mp4a.40.2")
+        .max_by_key(|vs| vs.bandwidth())
+    {
         Some(vs) => vs,
         None => {
-            tx.send(Err(anyhow!("Pas de stream audio dans {}", url.as_str()))).unwrap_or_default();
+            tx.send(Err(anyhow!("Pas de stream mp4a.40.2 dans {}", url.as_str()))).unwrap_or_default();
             return;
         }
     };
@@ -185,7 +190,7 @@ mod tests {
 
     #[test]
     fn ohdio() {
-        let rx = start("https://rcavmedias-vh.akamaihd.net/i/51225e9a-2402-48db-9e39-47c65761b140/secured/2021-06-27_16_00_00_cestsibon_0000_,64,128,.mp4.csmil/master.m3u8?hdnea=st=1632850095~exp=1632850215~acl=/i/51225e9a-2402-48db-9e39-47c65761b140/secured/2021-06-27_16_00_00_cestsibon_0000_*~hmac=368cfd88720986250b75e4ee1c6edf621bb018eceab4ea51a4e9e90178602bb5").unwrap();
+        let rx = start("https://rcavmedias-vh.akamaihd.net/i/51225e9a-2402-48db-9e39-47c65761b140/secured/2021-06-27_16_00_00_cestsibon_0000_,64,128,.mp4.csmil/master.m3u8?hdnea=st=1632871055~exp=1632871175~acl=/i/51225e9a-2402-48db-9e39-47c65761b140/secured/2021-06-27_16_00_00_cestsibon_0000_*~hmac=7f03694eb8a1817ed7d0c94cc3c02841ac355e54d096bbcbdf70b2eddb38f17f").unwrap();
         match rx.recv() {
             Ok(s) => match s {
                 Ok(_) => assert!(true),
