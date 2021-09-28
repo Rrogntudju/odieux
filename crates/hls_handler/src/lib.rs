@@ -185,17 +185,17 @@ mod tests {
 
     #[test]
     fn ohdio() {
-        let rx = start("https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8").unwrap();
+        let rx = start("https://cph-p2p-msl.akamaized.net/hls/liv/2000341/test/master.m3u8").unwrap();
         match rx.recv() {
             Ok(s) => match s {
                 Ok(_) => assert!(true),
                 Err(e) => {
-                    println!("{}", e);
-                    assert!(true);
+                    println!("{:?}", e);
+                    assert!(false);
                 }
             },
             Err(e) => {
-                println!("{}", e);
+                println!("{:?}", e);
                 assert!(true);
             }
         }
