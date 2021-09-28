@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Context, Result};
 use decrypt_aes128::decrypt_aes128;
 use hls_m3u8::tags::VariantStream;
-use hls_m3u8::types::EncryptionMethod;
+use hls_m3u8::types::{Codecs,EncryptionMethod};
 use hls_m3u8::{Decryptable, MasterPlaylist, MediaPlaylist};
 use mpeg2ts::ts::{ReadTsPacket, TsPacketReader, TsPayload};
 use std::collections::HashMap;
@@ -48,7 +48,7 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
     let vs = match master
         .variant_streams
         .iter()
-        .filter(|vs| vs.codecs().unwrap()[0] == "mp4a.40.2")
+        .filter(|vs| vs.codecs().unwrap_or(&Codecs::from([""]))[0] == "mp4a.40.2")
         .max_by_key(|vs| vs.bandwidth())
     {
         Some(vs) => vs,
