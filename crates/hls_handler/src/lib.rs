@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Context, Result};
 use decrypt_aes128::decrypt_aes128;
 use hls_m3u8::tags::VariantStream;
-use hls_m3u8::types::{Codecs, EncryptionMethod};
+use hls_m3u8::types::EncryptionMethod;
 use hls_m3u8::{Decryptable, MasterPlaylist, MediaPlaylist};
 use mpeg2ts::ts::{ReadTsPacket, TsPacketReader, TsPayload};
 use std::collections::HashMap;
