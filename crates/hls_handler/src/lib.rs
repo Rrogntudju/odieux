@@ -3,7 +3,6 @@ use decrypt_aes128::decrypt_aes128;
 use hls_m3u8::tags::VariantStream;
 use hls_m3u8::types::EncryptionMethod;
 use hls_m3u8::{Decryptable, MasterPlaylist, MediaPlaylist};
-use minreq;
 use mpeg2ts::ts::{ReadTsPacket, TsPacketReader, TsPayload};
 use std::collections::HashMap;
 use std::convert::TryFrom;
@@ -187,7 +186,12 @@ mod tests {
     #[test]
     fn ohdio() {
         let rx = start("url").unwrap(); 
-        let stream = rx.recv();
-        assert!(stream.is_ok());
+        match rx.recv() {
+            Ok(_) => assert!(true),
+            Err(e) => {
+                println!("{}", e);
+                assert!(false)
+            }
+        }
     }
 }

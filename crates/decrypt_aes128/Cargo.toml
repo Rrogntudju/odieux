@@ -1,6 +1,6 @@
 [package]
 name = "decrypt_aes128"
-authors = ["https://stackoverflow.com/users/11696053/universe-chen", "Rrogntudju"]
+authors = "Rrogntudju"]
 version = "0.1.0"
 edition = "2018"
 
