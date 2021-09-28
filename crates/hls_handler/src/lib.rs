@@ -14,20 +14,26 @@ type Message = Result<Box<Vec<u8>>>;
 const TIME_OUT: u64 = 10;
 const BOUND: usize = 3;
 
-fn handle_hls(url: Url, tx: SyncSender<Message>) {
-    let response = match minreq::get(url.as_str())
+fn get(url: &str) -> Result<Vec<u8>> {
+    match minreq::get(url)
         .with_timeout(TIME_OUT)
         .send()
-        .context(format!("get {}", url.as_str()))
+        .context(format!("get {}", url))
     {
         Ok(response) => {
             if response.status_code == 200 {
-                response.as_str().unwrap_or_default().to_owned()
+                Ok(response.into_bytes())
             } else {
-                tx.send(Err(anyhow!("{} a retourné {}", url.as_str(), response.reason_phrase))).unwrap_or_default();
-                return;
+                Err(anyhow!("{} a retourné {}", url, response.reason_phrase))
             }
         }
+        Err(e) => Err(e),
+    }
+}
+
+fn handle_hls(url: Url, tx: SyncSender<Message>) {
+    let response = match get(url.as_str()) {
+        Ok(response) => String::from_utf8(response).unwrap_or_default(),
         Err(e) => {
             tx.send(Err(e)).unwrap_or_default();
             return;
@@ -192,7 +198,7 @@ mod tests {
 
     #[test]
     fn ohdio() {
-        let rx = start("https://cph-p2p-msl.akamaized.net/hls/liv/2000341/test/master.m3u8").unwrap();
+        let rx = start("https://rcavmedias-vh.akamaihd.net/i/51225e9a-2402-48db-9e39-47c65761b140/secured/2021-06-27_16_00_00_cestsibon_0000_,64,128,.mp4.csmil/master.m3u8?hdnea=st=1632850095~exp=1632850215~acl=/i/51225e9a-2402-48db-9e39-47c65761b140/secured/2021-06-27_16_00_00_cestsibon_0000_*~hmac=368cfd88720986250b75e4ee1c6edf621bb018eceab4ea51a4e9e90178602bb5").unwrap();
         match rx.recv() {
             Ok(s) => match s {
                 Ok(_) => assert!(true),
