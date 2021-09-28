@@ -20,7 +20,14 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
         .send()
         .context(format!("get {}", url.as_str()))
     {
-        Ok(response) => response.as_str().unwrap_or_default().to_owned(),
+        Ok(response) => {
+            if response.status_code == 200 {
+                response.as_str().unwrap_or_default().to_owned()
+            } else {
+                tx.send(Err(anyhow!("{} a retourné {}", url.as_str(), response.reason_phrase))).unwrap_or_default();
+                return;
+            }
+        }
         Err(e) => {
             tx.send(Err(e)).unwrap_or_default();
             return;
