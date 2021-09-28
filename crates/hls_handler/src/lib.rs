@@ -109,9 +109,8 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
 
             let key = match cache.get(&uri) {
                 Some(key) => key.to_owned(),
-                None => match minreq::get(&uri).with_timeout(TIME_OUT).send().context(format!("get {}", &uri)) {
+                None => match get(&uri).context(format!("get {}", &uri)) {
                     Ok(response) => {
-                        let response = response.into_bytes();
                         cache.insert(uri, response.clone());
                         response
                     }
