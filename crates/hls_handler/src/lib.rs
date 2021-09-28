@@ -65,12 +65,8 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
         }
     };
 
-    let response = match minreq::get(media_url.as_ref())
-        .with_timeout(TIME_OUT)
-        .send()
-        .context(format!("get {}", media_url.as_ref()))
-    {
-        Ok(response) => response.as_str().unwrap_or_default().to_owned(),
+    let response = match get(media_url.as_ref()) {
+        Ok(response) => String::from_utf8(response).unwrap_or_default(),
         Err(e) => {
             tx.send(Err(e)).unwrap_or_default();
             return;
@@ -88,12 +84,8 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
     let mut cache: HashMap<String, Vec<u8>> = HashMap::new();
 
     for (_, media_segment) in media.segments {
-        let segment_response = match minreq::get(media_segment.uri().as_ref())
-            .with_timeout(TIME_OUT)
-            .send()
-            .context(format!("get {}", media_segment.uri().as_ref()))
-        {
-            Ok(response) => response.into_bytes(),
+        let segment_response = match get(media_segment.uri().as_ref()) {
+            Ok(response) => response,
             Err(e) => {
                 tx.send(Err(e)).unwrap_or_default();
                 return;
