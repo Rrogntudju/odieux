@@ -155,11 +155,11 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
                 }
             };
 
-            let pes = match packet.payload {
+            let data = match packet.payload {
                 Some(payload) => match payload {
-                    TsPayload::Pes(pes) => pes,
+                    TsPayload::Raw(data) => data,
                     _ => {
-                        tx.send(Err(anyhow!("Pas de paquet PES"))).unwrap_or_default();
+                        tx.send(Err(anyhow!("Pas de payload Raw"))).unwrap_or_default();
                         return;
                     }
                 },
@@ -169,7 +169,7 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
                 }
             };
 
-            stream.copy_from_slice(&pes.data[..]);
+            stream.copy_from_slice(&data[..]);
         }
 
         tx.send(Ok(Box::new(stream))).unwrap_or_default();
