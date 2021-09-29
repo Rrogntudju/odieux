@@ -19,7 +19,11 @@ impl Player {
         Self { rx: None, state : State::Stopped}
     }
 
-    pub fn start(url: &str) -> Result<Result<Receiver<Message>>> {
+    pub fn play(&mut self, url: &str) -> Result<()> {
+        self.rx = Some(start(url)?);
         
+        self.state = State::Playing;
+
+        Ok(())
     }
 }
