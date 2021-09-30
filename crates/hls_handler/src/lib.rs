@@ -195,7 +195,7 @@ mod tests {
 
     #[test]
     fn ohdio() {
-        let rx = start("Insérer un url master.m3u8 Ohdio. L'url doit être validé sinon on reçoit FORBIDDEN").unwrap();
+        let rx = start("Insérer un url master.m3u8 Ohdio validé").unwrap();
         match rx.recv() {
             Ok(s) => match s {
                 Ok(_) => assert!(true),
