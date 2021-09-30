@@ -154,7 +154,7 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
                 }
                 Err(e) => {
                     tx.send(Err(e)).unwrap_or_default();
-                    break;
+                    return;
                 }
             };
 
