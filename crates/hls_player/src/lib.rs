@@ -1,6 +1,8 @@
-use std::sync::mpsc::Receiver;
+use std::sync::{Arc, Mutex};
 use anyhow::{anyhow, Context, Result};
 use hls_handler::{start, Message};
+use rodio::Sink;
+
 
 enum State {
     Started,
@@ -10,20 +12,36 @@ enum State {
 }
 
 pub struct Player {
-    rx : Option<Receiver<Message>>,
     state: State,
+    end_signal: Option<Arc<Mutex<bool>>>,
+    sink: Option<Arc<Mutex<Sink>>>,
 }
 
 impl Player {
     pub fn new() -> Self {
-        Self { rx: None, state : State::Stopped}
+        Self {state : State::Stopped, end_signal: None, sink: None}
     }
 
-    pub fn play(&mut self, url: &str) -> Result<()> {
-        self.rx = Some(start(url)?);
-        
-        self.state = State::Playing;
+    pub fn start(&mut self, url: &str) -> Result<()> {
 
-        Ok(())
     }
+
+    pub fn play(&mut self)  {
+ 
+    }
+
+    pub fn stop(&mut self) {
+
+    }
+
+    pub fn pause(&mut self) {
+
+    }
+
 }
+/* if match end_signal.lock() {
+    Ok(end) => *end,
+    _ => return,
+} {
+    return;
+} */
