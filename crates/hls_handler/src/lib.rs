@@ -175,14 +175,16 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
             stream.copy_from_slice(&data[..]);
         }
 
-        tx.send(Ok(Box::new(stream))).unwrap_or_default();
+        if let Err(_) = tx.send(Ok(Box::new(stream))) {
+            return; // rx was dropped
+        }
     }
 }
 
 pub fn start(url: &str) -> Result<Receiver<Message>> {
     let master_url = Url::try_from(url).context("Validation de l'url MasterPlaylist")?;
     let (tx, rx) = sync_channel::<Message>(BOUND);
-    thread::spawn(move || handle_hls(master_url, tx));
+        thread::spawn(move || handle_hls(master_url, tx));
 
     Ok(rx)
 }
