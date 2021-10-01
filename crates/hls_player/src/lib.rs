@@ -3,49 +3,46 @@ use hls_handler;
 use rodio::{OutputStream, Sink};
 use std::sync::mpsc::Receiver;
 use std::sync::{Arc, Mutex};
+use std::thread;
 
-enum State {
-    Started,
-    Stopped,
-    Paused,
+fn handle_sink(sink: Arc<Mutex<Sink>>, tx: Receiver<Result<Box<Vec<u8>>>>, end_signal: Arc<Mutex<bool>>) {
+    loop {
+        match end_signal.lock() {
+            Ok(end) if *end => return,
+            _ => return
+        }
+    }
 }
 
-fn handle_sink(sink: Arc<Mutex<Sink>>, tx: Receiver<Result<Box<Vec<u8>>>>, end_signal: Arc<Mutex<bool>>) {}
-
 pub struct Player {
-    state: State,
-    end_signal: Option<Arc<Mutex<bool>>>,
-    sink: Option<Arc<Mutex<Sink>>>,
+    sink: Arc<Mutex<Sink>>,
+    end_signal: Arc<Mutex<bool>>,
 }
 
 impl Player {
-    pub fn new() -> Self {
-        Self {
-            state: State::Stopped,
-            end_signal: None,
-            sink: None,
-        }
-    }
-
-    pub fn start(&mut self, url: &str) -> Result<()> {
+    pub fn start(url: &str) -> Result<Self> {
         let tx = hls_handler::start(url)?;
         let (_, stream_handle) = OutputStream::try_default()?;
         let sink = Arc::new(Mutex::new(Sink::try_new(&stream_handle)?));
         let sink2 = sink.clone();
-        self.sink = Some(sink);
+        thread::spawn(move || handle_sink(sink2, tx));
 
-        Ok(())
+        Ok(Self { sink })
     }
 
-    pub fn play(&mut self) {}
+    pub fn play(&mut self) {
+        let sink = *self.sink.lock().expect("Poisoned lock");
+        sink.play();
+    }
 
-    pub fn stop(&mut self) {}
+    pub fn stop(&mut self) {
+        let sink = *self.sink.lock().expect("Poisoned lock");
+        sink.pause();
+        drop(sink);
+    }
 
-    pub fn pause(&mut self) {}
+    pub fn pause(&mut self) {
+        let sink = *self.sink.lock().expect("Poisoned lock");
+        sink.pause();
+    }
 }
-/* if match end_signal.lock() {
-    Ok(end) => *end,
-    _ => return,
-} {
-    return;
-} */
