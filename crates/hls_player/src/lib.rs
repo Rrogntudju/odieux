@@ -25,21 +25,25 @@ impl Player {
         let (_, stream_handle) = OutputStream::try_default()?;
         let sink = Arc::new(Mutex::new(Sink::try_new(&stream_handle)?));
         let sink2 = sink.clone();
-        thread::spawn(move || handle_sink(sink2, tx));
+        let end_signal = Arc::new(Mutex::new(false));
+        let end_signal2 = end_signal.clone();
+        thread::spawn(move || handle_sink(sink2, tx, end_signal2));
 
-        Ok(Self { sink })
+        Ok(Self { sink, end_signal })
     }
 
     pub fn play(&mut self) {
-        let sink = *self.sink.lock().expect("Poisoned lock");
+        let sink = self.sink.lock().expect("Poisoned lock");
         sink.play();
     }
 
     pub fn stop(&mut self) {
-        let sink = self.sink.lock().expect("Poisoned lock");
-        sink.pause();
-        let end_signal = *self.end_signal.lock().expect("Poisoned lock");
-        end_signal = true;
+        {
+            let sink = self.sink.lock().expect("Poisoned lock");
+            sink.pause(); 
+        }
+        let mut end_signal = self.end_signal.lock().expect("Poisoned lock");
+        *end_signal = true;
     }
 
     pub fn pause(&mut self) {
