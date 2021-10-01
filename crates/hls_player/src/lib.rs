@@ -26,18 +26,22 @@ impl Player {
                     return;
                 }
             } {
-                let sink = match sink2.lock() {
-                    Ok(sink) => sink,
-                    Err(e) => {
-                        eprintln!("Sink lock:\n{}", e);
-                        return;
+                {
+                    let sink = match sink2.lock() {
+                        Ok(sink) => sink,
+                        Err(e) => {
+                            eprintln!("Sink lock:\n{}", e);
+                            return;
+                        }
+                    };
+
+                    while sink.len() < 3 {
+                        match tx.recv() {
+                            
+                        }
                     }
-                };
-
-                while sink.len() < 3 {
-                    match tx.recv() {}
                 }
-
+                
                 thread::sleep(time::Duration::from_millis(1000));
             }
         });
