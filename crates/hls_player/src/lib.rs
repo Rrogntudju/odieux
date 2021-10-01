@@ -35,7 +35,7 @@ impl Player {
     pub fn play(&mut self) -> Result<()> {
         match self.sink.lock() {
             Ok(sink) => sink.play(),
-            Err(e) => return Err(anyhow!("{}", e)),
+            Err(e) => return Err(anyhow!("Sink lock:\n{}", e)),
         }
 
         Ok(())
@@ -44,12 +44,12 @@ impl Player {
     pub fn stop(&mut self) -> Result<()> {
         match self.sink.lock() {
             Ok(sink) => sink.pause(),
-            Err(e) => return Err(anyhow!("{}", e)),
+            Err(e) => return Err(anyhow!("Sink lock:\n{}", e)),
         }
 
         match self.end_signal.lock() {
             Ok(mut end_signal) => *end_signal = true,
-            Err(e) => return Err(anyhow!("{}", e)),
+            Err(e) => return Err(anyhow!("End signal lock:\n{}", e)),
         }
 
         Ok(())
@@ -58,7 +58,7 @@ impl Player {
     pub fn pause(&mut self) -> Result<()> {
         match self.sink.lock() {
             Ok(sink) => sink.pause(),
-            Err(e) => return Err(anyhow!("{}", e)),
+            Err(e) => return Err(anyhow!("Sink lock:\n{}", e)),
         }
 
         Ok(())
