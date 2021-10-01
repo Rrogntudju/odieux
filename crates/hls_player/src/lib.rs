@@ -3,14 +3,27 @@ use hls_handler;
 use rodio::{OutputStream, Sink};
 use std::sync::mpsc::Receiver;
 use std::sync::{Arc, Mutex};
-use std::thread;
+use std::{thread, time};
 
 fn handle_sink(sink: Arc<Mutex<Sink>>, tx: Receiver<Result<Box<Vec<u8>>>>, end_signal: Arc<Mutex<bool>>) {
     loop {
         match end_signal.lock() {
-            Ok(end) if *end => return,
+            Ok(end) if !*end => (),
             _ => return,
         }
+
+        let sink = match sink.lock() {
+            Ok(sink) => sink,
+            Err(e) => {
+                eprintln!(format!("{}", e));
+                return;
+            }
+        };
+
+        if sink.len() < 3 {
+        }
+
+        thread::sleep(time::Duration::from_millis(1000));
     }
 }
 
