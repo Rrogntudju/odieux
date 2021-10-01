@@ -32,22 +32,35 @@ impl Player {
         Ok(Self { sink, end_signal })
     }
 
-    pub fn play(&mut self) {
-        let sink = self.sink.lock().expect("Poisoned lock");
-        sink.play();
-    }
-
-    pub fn stop(&mut self) {
-        {
-            let sink = self.sink.lock().expect("Poisoned lock");
-            sink.pause(); 
+    pub fn play(&mut self) -> Result<()>  {
+        match self.sink.lock() {
+            Ok(sink) => sink.play(),
+            Err(e) => return Err(anyhow!("{}", e))
         }
-        let mut end_signal = self.end_signal.lock().expect("Poisoned lock");
-        *end_signal = true;
+
+        Ok(())
     }
 
-    pub fn pause(&mut self) {
-        let sink = self.sink.lock().expect("Poisoned lock");
-        sink.pause();
+    pub fn stop(&mut self) -> Result<()> {
+        match self.sink.lock() {
+            Ok(sink) => sink.pause(),
+            Err(e) => return Err(anyhow!("{}", e))
+        } 
+            
+        match self.end_signal.lock() {
+            Ok(mut end_signal) => *end_signal = true,
+            Err(e) => return Err(anyhow!("{}", e))
+        }
+
+        Ok(())
+    }
+
+    pub fn pause(&mut self) -> Result<()> {
+        match self.sink.lock() {
+            Ok(sink) => sink.pause(),
+            Err(e) => return Err(anyhow!("{}", e))
+        }
+
+        Ok(())
     }
 }
