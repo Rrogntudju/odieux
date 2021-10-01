@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, Result};
 use hls_handler;
 use rodio::{OutputStream, Sink};
 use std::sync::mpsc::Receiver;
@@ -9,7 +9,7 @@ fn handle_sink(sink: Arc<Mutex<Sink>>, tx: Receiver<Result<Box<Vec<u8>>>>, end_s
     loop {
         match end_signal.lock() {
             Ok(end) if *end => return,
-            _ => return
+            _ => return,
         }
     }
 }
@@ -32,10 +32,10 @@ impl Player {
         Ok(Self { sink, end_signal })
     }
 
-    pub fn play(&mut self) -> Result<()>  {
+    pub fn play(&mut self) -> Result<()> {
         match self.sink.lock() {
             Ok(sink) => sink.play(),
-            Err(e) => return Err(anyhow!("{}", e))
+            Err(e) => return Err(anyhow!("{}", e)),
         }
 
         Ok(())
@@ -44,12 +44,12 @@ impl Player {
     pub fn stop(&mut self) -> Result<()> {
         match self.sink.lock() {
             Ok(sink) => sink.pause(),
-            Err(e) => return Err(anyhow!("{}", e))
-        } 
-            
+            Err(e) => return Err(anyhow!("{}", e)),
+        }
+
         match self.end_signal.lock() {
             Ok(mut end_signal) => *end_signal = true,
-            Err(e) => return Err(anyhow!("{}", e))
+            Err(e) => return Err(anyhow!("{}", e)),
         }
 
         Ok(())
@@ -58,7 +58,7 @@ impl Player {
     pub fn pause(&mut self) -> Result<()> {
         match self.sink.lock() {
             Ok(sink) => sink.pause(),
-            Err(e) => return Err(anyhow!("{}", e))
+            Err(e) => return Err(anyhow!("{}", e)),
         }
 
         Ok(())
