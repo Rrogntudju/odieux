@@ -1,31 +1,8 @@
 use anyhow::{anyhow, Result};
 use hls_handler;
 use rodio::{OutputStream, Sink};
-use std::sync::mpsc::Receiver;
 use std::sync::{Arc, Mutex};
 use std::{thread, time};
-
-fn handle_sink(sink: Arc<Mutex<Sink>>, tx: Receiver<Result<Box<Vec<u8>>>>, end_signal: Arc<Mutex<bool>>) {
-    loop {
-        match end_signal.lock() {
-            Ok(end) if !*end => (),
-            _ => return,
-        }
-
-        let sink = match sink.lock() {
-            Ok(sink) => sink,
-            Err(e) => {
-                eprintln!(format!("{}", e));
-                return;
-            }
-        };
-
-        if sink.len() < 3 {
-        }
-
-        thread::sleep(time::Duration::from_millis(1000));
-    }
-}
 
 pub struct Player {
     sink: Arc<Mutex<Sink>>,
@@ -40,7 +17,30 @@ impl Player {
         let sink2 = sink.clone();
         let end_signal = Arc::new(Mutex::new(false));
         let end_signal2 = end_signal.clone();
-        thread::spawn(move || handle_sink(sink2, tx, end_signal2));
+
+        thread::spawn(move || {
+            while !match end_signal2.lock() {
+                Ok(end) => *end,
+                Err(e) => {
+                    eprintln!("End signal lock:\n{}", e);
+                    return;
+                }
+            } {
+                let sink = match sink2.lock() {
+                    Ok(sink) => sink,
+                    Err(e) => {
+                        eprintln!("Sink lock:\n{}", e);
+                        return;
+                    }
+                };
+
+                while sink.len() < 3 {
+                    match tx.recv() {}
+                }
+
+                thread::sleep(time::Duration::from_millis(1000));
+            }
+        });
 
         Ok(Self { sink, end_signal })
     }
