@@ -36,13 +36,14 @@ impl Player {
     }
 
     pub fn stop(&mut self) {
-        let sink = *self.sink.lock().expect("Poisoned lock");
+        let sink = self.sink.lock().expect("Poisoned lock");
         sink.pause();
-        drop(sink);
+        let end_signal = *self.end_signal.lock().expect("Poisoned lock");
+        end_signal = true;
     }
 
     pub fn pause(&mut self) {
-        let sink = *self.sink.lock().expect("Poisoned lock");
+        let sink = self.sink.lock().expect("Poisoned lock");
         sink.pause();
     }
 }
