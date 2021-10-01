@@ -10,7 +10,7 @@ use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::thread;
 use url::Url;
 
-pub type Message = Result<Box<Vec<u8>>>;
+type Message = Result<Box<Vec<u8>>>;
 const TIME_OUT: u64 = 10;
 const BOUND: usize = 3;
 
