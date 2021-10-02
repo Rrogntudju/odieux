@@ -1,13 +1,13 @@
-use anyhow::{anyhow, Result};
-use hls_handler;
+use anyhow::{anyhow, Context, Result};
 use rodio::{Decoder, OutputStream, Sink};
-use std::sync::{Arc, Mutex};
+use std::sync::atomic::Ordering;
+use std::sync::{Arc, Mutex, atomic::AtomicBool};
 use std::{thread, time};
 use std::io::Cursor;
 
 pub struct Player {
     sink: Arc<Mutex<Sink>>,
-    end_signal: Arc<Mutex<bool>>,
+    stop_signal: Arc<AtomicBool>,
 }
 
 impl Player {
@@ -16,51 +16,48 @@ impl Player {
         let (_, stream_handle) = OutputStream::try_default()?;
         let sink = Arc::new(Mutex::new(Sink::try_new(&stream_handle)?));
         let sink2 = sink.clone();
-        let end_signal = Arc::new(Mutex::new(false));
-        let end_signal2 = end_signal.clone();
+        let stop_signal = Arc::new(AtomicBool::new(false));
+        let stop_signal2 = stop_signal.clone();
 
         thread::spawn(move || {
-            while !match end_signal2.lock() {
-                Ok(end) => *end,
-                Err(e) => {
-                    eprintln!("End signal lock:\n{}", e);
-                    return;
-                }
-            } {
-                {
-                    let sink = match sink2.lock() {
-                        Ok(sink) => sink,
-                        Err(e) => {
-                            eprintln!("Sink lock:\n{}", e);
-                            return;
-                        }
-                    };
+            while !stop_signal2.load(Ordering::Relaxed) {
+                let sink = match sink2.lock() {
+                    Ok(sink) => sink,
+                    Err(e) => {
+                        eprintln!("Sink lock:\n{}", e);
+                        return;
+                    }
+                };
 
-                    if sink.len() < 2 {
-                        match rx.recv() {
-                            Ok(message) => {
-                                let stream = match message {
-                                    Ok(stream) => stream,
+                if sink.len() < 2 {
+                    match rx.recv() {
+                        Ok(message) => {
+                            let stream = match message {
+                                Ok(stream) => stream,
+                                Err(e) => {
+                                    eprintln!("{}", e);
+                                    return;
+                                }
+                            };
+                            let source = match Decoder::new(Cursor::new(*stream)).context("Decoder") {
+                                    Ok(source) => source,
                                     Err(e) => {
                                         eprintln!("{}", e);
                                         return;
                                     }
-                                };
-                                let source = match Decoder::new(Cursor::new(*stream)) {
-                                    
-                                }
-                                sink.append(source);
-                            }
-                            Err(_) => return // tx was dropped
+                            };
+                            sink.append(source);
                         }
+                        Err(_) => return // tx was dropped
                     }
                 }
+                drop(sink);
                 
                 thread::sleep(time::Duration::from_millis(1000));
             }
         });
 
-        Ok(Self { sink, end_signal })
+        Ok(Self { sink, stop_signal })
     }
 
     pub fn play(&mut self) -> Result<()> {
@@ -78,10 +75,7 @@ impl Player {
             Err(e) => return Err(anyhow!("Sink lock:\n{}", e)),
         }
 
-        match self.end_signal.lock() {
-            Ok(mut end_signal) => *end_signal = true,
-            Err(e) => return Err(anyhow!("End signal lock:\n{}", e)),
-        }
+        self.stop_signal.store(true, Ordering::Relaxed);
 
         Ok(())
     }
