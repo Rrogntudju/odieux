@@ -1,8 +1,9 @@
 use anyhow::{anyhow, Result};
 use hls_handler;
-use rodio::{OutputStream, Sink};
+use rodio::{Decoder, OutputStream, Sink};
 use std::sync::{Arc, Mutex};
 use std::{thread, time};
+use std::io::Cursor;
 
 pub struct Player {
     sink: Arc<Mutex<Sink>>,
@@ -11,7 +12,7 @@ pub struct Player {
 
 impl Player {
     pub fn start(url: &str) -> Result<Self> {
-        let tx = hls_handler::start(url)?;
+        let rx = hls_handler::start(url)?;
         let (_, stream_handle) = OutputStream::try_default()?;
         let sink = Arc::new(Mutex::new(Sink::try_new(&stream_handle)?));
         let sink2 = sink.clone();
@@ -35,9 +36,22 @@ impl Player {
                         }
                     };
 
-                    while sink.len() < 3 {
-                        match tx.recv() {
-                            
+                    if sink.len() < 2 {
+                        match rx.recv() {
+                            Ok(message) => {
+                                let stream = match message {
+                                    Ok(stream) => stream,
+                                    Err(e) => {
+                                        eprintln!("{}", e);
+                                        return;
+                                    }
+                                };
+                                let source = match Decoder::new(Cursor::new(*stream)) {
+                                    
+                                }
+                                sink.append(source);
+                            }
+                            Err(_) => return // tx was dropped
                         }
                     }
                 }
