@@ -32,7 +32,7 @@ impl Player {
                 if sink.len() < 2 {
                     match rx.recv() {
                         Ok(message) => {
-                            let stream = match message {
+                            let stream = match message.context("Message") {
                                 Ok(stream) => stream,
                                 Err(e) => {
                                     eprintln!("{}", e);
