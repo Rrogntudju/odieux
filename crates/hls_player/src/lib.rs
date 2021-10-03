@@ -6,6 +6,7 @@ use std::sync::{atomic::AtomicBool, Arc, Mutex};
 use std::{thread, time};
 
 pub struct Player {
+    output_stream: OutputStream,
     sink: Arc<Mutex<Sink>>,
     stop_signal: Arc<AtomicBool>,
 }
@@ -13,7 +14,7 @@ pub struct Player {
 impl Player {
     pub fn start(url: &str) -> Result<Self> {
         let rx = hls_handler::start(url)?;
-        let (_, stream_handle) = OutputStream::try_default().context("Échec: création de OutputStream")?;
+        let (output_stream, stream_handle) = OutputStream::try_default().context("Échec: création de OutputStream")?;
         let sink = Arc::new(Mutex::new(Sink::try_new(&stream_handle).context("Échec: création de Sink")?));
         let sink2 = sink.clone();
         let stop_signal = Arc::new(AtomicBool::new(false));
@@ -48,7 +49,7 @@ impl Player {
             }
         });
 
-        Ok(Self { sink, stop_signal })
+        Ok(Self { output_stream, sink, stop_signal })
     }
 
     pub fn play(&mut self) -> Result<()> {
