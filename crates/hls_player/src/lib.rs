@@ -1,9 +1,9 @@
 use anyhow::{anyhow, Context, Result};
 use rodio::{Decoder, OutputStream, Sink};
-use std::sync::atomic::Ordering;
-use std::sync::{Arc, Mutex, atomic::AtomicBool};
-use std::{thread, time};
 use std::io::Cursor;
+use std::sync::atomic::Ordering;
+use std::sync::{atomic::AtomicBool, Arc, Mutex};
+use std::{thread, time};
 
 pub struct Player {
     sink: Arc<Mutex<Sink>>,
@@ -23,10 +23,7 @@ impl Player {
             while !stop_signal2.load(Ordering::Relaxed) {
                 let sink = match sink2.lock() {
                     Ok(sink) => sink,
-                    Err(e) => {
-                        eprintln!("Sink lock:\n{}", e);
-                        return;
-                    }
+                    Err(e) => return eprintln!("Sink lock:\n{}", e)
                 };
 
                 if sink.len() < 2 {
@@ -34,25 +31,19 @@ impl Player {
                         Ok(message) => {
                             let stream = match message.context("Message") {
                                 Ok(stream) => stream,
-                                Err(e) => {
-                                    eprintln!("{}", e);
-                                    return;
-                                }
+                                Err(e) => return eprintln!("{}", e)
                             };
                             let source = match Decoder::new(Cursor::new(*stream)).context("Decoder") {
-                                    Ok(source) => source,
-                                    Err(e) => {
-                                        eprintln!("{}", e);
-                                        return;
-                                    }
+                                Ok(source) => source,
+                                Err(e) => return eprintln!("{}", e)
                             };
                             sink.append(source);
                         }
-                        Err(_) => return // tx was dropped
+                        Err(_) => return, // tx was dropped
                     }
                 }
                 drop(sink);
-                
+
                 thread::sleep(time::Duration::from_millis(1000));
             }
         });
@@ -69,23 +60,62 @@ impl Player {
         Ok(())
     }
 
-    pub fn stop(&mut self) -> Result<()> {
+    pub fn stop(&mut self)  {
         match self.sink.lock() {
             Ok(sink) => sink.pause(),
-            Err(e) => return Err(anyhow!("Sink lock:\n{}", e)),
+            Err(e) => return eprintln!("Sink lock:\n{}", e),
         }
 
         self.stop_signal.store(true, Ordering::Relaxed);
-
-        Ok(())
     }
 
-    pub fn pause(&mut self) -> Result<()> {
+    pub fn pause(&mut self)  {
         match self.sink.lock() {
             Ok(sink) => sink.pause(),
-            Err(e) => return Err(anyhow!("Sink lock:\n{}", e)),
+            Err(e) => eprintln!("Sink lock:\n{}", e)
         }
+    }
 
-        Ok(())
+    pub fn volume(&mut self) -> f32 {
+        match self.sink.lock() {
+            Ok(sink) => sink.volume(),
+            Err(e) => {
+                eprintln!("Sink lock:\n{}", e);
+                0_f32
+            }
+        }
+    }
+
+    pub fn set_volume(&mut self, volume: f32)  {
+        match self.sink.lock() {
+            Ok(sink) => sink.set_volume(volume),
+            Err(e) => eprintln!("Sink lock:\n{}", e)
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn ohdio() {
+        let mut player = match Player::start("") {
+            Ok(player) => player,
+            Err(e) => {
+                println!("{}", e);
+                return assert!(false);
+            }
+        };
+
+        thread::sleep(time::Duration::from_secs(30));
+        player.pause();
+        thread::sleep(time::Duration::from_secs(3));
+        player.play().unwrap();
+        thread::sleep(time::Duration::from_secs(3));
+        player.set_volume(1.2);
+        assert_eq!(player.volume(), 1.2);
+        thread::sleep(time::Duration::from_secs(3));
+        player.stop();
     }
 }

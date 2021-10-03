@@ -191,7 +191,7 @@ pub fn start(url: &str) -> Result<Receiver<Message>> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::start;
 
     #[test]
     fn ohdio() {
