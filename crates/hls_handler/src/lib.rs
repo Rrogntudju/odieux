@@ -36,7 +36,7 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
         }
     };
 
-    let master = match MasterPlaylist::try_from(response.as_str()).context("Validation de MasterPlayList") {
+    let master = match MasterPlaylist::try_from(response.as_str()).context("Échec: validation de MasterPlayList") {
         Ok(master) => master,
         Err(e) => {
             tx.send(Err(e)).unwrap_or_default();
@@ -77,7 +77,7 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
         }
     };
 
-    let media = match MediaPlaylist::try_from(response.as_str()).context("Validation de MediaPlayList") {
+    let media = match MediaPlaylist::try_from(response.as_str()).context("Échec: validation de MediaPlayList") {
         Ok(media) => media,
         Err(e) => {
             tx.send(Err(e)).unwrap_or_default();
@@ -145,7 +145,7 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
         let mut ts = TsPacketReader::new(decrypted.as_slice());
         let mut stream: Vec<u8> = Vec::new();
         loop {
-            let packet = match ts.read_ts_packet().context("Lecture d'un paquet TS") {
+            let packet = match ts.read_ts_packet().context("Échec: lecture d'un paquet TS") {
                 Ok(packet) => {
                     match packet {
                         Some(packet) => packet,
@@ -182,7 +182,7 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
 }
 
 pub fn start(url: &str) -> Result<Receiver<Message>> {
-    let master_url = Url::try_from(url).context("Validation de l'url MasterPlaylist")?;
+    let master_url = Url::try_from(url).context("Échec: validation de l'url MasterPlaylist")?;
     let (tx, rx) = sync_channel::<Message>(BOUND);
         thread::spawn(move || handle_hls(master_url, tx));
 
