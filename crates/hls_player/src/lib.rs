@@ -117,5 +117,6 @@ mod tests {
         assert_eq!(player.volume(), 1.2);
         thread::sleep(time::Duration::from_secs(3));
         player.stop();
+        assert!(true);
     }
 }
