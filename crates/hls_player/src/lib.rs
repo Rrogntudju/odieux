@@ -98,7 +98,7 @@ mod tests {
 
     #[test]
     fn ohdio() {
-        let mut player = match Player::start("https://rcavmedias-vh.akamaihd.net/i/51225e9a-2402-48db-9e39-47c65761b140/secured/2021-06-27_16_00_00_cestsibon_0000_,64,128,.mp4.csmil/master.m3u8?hdnea=st=1633387470~exp=1633387590~acl=/i/51225e9a-2402-48db-9e39-47c65761b140/secured/2021-06-27_16_00_00_cestsibon_0000_*~hmac=963538f38d667ee80556b963fbc75576d3cb12c2389c4009a30df146c3149dc2") {
+        let mut player = match Player::start("Insérer un url master.m3u8 Ohdio validé") {
             Ok(player) => player,
             Err(e) => {
                 println!("{:?}", e);
