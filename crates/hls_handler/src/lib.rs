@@ -160,11 +160,9 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
 
             let data = match packet.payload {
                 Some(payload) => match payload {
+                    TsPayload::Pes(pes) => pes.data,
                     TsPayload::Raw(data) => data,
-                    _ => {
-                        tx.send(Err(anyhow!("Pas de payload Raw"))).unwrap_or_default();
-                        return;
-                    }
+                    _ => continue
                 },
                 None => {
                     tx.send(Err(anyhow!("Pas de payload"))).unwrap_or_default();
@@ -198,7 +196,7 @@ mod tests {
         let rx = start("Insérer un url master.m3u8 Ohdio validé").unwrap();
         match rx.recv() {
             Ok(s) => match s {
-                Ok(_) => assert!(true),
+                Ok(message) => assert!(message.len() > 0),
                 Err(e) => {
                     println!("{:?}", e);
                     assert!(false);
@@ -206,7 +204,7 @@ mod tests {
             },
             Err(e) => {
                 println!("{:?}", e);
-                assert!(true);
+                assert!(false);
             }
         }
     }

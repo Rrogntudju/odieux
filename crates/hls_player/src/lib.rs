@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result};
 use rodio::{Decoder, OutputStream, Sink};
 use std::io::Cursor;
 use std::sync::atomic::Ordering;
@@ -26,7 +26,6 @@ impl Player {
                     Ok(sink) => sink,
                     Err(e) => return eprintln!("Sink lock:\n{:?}", e)
                 };
-
                 if sink.len() < 2 {
                     match rx.recv() {
                         Ok(message) => {
@@ -52,13 +51,11 @@ impl Player {
         Ok(Self { _output_stream, sink, stop_signal })
     }
 
-    pub fn play(&mut self) -> Result<()> {
+    pub fn play(&mut self) {
         match self.sink.lock() {
             Ok(sink) => sink.play(),
-            Err(e) => return Err(anyhow!("Sink lock:\n{:?}", e)),
+            Err(e) => return eprintln!("Sink lock:\n{:?}", e),
         }
-
-        Ok(())
     }
 
     pub fn stop(&mut self)  {
@@ -101,7 +98,7 @@ mod tests {
 
     #[test]
     fn ohdio() {
-        let mut player = match Player::start("https://rcavmedias-vh.akamaihd.net/i/51225e9a-2402-48db-9e39-47c65761b140/secured/2021-06-27_16_00_00_cestsibon_0000_,64,128,.mp4.csmil/master.m3u8?hdnea=st=1633221324~exp=1633221444~acl=/i/51225e9a-2402-48db-9e39-47c65761b140/secured/2021-06-27_16_00_00_cestsibon_0000_*~hmac=5dd3896f295e02382fb27f168962c54dd29186cfdaf739eb11f9e7e10f089f9a") {
+        let mut player = match Player::start("https://rcavmedias-vh.akamaihd.net/i/51225e9a-2402-48db-9e39-47c65761b140/secured/2021-06-27_16_00_00_cestsibon_0000_,64,128,.mp4.csmil/master.m3u8?hdnea=st=1633387470~exp=1633387590~acl=/i/51225e9a-2402-48db-9e39-47c65761b140/secured/2021-06-27_16_00_00_cestsibon_0000_*~hmac=963538f38d667ee80556b963fbc75576d3cb12c2389c4009a30df146c3149dc2") {
             Ok(player) => player,
             Err(e) => {
                 println!("{:?}", e);
@@ -109,15 +106,15 @@ mod tests {
             }
         };
 
-        thread::sleep(time::Duration::from_secs(30));
+        thread::sleep(time::Duration::from_secs(5));
         player.pause();
         thread::sleep(time::Duration::from_secs(3));
-        player.play().unwrap();
+        player.play();
         thread::sleep(time::Duration::from_secs(3));
-        player.set_volume(1.2);
-        assert_eq!(player.volume(), 1.2);
+        player.set_volume(1.5);
+        assert_eq!(player.volume(), 1.5);
         thread::sleep(time::Duration::from_secs(3));
         player.stop();
-        assert!(true);
+        assert!(false);
     }
 }
