@@ -172,7 +172,7 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
                 }
             };
 
-            stream.copy_from_slice(&data[..]);
+            stream.extend_from_slice(&data[..]);
         }
 
         if tx.send(Ok(Box::new(stream))).is_err() {
