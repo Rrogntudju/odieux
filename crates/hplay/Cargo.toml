@@ -4,5 +4,5 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-rodio = { git = "https://github.com/RustAudio/rodio.git", default-features = false, features = ["symphonia-aac"] }
+hls_player = {path = "../hls_player"}
 
