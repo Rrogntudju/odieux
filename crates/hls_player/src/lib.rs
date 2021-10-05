@@ -106,15 +106,15 @@ mod tests {
             }
         };
 
-        thread::sleep(time::Duration::from_secs(10));
+        thread::sleep(time::Duration::from_secs(15));
         player.pause();
         thread::sleep(time::Duration::from_secs(3));
         player.play();
         thread::sleep(time::Duration::from_secs(3));
-        player.set_volume(3.0);
-        assert_eq!(player.volume(), 3.0);
+        player.set_volume(5.0);
+        assert_eq!(player.volume(), 5.0);
         thread::sleep(time::Duration::from_secs(3));
         player.stop();
-        assert!(false); // pour visualiser le stdout
+        // assert!(false); // pour visualiser le stdout
     }
 }
