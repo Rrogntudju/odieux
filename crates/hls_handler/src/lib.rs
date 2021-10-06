@@ -27,6 +27,10 @@ fn get(url: &str) -> Result<Vec<u8>> {
     }
 }
 
+fn is_stream_pid(pid: &u16) -> bool {
+    0xc0 <= *pid && *pid <= 0xEF
+}
+
 fn handle_hls(url: Url, tx: SyncSender<Message>) {
     let response = match get(url.as_str()) {
         Ok(response) => String::from_utf8(response).unwrap_or_default(),
@@ -144,6 +148,7 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
 
         let mut ts = TsPacketReader::new(decrypted.as_slice());
         let mut stream: Vec<u8> = Vec::new();
+    
         loop {
             let packet = match ts.read_ts_packet().context("Échec: lecture d'un paquet TS") {
                 Ok(packet) => {
@@ -158,19 +163,22 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
                 }
             };
 
-            let data = match packet.payload {
-                Some(payload) => match payload {
-                    TsPayload::Pes(pes) => pes.data,
-                    TsPayload::Raw(data) => data,
-                    _ => continue
-                },
-                None => {
-                    tx.send(Err(anyhow!("Pas de payload"))).unwrap_or_default();
-                    return;
-                }
-            };
+            // Assuming just one AAC stream  
+            if is_stream_pid(&packet.header.pid.as_u16()) {
+                let data = match packet.payload {
+                    Some(payload) => match payload {
+                        TsPayload::Pes(pes) => pes.data,
+                        TsPayload::Raw(data) => data,
+                        _ => continue
+                    },
+                    None => {
+                        tx.send(Err(anyhow!("Pas de payload"))).unwrap_or_default();
+                        return;
+                    }
+                };
 
-            stream.extend_from_slice(&data[..]);
+                stream.extend_from_slice(&data[..]);
+            }
         }
 
         if tx.send(Ok(Box::new(stream))).is_err() {
