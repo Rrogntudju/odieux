@@ -33,11 +33,11 @@ impl Player {
                                 Ok(stream) => stream,
                                 Err(e) => return eprintln!("{:?}", e)
                             };
-                            let source = match Decoder::new(Cursor::new(*stream)).context("Échec: création de Decoder") {
-                                Ok(source) => source,
-                                Err(e) => return eprintln!("{:?}", e)
+                            match Decoder::new(Cursor::new(*stream)).context("Échec: création de Decoder") {
+                                Ok(source) => sink.append(source),
+                                Err(_) => println!("Hips!"),
                             };
-                            sink.append(source);
+//                            sink.append(source);
                         }
                         Err(_) => return, // tx was dropped
                     }

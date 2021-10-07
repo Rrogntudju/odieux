@@ -1,0 +1,8 @@
+[package]
+name = "hls2file"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+hls_handler = {path = "../hls_handler"}
+
