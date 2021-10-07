@@ -27,10 +27,6 @@ fn get(url: &str) -> Result<Vec<u8>> {
     }
 }
 
-fn is_stream_pid(pid: &u16) -> bool {
-    0xc0 <= *pid && *pid <= 0xEF
-}
-
 fn handle_hls(url: Url, tx: SyncSender<Message>) {
     let response = match get(url.as_str()) {
         Ok(response) => String::from_utf8(response).unwrap_or_default(),
@@ -163,8 +159,8 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
                 }
             };
 
-            // Assuming just one AAC stream  
-            if is_stream_pid(&packet.header.pid.as_u16()) {
+            // Assuming just one AAC stream with pid 256 
+            if packet.header.pid.as_u16() == 256 {
                 let data = match packet.payload {
                     Some(payload) => match payload {
                         TsPayload::Pes(pes) => pes.data,
