@@ -15,7 +15,7 @@ const TIME_OUT: u64 = 10;
 const BOUND: usize = 3;
 
 fn get(url: &str) -> Result<Vec<u8>> {
-    match minreq::get(url).with_timeout(TIME_OUT).send().context(format!("get {}", url)) {
+    match minreq::get(url).with_timeout(TIME_OUT).send().context(format!("Échec: get {}", url)) {
         Ok(response) => {
             if response.status_code == 200 {
                 Ok(response.into_bytes())
@@ -113,7 +113,7 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
 
             let key = match cache.get(&uri) {
                 Some(key) => key.to_owned(),
-                None => match get(&uri).context(format!("get {}", &uri)) {
+                None => match get(&uri).context(format!("Échec: get {}", &uri)) {
                     Ok(response) => {
                         cache.insert(uri, response.clone());
                         response
