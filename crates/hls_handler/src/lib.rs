@@ -113,7 +113,7 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
 
             let key = match cache.get(&uri) {
                 Some(key) => key.to_owned(),
-                None => match get(&uri).context(format!("Échec: get {}", &uri)) {
+                None => match get(&uri) {
                     Ok(response) => {
                         cache.insert(uri, response.clone());
                         response
