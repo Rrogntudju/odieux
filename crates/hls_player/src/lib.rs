@@ -1,3 +1,4 @@
+mod rxreader;
 use anyhow::{Context, Result};
 use rodio::{Decoder, OutputStream, Sink};
 use std::io::Cursor;
