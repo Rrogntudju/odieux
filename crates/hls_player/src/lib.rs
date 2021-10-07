@@ -1,95 +1,43 @@
 mod rxreader;
+use rxreader::RxReader;
 use anyhow::{Context, Result};
 use rodio::{Decoder, OutputStream, Sink};
-use std::io::Cursor;
-use std::sync::atomic::Ordering;
-use std::sync::{atomic::AtomicBool, Arc, Mutex};
 use std::{thread, time};
 
 pub struct Player {
     _output_stream: OutputStream,
-    sink: Arc<Mutex<Sink>>,
-    stop_signal: Arc<AtomicBool>,
+    sink: Sink,
 }
 
 impl Player {
     pub fn start(url: &str) -> Result<Self> {
         let rx = hls_handler::start(url)?;
         let (_output_stream, stream_handle) = OutputStream::try_default().context("Échec: création de OutputStream")?;
-        let sink = Arc::new(Mutex::new(Sink::try_new(&stream_handle).context("Échec: création de Sink")?));
-        let sink2 = sink.clone();
-        let stop_signal = Arc::new(AtomicBool::new(false));
-        let stop_signal2 = stop_signal.clone();
+        let sink = Sink::try_new(&stream_handle).context("Échec: création de Sink")?;
+        let source = Decoder::new(RxReader::new(rx)).context("Échec: création de Decoder")?;
+        sink.append(source);
 
-        thread::spawn(move || {
-            while !stop_signal2.load(Ordering::Relaxed) {
-                let sink = match sink2.lock() {
-                    Ok(sink) => sink,
-                    Err(e) => return eprintln!("Sink lock:\n{:?}", e)
-                };
-                if sink.len() < 2 {
-                    match rx.recv() {
-                        Ok(message) => {
-                            let stream = match message.context("Échec: réception du message") {
-                                Ok(stream) => stream,
-                                Err(e) => return eprintln!("{:?}", e)
-                            };
-                            match Decoder::new(Cursor::new(*stream)).context("Échec: création de Decoder") {
-                                Ok(source) => sink.append(source),
-                                Err(_) => println!("Hips!"),
-                            };
-//                            sink.append(source);
-                        }
-                        Err(_) => return, // tx was dropped
-                    }
-                }
-                drop(sink);
-
-                thread::sleep(time::Duration::from_millis(1000));
-            }
-        });
-
-        Ok(Self { _output_stream, sink, stop_signal })
+        Ok(Self { _output_stream, sink })
     }
 
     pub fn play(&mut self) {
-        match self.sink.lock() {
-            Ok(sink) => sink.play(),
-            Err(e) => return eprintln!("Sink lock:\n{:?}", e),
-        }
+        self.sink.play();
     }
 
     pub fn stop(&mut self)  {
-        match self.sink.lock() {
-            Ok(sink) => sink.pause(),
-            Err(e) => return eprintln!("Sink lock:\n{:?}", e),
-        }
-
-        self.stop_signal.store(true, Ordering::Relaxed);
+        self.sink.stop();
     }
 
     pub fn pause(&mut self)  {
-        match self.sink.lock() {
-            Ok(sink) => sink.pause(),
-            Err(e) => eprintln!("Sink lock:\n{:?}", e)
-        }
+        self.sink.pause();
     }
 
     pub fn volume(&mut self) -> f32 {
-        match self.sink.lock() {
-            Ok(sink) => sink.volume(),
-            Err(e) => {
-                eprintln!("Sink lock:\n{:?}", e);
-                0_f32
-            }
-        }
+        self.sink.volume()
     }
 
     pub fn set_volume(&mut self, volume: f32)  {
-        match self.sink.lock() {
-            Ok(sink) => sink.set_volume(volume),
-            Err(e) => eprintln!("Sink lock:\n{:?}", e)
-        }
+        self.sink.set_volume(volume);
     }
 }
 
