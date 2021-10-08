@@ -1,5 +1,5 @@
-mod rxreader;
-use rxreader::RxReader;
+mod rxcursor;
+use rxcursor::RxCursor;
 use anyhow::{Context, Result};
 use rodio::{Decoder, OutputStream, Sink};
 use std::{thread, time};
