@@ -47,10 +47,7 @@ impl Seek for RxCursor {
                 self.pos = n;
                 Ok(self.pos)
             }
-            None => Err(Error::new_const(
-                ErrorKind::InvalidInput,
-                &"invalid seek to a negative or overflowing position",
-            )),
+            None => Err(Error::new(ErrorKind::InvalidInput, "invalid seek to a negative or overflowing position"))
         } 
     }
 }
