@@ -2,16 +2,23 @@ use std::sync::mpsc::Receiver;
 use anyhow::Result;
 use std::io::{Read, Seek, SeekFrom, Error, ErrorKind};
 use std::{thread, time};
+use std::sync::{Mutex, Arc, atomic::AtomicBool};
 
 pub struct RxCursor {
-    inner: Vec<u8>,
-    pos: u64
+    inner: Arc<Mutex<Vec<u8>>>,    
+    pos: u64,
+    stop_signal: Arc<AtomicBool>
 }
 
 impl RxCursor {
     pub fn new(rx: Receiver<Result<Box<Vec<u8>>>>) -> Self {
-        let inner = Vec::new();
-        Self { inner, pos: 0 }
+        let inner = Arc::new(Mutex::new(Vec::new()));
+        let inner2 = inner.clone();
+        let stop_signal = Arc::new(AtomicBool::new(false));
+        let stop_signal2 = stop_signal.clone();
+
+        
+        Self { inner, pos: 0, stop_signal }
     }
 
     pub fn remaining_slice(&self) -> &[u8] {
