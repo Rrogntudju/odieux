@@ -1,13 +1,16 @@
-use std::sync::mpsc::Receiver;
 use anyhow::{Context, Result};
-use std::io::{Read, Seek, SeekFrom, Error, ErrorKind};
+use std::io::{Error, ErrorKind, Read, Seek, SeekFrom};
+use std::sync::mpsc::Receiver;
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc, Mutex,
+};
 use std::{thread, time};
-use std::sync::{Mutex, Arc, atomic::{AtomicBool, Ordering}};
 
 pub struct RxCursor {
-    inner: Arc<Mutex<Vec<u8>>>,    
+    inner: Arc<Mutex<Vec<u8>>>,
     pos: u64,
-    stop_signal: Arc<AtomicBool>
+    stop_signal: Arc<AtomicBool>,
 }
 
 impl RxCursor {
@@ -29,9 +32,8 @@ impl RxCursor {
                                 let mut inner = inner2.lock().expect("Poisoned lock");
                                 inner.append(&mut stream);
                             }
-                            Err(e) => return eprintln!("{:?}", e)
+                            Err(e) => return eprintln!("{:?}", e),
                         };
-                        
                     }
                     Err(_) => return, // tx was dropped
                 }
@@ -53,15 +55,15 @@ impl Drop for RxCursor {
 impl Read for RxCursor {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize, std::io::Error> {
         let inner = self.inner.lock().expect("Poisoned lock");
-        let len = self.pos.min(inner.len() as u64); 
+        let len = self.pos.min(inner.len() as u64);
         let n = Read::read(&mut &inner[(len as usize)..], buf)?;
         self.pos += n as u64;
-        Ok(n) 
+        Ok(n)
     }
 }
 
 impl Seek for RxCursor {
-    fn seek(&mut self, style: SeekFrom) -> Result<u64, std::io::Error> { 
+    fn seek(&mut self, style: SeekFrom) -> Result<u64, std::io::Error> {
         let (base_pos, offset) = match style {
             SeekFrom::Start(n) => {
                 self.pos = n;
@@ -81,8 +83,7 @@ impl Seek for RxCursor {
                 self.pos = n;
                 Ok(self.pos)
             }
-            None => Err(Error::new(ErrorKind::InvalidInput, "invalid seek to a negative or overflowing position"))
-        } 
+            None => Err(Error::new(ErrorKind::InvalidInput, "invalid seek to a negative or overflowing position")),
+        }
     }
 }
-    

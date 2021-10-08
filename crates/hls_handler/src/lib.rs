@@ -144,7 +144,7 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
 
         let mut ts = TsPacketReader::new(decrypted.as_slice());
         let mut stream: Vec<u8> = Vec::new();
-    
+
         loop {
             let packet = match ts.read_ts_packet().context("Échec: lecture d'un paquet TS") {
                 Ok(packet) => {
@@ -159,13 +159,13 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
                 }
             };
 
-            // Assuming just one AAC stream with pid 256 
+            // Assuming just one AAC stream with pid 256
             if packet.header.pid.as_u16() == 256 {
                 let data = match packet.payload {
                     Some(payload) => match payload {
                         TsPayload::Pes(pes) => pes.data,
                         TsPayload::Raw(data) => data,
-                        _ => continue
+                        _ => continue,
                     },
                     None => {
                         tx.send(Err(anyhow!("Pas de payload"))).unwrap_or_default();
@@ -186,7 +186,7 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
 pub fn start(url: &str) -> Result<Receiver<Message>> {
     let master_url = Url::try_from(url).context("Échec: validation de l'url MasterPlaylist")?;
     let (tx, rx) = sync_channel::<Message>(BOUND);
-        thread::spawn(move || handle_hls(master_url, tx));
+    thread::spawn(move || handle_hls(master_url, tx));
 
     Ok(rx)
 }

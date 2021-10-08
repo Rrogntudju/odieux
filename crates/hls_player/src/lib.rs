@@ -1,7 +1,7 @@
 mod rxcursor;
-use rxcursor::RxCursor;
 use anyhow::{Context, Result};
 use rodio::{Decoder, OutputStream, Sink};
+use rxcursor::RxCursor;
 
 pub struct Player {
     _output_stream: OutputStream,
@@ -23,11 +23,11 @@ impl Player {
         self.sink.play();
     }
 
-    pub fn stop(&mut self)  {
+    pub fn stop(&mut self) {
         self.sink.stop();
     }
 
-    pub fn pause(&mut self)  {
+    pub fn pause(&mut self) {
         self.sink.pause();
     }
 
@@ -35,7 +35,7 @@ impl Player {
         self.sink.volume()
     }
 
-    pub fn set_volume(&mut self, volume: f32)  {
+    pub fn set_volume(&mut self, volume: f32) {
         self.sink.set_volume(volume);
     }
 }
