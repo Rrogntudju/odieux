@@ -14,9 +14,8 @@ impl RxCursor {
     }
 
     pub fn remaining_slice(&self) -> &[u8] {
-        let inner: &[u8] = self.inner.as_ref();
-        let len = self.pos.min(inner.len() as u64);
-        &inner[(len as usize)..]
+        let len = self.pos.min((&self.inner).len() as u64);
+        &(self.inner)[(len as usize)..]
     }
 }
 
@@ -30,13 +29,12 @@ impl Read for RxCursor {
 
 impl Seek for RxCursor {
     fn seek(&mut self, style: SeekFrom) -> Result<u64, std::io::Error> { 
-        let inner: &[u8] = self.inner.as_ref();
         let (base_pos, offset) = match style {
             SeekFrom::Start(n) => {
                 self.pos = n;
                 return Ok(n);
             }
-            SeekFrom::End(n) => (inner.len() as u64, n),
+            SeekFrom::End(n) => ((&self.inner).len() as u64, n),
             SeekFrom::Current(n) => (self.pos, n),
         };
         let new_pos = if offset >= 0 {
