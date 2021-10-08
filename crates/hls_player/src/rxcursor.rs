@@ -16,7 +16,7 @@ pub struct RxCursor {
 impl RxCursor {
     pub fn new(rx: Receiver<Result<Box<Vec<u8>>>>) -> Result<Self> {
         let mut buf: Vec<u8> = Vec::new();
-        let mut stream = *rx.recv()??;
+        let mut stream = *rx.recv()??;  // Wait for first TS packet
         buf.append(&mut stream);
         let inner = Arc::new(Mutex::new(buf));
         let inner2 = inner.clone();
