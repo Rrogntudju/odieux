@@ -2,7 +2,7 @@ use std::sync::mpsc::Receiver;
 use anyhow::{Context, Result};
 use std::io::{Read, Seek, SeekFrom, Error, ErrorKind};
 use std::{thread, time};
-use std::sync::{Mutex, Arc, atomic::AtomicBool};
+use std::sync::{Mutex, Arc, atomic::{AtomicBool, Ordering}};
 
 pub struct RxCursor {
     inner: Arc<Mutex<Vec<u8>>>,    
@@ -20,21 +20,41 @@ impl RxCursor {
         let stop_signal = Arc::new(AtomicBool::new(false));
         let stop_signal2 = stop_signal.clone();
 
+        thread::spawn(move || {
+            while !stop_signal2.load(Ordering::Relaxed) {
+                match rx.recv() {
+                    Ok(message) => {
+                        match message.context("Échec: réception du message") {
+                            Ok(mut stream) => {
+                                let mut inner = inner2.lock().expect("Poisoned lock");
+                                inner.append(&mut stream);
+                            }
+                            Err(e) => return eprintln!("{:?}", e)
+                        };
+                        
+                    }
+                    Err(_) => return, // tx was dropped
+                }
 
+                thread::sleep(time::Duration::from_millis(1000));
+            }
+        });
 
         Ok(Self { inner, pos: 0, stop_signal })
     }
+}
 
-    pub fn remaining_slice(&self) -> &[u8] {
-        let inner = self.inner.lock().expect("Poisoned lock");
-        let len = self.pos.min(inner.len() as u64);
-        &inner[(len as usize)..]
+impl Drop for RxCursor {
+    fn drop(&mut self) {
+        self.stop_signal.store(true, Ordering::Relaxed);
     }
 }
 
 impl Read for RxCursor {
-    fn read(&mut self, buf: &mut [u8]) -> Result<usize, std::io::Error> { 
-        let n = Read::read(&mut self.remaining_slice(), buf)?;
+    fn read(&mut self, buf: &mut [u8]) -> Result<usize, std::io::Error> {
+        let inner = self.inner.lock().expect("Poisoned lock");
+        let len = self.pos.min(inner.len() as u64); 
+        let n = Read::read(&mut &inner[(len as usize)..], buf)?;
         self.pos += n as u64;
         Ok(n) 
     }
@@ -47,7 +67,8 @@ impl Seek for RxCursor {
                 self.pos = n;
                 return Ok(n);
             }
-            SeekFrom::End(n) => ((&self.inner).len() as u64, n),
+
+            SeekFrom::End(n) => ((self.inner.lock().expect("Poisoned lock")).len() as u64, n),
             SeekFrom::Current(n) => (self.pos, n),
         };
         let new_pos = if offset >= 0 {
