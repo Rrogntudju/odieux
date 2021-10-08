@@ -1,16 +1,17 @@
 use std::sync::mpsc::Receiver;
 use anyhow::Result;
 use std::io::{Read, Seek, SeekFrom, Error, ErrorKind};
+use std::{thread, time};
 
 pub struct RxCursor {
-    rx: Receiver<Result<Box<Vec<u8>>>>,
     inner: Vec<u8>,
     pos: u64
 }
 
 impl RxCursor {
     pub fn new(rx: Receiver<Result<Box<Vec<u8>>>>) -> Self {
-        Self { rx, pos: 0 }
+        let inner = Vec::new();
+        Self { inner, pos: 0 }
     }
 
     pub fn remaining_slice(&self) -> &[u8] {

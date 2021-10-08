@@ -2,7 +2,6 @@ mod rxcursor;
 use rxcursor::RxCursor;
 use anyhow::{Context, Result};
 use rodio::{Decoder, OutputStream, Sink};
-use std::{thread, time};
 
 pub struct Player {
     _output_stream: OutputStream,
@@ -14,7 +13,7 @@ impl Player {
         let rx = hls_handler::start(url)?;
         let (_output_stream, stream_handle) = OutputStream::try_default().context("Échec: création de OutputStream")?;
         let sink = Sink::try_new(&stream_handle).context("Échec: création de Sink")?;
-        let source = Decoder::new(RxReader::new(rx)).context("Échec: création de Decoder")?;
+        let source = Decoder::new(RxCursor::new(rx)).context("Échec: création de Decoder")?;
         sink.append(source);
 
         Ok(Self { _output_stream, sink })
@@ -44,6 +43,7 @@ impl Player {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::{thread, time};
 
     #[test]
     fn ohdio() {
