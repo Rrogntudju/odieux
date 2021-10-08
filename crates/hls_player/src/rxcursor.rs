@@ -1,5 +1,5 @@
 use std::sync::mpsc::Receiver;
-use anyhow::Result;
+use anyhow::{Context, Result};
 use std::io::{Read, Seek, SeekFrom, Error, ErrorKind};
 use std::{thread, time};
 use std::sync::{Mutex, Arc, atomic::AtomicBool};
@@ -11,19 +11,24 @@ pub struct RxCursor {
 }
 
 impl RxCursor {
-    pub fn new(rx: Receiver<Result<Box<Vec<u8>>>>) -> Self {
-        let inner = Arc::new(Mutex::new(Vec::new()));
+    pub fn new(rx: Receiver<Result<Box<Vec<u8>>>>) -> Result<Self> {
+        let mut buf: Vec<u8> = Vec::new();
+        let mut stream = *rx.recv()??;
+        buf.append(&mut stream);
+        let inner = Arc::new(Mutex::new(buf));
         let inner2 = inner.clone();
         let stop_signal = Arc::new(AtomicBool::new(false));
         let stop_signal2 = stop_signal.clone();
 
-        
-        Self { inner, pos: 0, stop_signal }
+
+
+        Ok(Self { inner, pos: 0, stop_signal })
     }
 
     pub fn remaining_slice(&self) -> &[u8] {
-        let len = self.pos.min((&self.inner).len() as u64);
-        &(self.inner)[(len as usize)..]
+        let inner = self.inner.lock().expect("Poisoned lock");
+        let len = self.pos.min(inner.len() as u64);
+        &inner[(len as usize)..]
     }
 }
 
