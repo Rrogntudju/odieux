@@ -28,10 +28,7 @@ impl RxCursor {
                 match rx.recv() {
                     Ok(message) => {
                         match message.context("Échec: réception du message") {
-                            Ok(mut stream) => {
-                                let mut inner = inner2.lock().expect("Poisoned lock");
-                                inner.append(&mut stream);
-                            }
+                            Ok(mut stream) =>  inner2.lock().expect("Poisoned lock").append(&mut stream),
                             Err(e) => return eprintln!("{:?}", e),
                         };
                     }
