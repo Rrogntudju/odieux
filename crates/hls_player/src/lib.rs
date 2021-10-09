@@ -21,7 +21,7 @@ mod tests {
 
     #[test]
     fn ohdio() {
-        let (player, _output_stream) = match start("https://rcavmedias-vh.akamaihd.net/i/5a5d3f75-97a9-47cd-be1c-70938e97f3d8/secured/2021-08-08_16_00_00_cestsibon_0000_,64,128,.mp4.csmil/master.m3u8?hdnea=st=1633815757~exp=1633815877~acl=/i/5a5d3f75-97a9-47cd-be1c-70938e97f3d8/secured/2021-08-08_16_00_00_cestsibon_0000_,*~hmac=44c6fd5088c7ba3dcccf24590e5be77160f5ea09f9bd386bb3667ca44db6127b") {
+        let (player, _output_stream) = match start("Fournir un url master.m3u8 validé") {
             Ok((s, o)) => (s, o),
             Err(e) => {
                 println!("{:?}", e);
