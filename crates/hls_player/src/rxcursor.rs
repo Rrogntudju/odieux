@@ -5,7 +5,7 @@ use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc, Mutex,
 };
-use std::{thread, time};
+use std::thread;
 
 pub struct RxCursor {
     inner: Arc<Mutex<Vec<u8>>>,
@@ -34,8 +34,6 @@ impl RxCursor {
                     }
                     Err(_) => return, // tx was dropped
                 }
-
-                thread::sleep(time::Duration::from_millis(1000));
             }
         });
 
