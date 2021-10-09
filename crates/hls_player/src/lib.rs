@@ -4,14 +4,14 @@ use rodio::{Decoder, OutputStream, Sink};
 use rxcursor::RxCursor;
 
 
-pub fn start(url: &str) -> Result<Sink> {
+pub fn start(url: &str) -> Result<(Sink, OutputStream)> {
     let rx = hls_handler::start(url)?;
     let (_output_stream, stream_handle) = OutputStream::try_default().context("Échec: création de OutputStream")?;
     let sink = Sink::try_new(&stream_handle).context("Échec: création de Sink")?;
     let source = Decoder::new(RxCursor::new(rx)?).context("Échec: création de Decoder")?;
     sink.append(source);
 
-    Ok(sink)
+    Ok((sink, _output_stream))
 }
 
 #[cfg(test)]
@@ -21,8 +21,8 @@ mod tests {
 
     #[test]
     fn ohdio() {
-        let player = match start("Insérer un url master.m3u8 Ohdio validé") {
-            Ok(player) => player,
+        let (player, _output_stream) = match start("Insérer un url master.m3u8 Ohdio validé") {
+            Ok((p, o)) => (p, o),
             Err(e) => {
                 println!("{:?}", e);
                 return assert!(false);
