@@ -10,7 +10,7 @@ use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::thread;
 use url::Url;
 
-type Message = Result<Box<Vec<u8>>>;
+type Message = Result<Vec<u8>>;
 const TIME_OUT: u64 = 10;
 const BOUND: usize = 3;
 
@@ -177,7 +177,7 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
             }
         }
 
-        if tx.send(Ok(Box::new(stream))).is_err() {
+        if tx.send(Ok(stream)).is_err() {
             return; // rx was dropped
         }
     }
