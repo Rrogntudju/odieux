@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 use std::io::{Error, ErrorKind, Read, Seek, SeekFrom};
 use std::sync::mpsc::Receiver;
 use std::sync::{
@@ -27,7 +27,7 @@ impl RxCursor {
             while !stop_signal2.load(Ordering::Relaxed) {
                 match rx.recv() {
                     Ok(message) => {
-                        match message.context("Échec: réception du message") {
+                        match message {
                             Ok(mut stream) =>  inner2.lock().expect("Poisoned lock").append(&mut stream),
                             Err(e) => return eprintln!("{:?}", e),
                         };
