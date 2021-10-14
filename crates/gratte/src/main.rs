@@ -3,7 +3,7 @@ use std::default::Default;
 use std::env;
 use std::error::Error;
 use std::fs;
-use Soup;
+use soup::Soup;
 
 #[derive(Serialize)]
 struct Emission {
@@ -25,7 +25,7 @@ fn gratte(url: &str, out: &str) -> Result<(), Box<dyn Error>> {
             },
             Err(e) => return Err(e.into()),
         };
-        let soup = Soup::new(response);
+        let soup = Soup::new(response.as_str().unwrap_or("DOH!"));
     }
     let mut json = env::temp_dir();
     json.push(out);
