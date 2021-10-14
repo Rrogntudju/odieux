@@ -1,11 +1,10 @@
 use serde::Serialize;
+use serde_json::Value;
 use soup::prelude::*;
 use std::default::Default;
 use std::env;
 use std::error::Error;
 use std::fs;
-use serde_json::Value;
-
 
 #[derive(Serialize)]
 struct Episode {
@@ -52,12 +51,12 @@ fn gratte(url: &str, out: &str) -> Result<(), Box<dyn Error>> {
                             let titre = item_id["title"].to_string();
                             let media_id = item_id["mediaId"].to_string();
                             épisodes.0.push(Episode { titre, media_id });
-                        },
+                        }
                         _ => break,
                     }
                 }
-            },
-            _ => return Err("items introuvable".into())
+            }
+            _ => return Err("items introuvable".into()),
         }
     }
     let mut json = env::temp_dir();
