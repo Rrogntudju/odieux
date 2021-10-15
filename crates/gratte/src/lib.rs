@@ -1,8 +1,8 @@
+use anyhow::{anyhow, Result};
 use serde::Serialize;
 use serde_json::Value;
 use soup::prelude::*;
 use std::default::Default;
-use anyhow::{Result, anyhow};
 
 #[derive(Serialize)]
 struct Episode {
