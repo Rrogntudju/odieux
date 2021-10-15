@@ -2,7 +2,6 @@ use serde::Serialize;
 use serde_json::Value;
 use soup::prelude::*;
 use std::default::Default;
-use std::error::Error;
 use anyhow::{Result, anyhow};
 
 #[derive(Serialize)]
@@ -18,7 +17,7 @@ fn unquote(v: &Value) -> String {
     v.as_str().unwrap_or("DOH!").trim_start_matches("\"").trim_end_matches("\"").to_string()
 }
 
-pub fn gratte(url: &str, page: u16, out: &str) -> Result<String> {
+pub fn gratte(url: &str, page: u16) -> Result<String> {
     let mut épisodes = Episodes::default();
     let url = format!("{}{}", url, page);
     let page = match minreq::get(&url).with_timeout(10).send() {
@@ -64,10 +63,18 @@ pub fn gratte(url: &str, page: u16, out: &str) -> Result<String> {
     Ok(serde_json::to_string(&épisodes)?)
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
-    gratte(
-        "https://ici.radio-canada.ca/ohdio/musique/emissions/1161/cestsibon?pageNumber=",
-        "csb.json",
-    )?;
-    Ok(())
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn csb() {
+        match gratte("https://ici.radio-canada.ca/ohdio/musique/emissions/1161/cestsibon?pageNumber=", 1) {
+            Ok(_) => assert!(true),
+            Err(e) => {
+                println!("{:?}", e);
+                assert!(false);
+            }
+        }
+    }
 }

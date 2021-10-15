@@ -1,6 +1,7 @@
 [package]
 name = "gratte"
 version = "0.1.0"
+authors = ["Rrogntudju"]
 edition = "2018"
 
 [dependencies]
