@@ -8,4 +8,5 @@ serde = { version ="1", features = ["derive"] }
 serde_json = "1"
 minreq = { version = "2", features = ["https"] }
 soup = "0.5"
+anyhow = "1"
 
