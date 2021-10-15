@@ -15,6 +15,10 @@ struct Episode {
 #[derive(Serialize, Default)]
 struct Episodes(Vec<Episode>);
 
+fn unquote(v: &Value) -> String {
+    v.as_str().unwrap_or("DOH!").trim_start_matches("\"").trim_end_matches("\"").to_string()
+}
+
 fn gratte(url: &str, out: &str) -> Result<(), Box<dyn Error>> {
     let mut épisodes = Episodes::default();
     for i in 1..2 {
@@ -48,9 +52,7 @@ fn gratte(url: &str, out: &str) -> Result<(), Box<dyn Error>> {
                     match &items[j] {
                         item if item.is_object() => {
                             let item_id = &item["playlistItemId"];
-                            let titre = item_id["title"].to_string();
-                            let media_id = item_id["mediaId"].to_string();
-                            épisodes.0.push(Episode { titre, media_id });
+                            épisodes.0.push(Episode { titre: unquote(&item_id["title"]), media_id: unquote(&item_id["mediaId"]) });
                         }
                         _ => break,
                     }
