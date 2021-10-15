@@ -58,7 +58,7 @@ pub fn gratte(url: &str, page: u16) -> Result<String> {
                 }
             }
         }
-        _ => return Err(anyhow!("items introuvable")),
+        _ => return Err(anyhow!("items inexistant")),
     }
     Ok(serde_json::to_string(&épisodes)?)
 }
@@ -69,8 +69,8 @@ mod tests {
 
     #[test]
     fn csb() {
-        match gratte("https://ici.radio-canada.ca/ohdio/musique/emissions/1161/cestsibon?pageNumber=", 1) {
-            Ok(_) => assert!(true),
+        match gratte("https://ici.radio-canada.ca/ohdio/musique/emissions/1161/cestsibon?pageNumber=", 100) {
+            Ok(json) => assert_ne!(json, "{[]}" ),
             Err(e) => {
                 println!("{:?}", e);
                 assert!(false);
