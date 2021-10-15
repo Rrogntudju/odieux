@@ -2,9 +2,7 @@ use serde::Serialize;
 use serde_json::Value;
 use soup::prelude::*;
 use std::default::Default;
-use std::env;
 use std::error::Error;
-use std::fs;
 use anyhow::{Result, anyhow};
 
 #[derive(Serialize)]
@@ -61,12 +59,8 @@ pub fn gratte(url: &str, page: u16, out: &str) -> Result<String> {
                 }
             }
         }
-        _ => return Err("items introuvable".into()),
+        _ => return Err(anyhow!("items introuvable")),
     }
-    let mut json = env::temp_dir();
-    json.push(out);
-    fs::write(json, serde_json::to_string(&épisodes)?)?;
-
     Ok(serde_json::to_string(&épisodes)?)
 }
 
