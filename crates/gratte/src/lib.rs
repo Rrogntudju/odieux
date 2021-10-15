@@ -69,8 +69,8 @@ mod tests {
 
     #[test]
     fn csb() {
-        match gratte("https://ici.radio-canada.ca/ohdio/musique/emissions/1161/cestsibon?pageNumber=", 100) {
-            Ok(json) => assert_ne!(json, "{[]}" ),
+        match gratte("https://ici.radio-canada.ca/ohdio/musique/emissions/1161/cestsibon?pageNumber=", 1) {
+            Ok(json) => assert_ne!(json, "[]"),
             Err(e) => {
                 println!("{:?}", e);
                 assert!(false);
