@@ -1,10 +1,10 @@
 use anyhow::{anyhow, Result};
-use serde::Serialize;
-use serde_json::Value;
+use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
 use soup::prelude::*;
 use std::default::Default;
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize, Default)]
 struct Episode {
     titre: String,
     media_id: String,
@@ -12,10 +12,6 @@ struct Episode {
 
 #[derive(Serialize, Default)]
 struct Episodes(Vec<Episode>);
-
-fn unquote(v: &Value) -> String {
-    v.as_str().unwrap_or("DOH!").trim_start_matches("\"").trim_end_matches("\"").to_string()
-}
 
 pub fn gratte(url: &str, page: u16) -> Result<String> {
     let mut épisodes = Episodes::default();
@@ -49,10 +45,11 @@ pub fn gratte(url: &str, page: u16) -> Result<String> {
                 match &items[j] {
                     item if item.is_object() => {
                         let item_id = &item["playlistItemId"];
-                        épisodes.0.push(Episode {
-                            titre: unquote(&item_id["title"]),
-                            media_id: unquote(&item_id["mediaId"]),
+                        let épisode = json!({
+                            "titre": &item_id["title"],
+                            "media_id": &item_id["mediaId"]
                         });
+                        épisodes.0.push(serde_json::from_value(épisode).unwrap_or_default());
                     }
                     _ => break,
                 }
