@@ -1,13 +1,8 @@
-use lazy_static::lazy_static;
-use std::sync::{Arc, Mutex};
 use hls_player::*;
 
-lazy_static! {
-    static ref SINK: Arc<Mutex<Option<Sink>>> = Arc::new(Mutex::new(None));
-}
+static mut STATE: Option<State> = None;
 
-static mut OUTPUTSTREAM: Option<OutputStream> = None;
-
+struct
 pub mod filters {
     use std::convert::Infallible;
     use std::path::PathBuf;
@@ -33,7 +28,7 @@ fn parse_args(args: &mut Args) -> Result<(SocketAddr, PathBuf)> {
 
     let path_static = match args.next() {
         Some(arg) => arg.parse::<PathBuf>()?,
-        None => return Err(anyhow!("Le chemin du répertoire static est manquant")),
+        None => return Err(anyhow!("Le chemin du répertoire statique est manquant")),
     };
 
     if !path_static.is_dir() {
