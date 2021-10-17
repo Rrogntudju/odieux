@@ -1,6 +1,7 @@
 mod rxcursor;
 use anyhow::{Context, Result};
-use rodio::{Decoder, OutputStream, Sink};
+use rodio::Decoder;
+pub use rodio::{OutputStream, Sink};
 use rxcursor::RxCursor;
 
 
@@ -13,8 +14,6 @@ pub fn start(url: &str) -> Result<(Sink, OutputStream)> {
 
     Ok((sink, _output_stream))
 }
-
-pub Sink, OutputStream;
 
 #[cfg(test)]
 mod tests {
