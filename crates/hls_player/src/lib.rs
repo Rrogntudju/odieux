@@ -14,6 +14,8 @@ pub fn start(url: &str) -> Result<(Sink, OutputStream)> {
     Ok((sink, _output_stream))
 }
 
+pub Sink, OutputStream;
+
 #[cfg(test)]
 mod tests {
     use super::*;
