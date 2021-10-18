@@ -1,7 +1,8 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::thread_local;
-use hls_player::*;
+use hls_player::{start, Sink, OutputStream};
+use gratte::{gratte, Episode};
 
 struct State {
 

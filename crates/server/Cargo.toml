@@ -10,3 +10,4 @@ tokio = {version = "1", features = ["macros"]}
 anyhow = "1"
 serde_json = "1"
 hls_player = {path = "../hls_player"}
+gratte = {path = "../gratte"}
