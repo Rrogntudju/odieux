@@ -1,20 +1,17 @@
 use anyhow::{anyhow, Result};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::{json, Value};
 use soup::prelude::*;
 use std::default::Default;
 
-#[derive(Serialize, Deserialize, Default)]
-struct Episode {
+#[derive(Deserialize, Default)]
+pub struct Episode {
     titre: String,
     media_id: String,
 }
 
-#[derive(Serialize, Default)]
-struct Episodes(Vec<Episode>);
-
-pub fn gratte(url: &str, page: u16) -> Result<String> {
-    let mut épisodes = Episodes::default();
+pub fn gratte(url: &str, page: u16) -> Result<Vec<Episode>> {
+    let mut épisodes = Vec::new();
     let url = format!("{}{}", url, page);
     let page = match minreq::get(&url).with_timeout(10).send() {
         Ok(response) => match response.status_code {
@@ -49,7 +46,7 @@ pub fn gratte(url: &str, page: u16) -> Result<String> {
                             "titre": &item_id["title"],
                             "media_id": &item_id["mediaId"]
                         });
-                        épisodes.0.push(serde_json::from_value(épisode).unwrap_or_default());
+                        épisodes.push(serde_json::from_value(épisode).unwrap_or_default());
                     }
                     _ => break,
                 }
@@ -57,7 +54,7 @@ pub fn gratte(url: &str, page: u16) -> Result<String> {
         }
         _ => return Err(anyhow!("items inexistant")),
     }
-    Ok(serde_json::to_string(&épisodes)?)
+    Ok(épisodes)
 }
 
 #[cfg(test)]
@@ -67,7 +64,7 @@ mod tests {
     #[test]
     fn csb() {
         match gratte("https://ici.radio-canada.ca/ohdio/musique/emissions/1161/cestsibon?pageNumber=", 1) {
-            Ok(json) => assert_ne!(json, "[]"),
+            Ok(épisodes) => assert!(épisodes.len() > 0),
             Err(e) => {
                 println!("{:?}", e);
                 assert!(false);
