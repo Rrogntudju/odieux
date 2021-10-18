@@ -1,24 +1,11 @@
 use hls_player::*;
 
-static mut STATE: Option<State> = None;
-
-struct
-pub mod filters {
-    use std::convert::Infallible;
-    use std::path::PathBuf;
-    use warp::Filter;
-
-    pub fn static_file(path: PathBuf) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-        warp::path("static").and(warp::fs::dir(path))
-    }
-}
-
 use std::env::{args, Args};
 use std::net::SocketAddr;
 use std::path::PathBuf;
 use warp::Filter;
 use anyhow::{Result, anyhow};
-use filters::*;
+
 
 fn parse_args(args: &mut Args) -> Result<(SocketAddr, PathBuf)> {
     let addr = match args.skip(1).next() {
