@@ -5,22 +5,24 @@ use hls_player::{start, Sink, OutputStream};
 use gratte::{gratte, Episode};
 
 enum Command {
-    Start(u16),
-    Volume(u16),
+    Start(usize),
+    Volume(usize),
     Pause,
     Stop,
     Play,
-    Page(u16),
+    Page(usize),
 }
+
+#[derive(Debug)]
 enum PlayerState {
     Playing,
     Paused,
     Stopped,
 }
 struct State {
-    player: PlayerState,
-    volume: u16,
-    page: u16,
+    player: String,
+    volume: usize,
+    page: usize,
     episodes: Vec<Episode>,
 }
 
