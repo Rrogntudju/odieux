@@ -4,13 +4,30 @@ use std::thread_local;
 use hls_player::{start, Sink, OutputStream};
 use gratte::{gratte, Episode};
 
+enum Command {
+    Start(u16),
+    Volume(u16),
+    Pause,
+    Stop,
+    Play,
+    Page(u16),
+}
+enum PlayerState {
+    Playing,
+    Paused,
+    Stopped,
+}
 struct State {
-
+    player: PlayerState,
+    volume: u16,
+    page: u16,
+    episodes: Vec<Episode>,
 }
 
 thread_local! {
     static SINK: RefCell<Option<Sink>> = RefCell::new(None);
-    static _OUTPUTSTREAM: RefCell<Option<OutputStream>> = RefCell::new(None);
+    static OUTPUTSTREAM: RefCell<Option<OutputStream>> = RefCell::new(None);
+    static STATE: RefCell<Option<State>> = RefCell::new(None);
 }
 
 pub mod filters {
@@ -30,12 +47,12 @@ pub mod filters {
             .and_then(handlers::command)
     }
 
-    pub fn get_state() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    pub fn state() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
         warp::path("command")
             .and(warp::path::end())
             .and(warp::post())
             .and(json_body())
-            .and_then(handlers::get_state)
+            .and_then(handlers::state)
     }
 
     fn json_body() -> impl Filter<Extract = (HashMap<String, String>,), Error = warp::Rejection> + Clone {
@@ -50,11 +67,12 @@ mod handlers {
 
     pub async fn command(body: HashMap<String, String>,) -> Result<impl warp::Reply, Infallible> {
         
-
+        STATE.with(|s| {let state = s.borrow_mut(); *state = Some(State {})});
+        STATE.with(|s| {let state = s.borrow_mut(); *state = None;});
         Ok(response)
     }
 
-    pub async fn get_state(body: HashMap<String, String>,) -> Result<impl warp::Reply, Infallible> {
+    pub async fn state(body: HashMap<String, String>,) -> Result<impl warp::Reply, Infallible> {
     }
 
 
