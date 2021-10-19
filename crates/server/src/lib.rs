@@ -50,7 +50,7 @@ pub mod filters {
     }
 
     pub fn state() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-        warp::path("command")
+        warp::path("state")
             .and(warp::path::end())
             .and(warp::post())
             .and(json_body())
@@ -101,13 +101,23 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn csrf_mismatch1() {
+    async fn command() {
         let resp = request()
             .method("POST")
             .path("/userinfos")
-            .header("Cookie", "Csrf-Token=LOL")
             .body(r#"{"fournisseur": "Google", "origine": "http://localhost"}"#)
-            .reply(&filters::userinfos())
+            .reply(&filters::command())
+            .await;
+        assert_eq!(resp.status(), StatusCode::FORBIDDEN);
+    }
+
+    #[tokio::test]
+    async fn state() {
+        let resp = request()
+            .method("POST")
+            .path("/userinfos")
+            .body(r#"{"fournisseur": "Google", "origine": "http://localhost"}"#)
+            .reply(&filters::state())
             .await;
         assert_eq!(resp.status(), StatusCode::FORBIDDEN);
     }
