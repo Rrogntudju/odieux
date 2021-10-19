@@ -38,7 +38,7 @@ pub mod filters {
     use warp::Filter;
 
     pub fn static_file(path: PathBuf) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-        warp::path("static").and(warp::fs::dir(path))
+        warp::path("statique").and(warp::fs::dir(path))
     }
 
     pub fn command() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
@@ -94,8 +94,8 @@ mod tests {
     async fn static_file() {
         let resp = request()
             .method("GET")
-            .path("/static/userinfos.htm")
-            .reply(&filters::static_file(PathBuf::from("../static")))
+            .path("/statique/index.htm")
+            .reply(&filters::static_file(PathBuf::from("../../statique")))
             .await;
         assert_eq!(resp.status(), StatusCode::OK);
     }
