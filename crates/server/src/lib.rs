@@ -63,13 +63,13 @@ mod handlers {
     pub async fn command(body: Bytes,) -> Result<impl warp::Reply, Infallible> {
         let response = match serde_json::from_slice::<Command>(body.as_ref()) {
             Ok(command) => match command {
-                Start(url) =>
-                Volume(v) =>
-                Pause =>
-                Stop => 
-                Play =>
-                Page(p) =>
-                State => reply_state();
+                Command::Start(url) => {reply_state()},
+                Command::Volume(vol) => {reply_state()},
+                Command::Pause => {reply_state()},
+                Command::Stop => {reply_state()},
+                Command::Play => {reply_state()},
+                Command::Page(page) => {reply_state()},
+                Command::State => reply_state(),
             },
             _ => reply_error(StatusCode::BAD_REQUEST),
         };
