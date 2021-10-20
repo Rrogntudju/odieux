@@ -3,20 +3,9 @@ use std::collections::HashMap;
 use std::thread_local;
 use hls_player::{start, Sink, OutputStream};
 use gratte::{gratte, Episode};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
-#[derive(Deserialize)]
-enum Command {
-    Start(usize),
-    Volume(usize),
-    Pause,
-    Stop,
-    Play,
-    Page(usize),
-    State,
-}
-
-#[derive(Debug)]
+#[derive(Serialize)]
 enum PlayerState {
     Playing,
     Paused,
@@ -24,7 +13,7 @@ enum PlayerState {
 }
 #[derive(Serialize)]
 struct State {
-    player: String,
+    player: PlayerState,
     volume: usize,
     page: usize,
     episodes: Vec<Episode>,
@@ -64,13 +53,29 @@ mod handlers {
     use warp::http::{Error, Response, StatusCode};
 
     pub async fn command(body: HashMap<String, String>,) -> Result<impl warp::Reply, Infallible> {
-        
- 
-        Ok(Response::builder().status(200).body(String::default()))
+        let response = match body.iter().next() {
+            Some((key, val)) => { match key.as_str() {
+                    "start" => reply_state(),
+                    "volume" => reply_state(),
+                    "pause" => reply_state(),
+                    "stop" => reply_state(),
+                    "play" => reply_state(),
+                    "page" => reply_state(),
+                    "state" => reply_state(),
+                    _ => reply_error(StatusCode::BAD_REQUEST),
+                }
+            }
+            None => reply_error(StatusCode::BAD_REQUEST),
+        };
+        Ok(response)  
     }
 
     fn reply_error(sc: StatusCode) -> Result<Response<String>, Error> {
         Response::builder().status(sc).body(String::default())
+    }
+
+    fn reply_state() -> Result<Response<String>, Error> {
+        Response::builder().status(200).body(String::default())
     }
 }
 
