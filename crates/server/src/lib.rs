@@ -69,12 +69,12 @@ mod handlers {
 
     pub async fn command(body: HashMap<String, String>,) -> Result<impl warp::Reply, Infallible> {
         
-        STATE.with(|s| {let state = s.borrow_mut(); *state = Some(State {})});
-        STATE.with(|s| {let state = s.borrow_mut(); *state = None;});
-        Ok(response)
+ 
+        Ok(Response::builder().status(200).body(String::default()))
     }
 
     pub async fn state(body: HashMap<String, String>,) -> Result<impl warp::Reply, Infallible> {
+        Ok(Response::builder().status(200).body(String::default()))
     }
 
 

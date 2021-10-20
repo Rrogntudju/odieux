@@ -1,10 +1,7 @@
 use std::env::{args, Args};
 use std::net::SocketAddr;
 use std::path::PathBuf;
-use warp::Filter;
 use anyhow::{Result, anyhow};
-use server::filters;
-
 
 fn parse_args(args: &mut Args) -> Result<(SocketAddr, PathBuf)> {
     let addr = match args.skip(1).next() {
@@ -26,6 +23,8 @@ fn parse_args(args: &mut Args) -> Result<(SocketAddr, PathBuf)> {
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
+    use server::filters::*;
+
     let (addr, path_static) = parse_args(&mut args())?;
     let routes = static_file(path_static);
     let server = warp::serve(routes);
