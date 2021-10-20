@@ -11,6 +11,7 @@ enum Command {
     Stop,
     Play,
     Page(usize),
+    State,
 }
 
 #[derive(Debug)]
@@ -49,14 +50,6 @@ pub mod filters {
             .and_then(handlers::command)
     }
 
-    pub fn state() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-        warp::path("state")
-            .and(warp::path::end())
-            .and(warp::post())
-            .and(json_body())
-            .and_then(handlers::state)
-    }
-
     fn json_body() -> impl Filter<Extract = (HashMap<String, String>,), Error = warp::Rejection> + Clone {
         warp::body::content_length_limit(1024).and(warp::body::json())
     }
@@ -72,11 +65,6 @@ mod handlers {
  
         Ok(Response::builder().status(200).body(String::default()))
     }
-
-    pub async fn state(body: HashMap<String, String>,) -> Result<impl warp::Reply, Infallible> {
-        Ok(Response::builder().status(200).body(String::default()))
-    }
-
 
     fn reply_error(sc: StatusCode) -> Result<Response<String>, Error> {
         Response::builder().status(sc).body(String::default())
@@ -107,17 +95,6 @@ mod tests {
             .path("/userinfos")
             .body(r#"{"fournisseur": "Google", "origine": "http://localhost"}"#)
             .reply(&filters::command())
-            .await;
-        assert_eq!(resp.status(), StatusCode::FORBIDDEN);
-    }
-
-    #[tokio::test]
-    async fn state() {
-        let resp = request()
-            .method("POST")
-            .path("/userinfos")
-            .body(r#"{"fournisseur": "Google", "origine": "http://localhost"}"#)
-            .reply(&filters::state())
             .await;
         assert_eq!(resp.status(), StatusCode::FORBIDDEN);
     }
