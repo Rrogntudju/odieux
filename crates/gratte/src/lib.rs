@@ -1,10 +1,10 @@
 use anyhow::{anyhow, Result};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use soup::prelude::*;
 use std::default::Default;
 
-#[derive(Deserialize, Default)]
+#[derive(Deserialize, Serialize, Default)]
 #[allow(dead_code)]
 pub struct Episode {
     titre: String,

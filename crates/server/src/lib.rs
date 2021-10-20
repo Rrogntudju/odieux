@@ -3,7 +3,9 @@ use std::collections::HashMap;
 use std::thread_local;
 use hls_player::{start, Sink, OutputStream};
 use gratte::{gratte, Episode};
+use serde::{Deserialize, Serialize};
 
+#[derive(Deserialize)]
 enum Command {
     Start(usize),
     Volume(usize),
@@ -20,6 +22,7 @@ enum PlayerState {
     Paused,
     Stopped,
 }
+#[derive(Serialize)]
 struct State {
     player: String,
     volume: usize,
@@ -51,7 +54,7 @@ pub mod filters {
     }
 
     fn json_body() -> impl Filter<Extract = (HashMap<String, String>,), Error = warp::Rejection> + Clone {
-        warp::body::content_length_limit(1024).and(warp::body::json())
+        warp::body::content_length_limit(512).and(warp::body::json())
     }
 }
 
@@ -92,8 +95,8 @@ mod tests {
     async fn command() {
         let resp = request()
             .method("POST")
-            .path("/userinfos")
-            .body(r#"{"fournisseur": "Google", "origine": "http://localhost"}"#)
+            .path("/command")
+            .body(r#"{"State": ""}"#)
             .reply(&filters::command())
             .await;
         assert_eq!(resp.status(), StatusCode::FORBIDDEN);
