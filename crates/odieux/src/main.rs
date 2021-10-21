@@ -1,7 +1,7 @@
+use anyhow::{anyhow, Result};
 use std::env::{args, Args};
 use std::net::SocketAddr;
 use std::path::PathBuf;
-use anyhow::{Result, anyhow};
 
 fn parse_args(args: &mut Args) -> Result<(SocketAddr, PathBuf)> {
     let addr = match args.skip(1).next() {

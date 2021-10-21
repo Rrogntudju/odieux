@@ -1,9 +1,8 @@
+use gratte::{gratte, Episode};
+use hls_player::{start, OutputStream, Sink};
+use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::thread_local;
-use hls_player::{start, Sink, OutputStream};
-use gratte::{gratte, Episode};
-use serde::{Deserialize, Serialize};
-
 
 #[derive(Deserialize)]
 enum Command {
@@ -56,25 +55,27 @@ pub mod filters {
 
 mod handlers {
     use super::*;
+    use bytes::Bytes;
     use std::convert::Infallible;
     use warp::http::{Error, Response, StatusCode};
-    use bytes::Bytes;
 
-    pub async fn command(body: Bytes,) -> Result<impl warp::Reply, Infallible> {
+    const CSB: &str = "https://ici.radio-canada.ca/ohdio/musique/emissions/1161/cestsibon?pageNumber=";
+
+    pub async fn command(body: Bytes) -> Result<impl warp::Reply, Infallible> {
         let response = match serde_json::from_slice::<Command>(body.as_ref()) {
             Ok(command) => match command {
-                Command::Start(url) => {reply_state()},
-                Command::Volume(vol) => {reply_state()},
-                Command::Pause => {reply_state()},
-                Command::Stop => {reply_state()},
-                Command::Play => {reply_state()},
-                Command::Page(page) => {reply_state()},
+                Command::Start(id) => reply_state(),
+                Command::Volume(vol) => reply_state(),
+                Command::Pause => reply_state(),
+                Command::Stop => reply_state(),
+                Command::Play => reply_state(),
+                Command::Page(page) => reply_state(),
                 Command::State => reply_state(),
             },
             _ => reply_error(StatusCode::BAD_REQUEST),
         };
 
-        Ok(response)  
+        Ok(response)
     }
 
     fn reply_error(sc: StatusCode) -> Result<Response<String>, Error> {
@@ -82,7 +83,25 @@ mod handlers {
     }
 
     fn reply_state() -> Result<Response<String>, Error> {
-        Response::builder().status(200).body(String::default())
+        if STATE.with(|s| s.borrow().is_none()) {
+            STATE.with(|s| {
+                let épisodes = match gratte(CSB, 1) {
+                    Ok(épisodes) => épisodes,
+                    Err(e) => {
+                        eprintln!("{}", e);
+                        Vec::new()
+                    }
+                };
+                *s.borrow_mut() = Some(State {
+                    player: PlayerState::Stopped,
+                    volume: 100,
+                    page: 1,
+                    episodes: épisodes,
+                });
+            })
+        }
+
+        Response::builder().status(StatusCode::OK).body(String::default())
     }
 }
 
@@ -97,7 +116,7 @@ mod tests {
     async fn static_file() {
         let resp = request()
             .method("GET")
-            .path("/statique/index.htm")
+            .path("/statique/csb.htm")
             .reply(&filters::static_file(PathBuf::from("../../statique")))
             .await;
         assert_eq!(resp.status(), StatusCode::OK);
