@@ -83,8 +83,8 @@ mod handlers {
     }
 
     fn reply_state() -> Result<Response<String>, Error> {
-        if STATE.with(|s| s.borrow().is_none()) {
-            STATE.with(|s| {
+        STATE.with(|s| {
+            if s.borrow().is_none() {
                 let épisodes = gratte(CSB, 1).unwrap_or_else(|e| {
                     eprintln!("{}", e);
                     Vec::new()
@@ -95,10 +95,10 @@ mod handlers {
                     page: 1,
                     episodes: épisodes,
                 });
-            })
-        }
-        let state = STATE.with(|s| s.borrow().clone());
-        Response::builder().status(StatusCode::OK).body(serde_json::to_string(&state.unwrap()).unwrap())
+            }
+        });
+        let state = STATE.with(|s| s.borrow().clone().unwrap());
+        Response::builder().status(StatusCode::OK).body(serde_json::to_string(&state).unwrap())
     }
 }
 
