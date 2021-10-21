@@ -74,7 +74,6 @@ mod handlers {
             },
             _ => reply_error(StatusCode::BAD_REQUEST),
         };
-
         Ok(response)
     }
 
@@ -127,6 +126,6 @@ mod tests {
             .body(r#"{"State": null}"#)
             .reply(&filters::command())
             .await;
-        assert_eq!(resp.status(), StatusCode::FORBIDDEN);
+        assert_eq!(resp.status(), StatusCode::OK);
     }
 }
