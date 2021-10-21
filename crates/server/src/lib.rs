@@ -85,13 +85,10 @@ mod handlers {
     fn reply_state() -> Result<Response<String>, Error> {
         if STATE.with(|s| s.borrow().is_none()) {
             STATE.with(|s| {
-                let épisodes = match gratte(CSB, 1) {
-                    Ok(épisodes) => épisodes,
-                    Err(e) => {
-                        eprintln!("{}", e);
-                        Vec::new()
-                    }
-                };
+                let épisodes = gratte(CSB, 1).unwrap_or_else(|e| {
+                    eprintln!("{}", e);
+                    Vec::new()
+                });
                 *s.borrow_mut() = Some(State {
                     player: PlayerState::Stopped,
                     volume: 100,
@@ -127,7 +124,7 @@ mod tests {
         let resp = request()
             .method("POST")
             .path("/command")
-            .body(r#"{"State"}"#)
+            .body(r#"{"State": null}"#)
             .reply(&filters::command())
             .await;
         assert_eq!(resp.status(), StatusCode::FORBIDDEN);
