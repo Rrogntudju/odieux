@@ -2,7 +2,7 @@
 name = "gratte"
 version = "0.1.0"
 authors = ["Rrogntudju"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 serde = { version ="1", features = ["derive"] }

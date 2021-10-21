@@ -2,7 +2,7 @@
 name = "hls_player"
 version = "0.1.0"
 authors = ["Rrogntudju"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 rodio = { git = "https://github.com/RustAudio/rodio.git", default-features = false, features = ["symphonia-aac"] }

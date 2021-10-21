@@ -2,7 +2,7 @@
 name = "decrypt_aes128"
 authors = ["Rrogntudju"]
 version = "0.1.0"
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 aes = "0.7"
