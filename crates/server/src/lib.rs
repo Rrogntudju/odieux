@@ -14,13 +14,13 @@ enum Command {
     Page(usize),
     State,
 }
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 enum PlayerState {
     Playing,
     Paused,
     Stopped,
 }
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 struct State {
     player: PlayerState,
     volume: usize,
@@ -97,8 +97,8 @@ mod handlers {
                 });
             })
         }
-
-        Response::builder().status(StatusCode::OK).body(String::default())
+        let state = STATE.with(|s| s.borrow().clone());
+        Response::builder().status(StatusCode::OK).body(serde_json::to_string(&state.unwrap()).unwrap())
     }
 }
 

@@ -4,7 +4,7 @@ use serde_json::{json, Value};
 use soup::prelude::*;
 use std::default::Default;
 
-#[derive(Deserialize, Serialize, Default)]
+#[derive(Deserialize, Serialize, Default, Clone)]
 #[allow(dead_code)]
 pub struct Episode {
     titre: String,
