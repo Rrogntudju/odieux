@@ -63,15 +63,21 @@ mod handlers {
 
     pub async fn command(body: Bytes) -> Result<impl warp::Reply, Infallible> {
         let response = match serde_json::from_slice::<Command>(body.as_ref()) {
-            Ok(command) => match command {
-                Command::Start(id) => reply_state(),
-                Command::Volume(vol) => reply_state(),
-                Command::Pause => reply_state(),
-                Command::Stop => reply_state(),
-                Command::Play => reply_state(),
-                Command::Page(page) => reply_state(),
-                Command::State => reply_state(),
-            },
+            Ok(command) => {
+                match command {
+                    Command::Start(id) => (),
+                    Command::Volume(vol) => SINK.with(|sink| sink.borrow().as_ref().unwrap().set_volume((vol / 2) as f32)),
+                    Command::Pause => SINK.with(|sink| sink.borrow().as_ref().unwrap().pause()),
+                    Command::Stop => {
+                        SINK.with(|sink| sink.borrow().as_ref().unwrap().stop());
+                        STATE.with(|state| state.borrow_mut().as_mut().unwrap().player = PlayerState::Stopped);
+                    },
+                    Command::Play => SINK.with(|s| s.borrow().as_ref().unwrap().play()),
+                    Command::Page(page) => (),
+                    Command::State => (),
+                };
+                reply_state()
+            }
             _ => reply_error(StatusCode::BAD_REQUEST),
         };
         Ok(response)
@@ -82,13 +88,13 @@ mod handlers {
     }
 
     fn reply_state() -> Result<Response<String>, Error> {
-        STATE.with(|s| {
-            if s.borrow().is_none() {
+        STATE.with(|state| {
+            if state.borrow().is_none() {
                 let épisodes = gratte(CSB, 1).unwrap_or_else(|e| {
                     eprintln!("{}", e);
                     Vec::new()
                 });
-                *s.borrow_mut() = Some(State {
+                *state.borrow_mut() = Some(State {
                     player: PlayerState::Stopped,
                     volume: 100,
                     page: 1,
@@ -96,7 +102,7 @@ mod handlers {
                 });
             }
         });
-        let state = STATE.with(|s| s.borrow().clone().unwrap());
+        let state = STATE.with(|state| state.borrow().clone().unwrap());
         Response::builder().status(StatusCode::OK).body(serde_json::to_string(&state).unwrap())
     }
 }
