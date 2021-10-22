@@ -15,16 +15,11 @@ const TIME_OUT: u64 = 10;
 const BOUND: usize = 3;
 
 fn get(url: &str) -> Result<Vec<u8>> {
-    match minreq::get(url).with_timeout(TIME_OUT).send().context(format!("Échec: get {}", url)) {
-        Ok(response) => {
-            if response.status_code == 200 {
-                Ok(response.into_bytes())
-            } else {
-                Err(anyhow!("{} a retourné {}", url, response.reason_phrase))
-            }
-        }
-        Err(e) => Err(e),
-    }
+    Ok(minreq::get(url)
+        .with_timeout(TIME_OUT)
+        .send()
+        .context(format!("Échec: get {}", url))?
+        .into_bytes())
 }
 
 fn handle_hls(url: Url, tx: SyncSender<Message>) {
