@@ -5,7 +5,6 @@ use soup::prelude::*;
 use std::default::Default;
 
 #[derive(Serialize, Default, Clone)]
-#[allow(dead_code)]
 pub struct Episode {
     titre: String,
     media_id: String,
