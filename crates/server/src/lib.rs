@@ -26,6 +26,7 @@ struct State {
     volume: usize,
     page: usize,
     episodes: Vec<Episode>,
+    message: String,
 }
 
 thread_local! {
@@ -36,6 +37,7 @@ thread_local! {
         volume: 10,
         page: 1,
         episodes: Vec::new(),
+        message: String::default(),
     });
 }
 
@@ -63,7 +65,7 @@ mod handlers {
     use anyhow::{anyhow, Context, Result};
     use bytes::Bytes;
     use serde_json::value::Value;
-    use std::convert::Infallible;
+    use std::{convert::Infallible};
     use warp::http::{Error, Response, StatusCode};
 
     const TIME_OUT: u64 = 10;
@@ -82,6 +84,7 @@ mod handlers {
     pub async fn command(body: Bytes) -> Result<impl warp::Reply, Infallible> {
         let response = match serde_json::from_slice::<Command>(body.as_ref()) {
             Ok(command) => {
+                STATE.with(|state| state.borrow_mut().message = String::default());
                 match command {
                     Command::Start(id) => (),
                     Command::Volume(vol) => SINK.with(|sink| {
