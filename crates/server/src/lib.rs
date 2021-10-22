@@ -63,13 +63,16 @@ mod handlers {
     use bytes::Bytes;
     use std::convert::Infallible;
     use warp::http::{Error, Response, StatusCode};
-    use anyhow::Result;
+    use anyhow::{Result, Context, anyhow};
+    use serde_json::value::Value;
 
+    const TIME_OUT: u64 = 10;
     const CSB: &str = "https://ici.radio-canada.ca/ohdio/musique/emissions/1161/cestsibon?pageNumber=";
-    const VALIDATION: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianet&connectionType=hd&deviceType=ipad&idMedia={}&multibitrate=true&output=json&tech=hls";
+    const URL_VALIDER: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianet&connectionType=hd&deviceType=ipad&idMedia={}&multibitrate=true&output=json&tech=hls";
 
     fn valider(url:&str, id: &str) -> Result<String> {
-
+        let value: Value = minreq::get(url).with_timeout(TIME_OUT).send().context(format!("Échec: get {}", url))?.json()?;
+        Ok(value["url"].to_string())
     }
 
     pub async fn command(body: Bytes) -> Result<impl warp::Reply, Infallible> {
@@ -97,11 +100,16 @@ mod handlers {
                     }),
                     Command::Play =>SINK.with(|sink| {
                         if STATE.with(|state| state.borrow().player == PlayerState::Paused) {
-                            sink.borrow().as_ref().unwrap().pause();
+                            sink.borrow().as_ref().unwrap().play();
                             STATE.with(|state| state.borrow_mut().player = PlayerState::Playing);
                         }
                     }),
-                    Command::Page(page) => (),
+                    Command::Page(page) => {
+                        let épisodes = gratte(CSB, page).context("Échec du grattage").unwrap_or_else(|e| {
+                            eprintln!("{}", e);
+                            Vec::new()
+                        });
+                    },
                     Command::State => (),
                 };
                 reply_state()
@@ -116,20 +124,6 @@ mod handlers {
     }
 
     fn reply_state() -> Result<Response<String>, Error> {
-        /*         STATE.with(|state| {
-            if state.borrow().is_none() {
-                let épisodes = gratte(CSB, 1).unwrap_or_else(|e| {
-                    eprintln!("{}", e);
-                    Vec::new()
-                });
-                *state.borrow_mut() = State {
-                    player: PlayerState::Stopped,
-                    volume: 100,
-                    page: 1,
-                    episodes: épisodes,
-                };
-            }
-        }); */
         let state = STATE.with(|state| state.borrow().clone());
         Response::builder().status(StatusCode::OK).body(serde_json::to_string(&state).unwrap())
     }

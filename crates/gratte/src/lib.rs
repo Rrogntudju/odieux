@@ -11,7 +11,7 @@ pub struct Episode {
     media_id: String,
 }
 
-pub fn gratte(url: &str, page: u16) -> Result<Vec<Episode>> {
+pub fn gratte(url: &str, page: usize) -> Result<Vec<Episode>> {
     let mut épisodes = Vec::new();
     let url = format!("{}{}", url, page);
     let page = match minreq::get(&url).with_timeout(10).send() {
@@ -31,7 +31,6 @@ pub fn gratte(url: &str, page: u16) -> Result<Vec<Episode>> {
             _ => None,
         })
         .next();
-
     let valeur: Value = match script {
         Some(s) => serde_json::from_str(s.trim_start_matches("window._rcState_ = /*bns*/ ").trim_end_matches(" /*bne*/;"))?,
         None => return Err(anyhow!("script introuvable")),
