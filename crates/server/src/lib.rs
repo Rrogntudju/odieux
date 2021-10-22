@@ -1,5 +1,5 @@
 use gratte::{gratte, Episode};
-use hls_player::{start, OutputStream, Sink};
+use hls_player::{OutputStream, Sink};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::thread_local;
@@ -31,7 +31,7 @@ struct State {
 
 thread_local! {
     static SINK: RefCell<Option<Sink>> = RefCell::new(None);
-    static OUTPUTSTREAM: RefCell<Option<OutputStream>> = RefCell::new(None);
+    static OUTPUT_STREAM: RefCell<Option<OutputStream>> = RefCell::new(None);
     static STATE: RefCell<State> = RefCell::new(State {
         player: PlayerState::Stopped,
         volume: 10,
@@ -62,7 +62,7 @@ pub mod filters {
 
 mod handlers {
     use super::*;
-    use anyhow::{anyhow, Context, Result};
+    use anyhow::{Context, Result};
     use bytes::Bytes;
     use serde_json::value::Value;
     use std::{convert::Infallible};
@@ -70,15 +70,15 @@ mod handlers {
 
     const TIME_OUT: u64 = 10;
     const CSB: &str = "https://ici.radio-canada.ca/ohdio/musique/emissions/1161/cestsibon?pageNumber=";
-    const URL_VALIDER: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianet&connectionType=hd&deviceType=ipad&idMedia={}&multibitrate=true&output=json&tech=hls";
+    const URL_VALIDEUR: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianet&connectionType=hd&deviceType=ipad&idMedia={}&multibitrate=true&output=json&tech=hls";
 
-    fn valider(url: &str, id: &str) -> Result<String> {
-        let value: Value = minreq::get(url)
+    fn start(id: &str) -> Result<(Sink, OutputStream)> {
+        let value: Value = minreq::get(URL_VALIDEUR)
             .with_timeout(TIME_OUT)
             .send()
-            .context(format!("Échec: get {}", url))?
+            .context(format!("Échec: get {}", URL_VALIDEUR))?
             .json()?;
-        Ok(value["url"].to_string())
+        Ok(hls_player::start(value["url"].as_str().unwrap_or_default()).context("Échec du démarrage")?)
     }
 
     pub async fn command(body: Bytes) -> Result<impl warp::Reply, Infallible> {
@@ -86,7 +86,20 @@ mod handlers {
             Ok(command) => {
                 STATE.with(|state| state.borrow_mut().message = String::default());
                 match command {
-                    Command::Start(id) => (),
+                    Command::Start(id) => {
+                        SINK.with(|sink| {
+                            if STATE.with(|state| state.borrow().player != PlayerState::Stopped) {
+                                sink.borrow().as_ref().unwrap().stop();
+                                STATE.with(|state| state.borrow_mut().player = PlayerState::Stopped);
+                            }
+                        });
+                        match start(&id) {
+                            Ok((sink, output_stream)) => {},
+                            Err(e) => {
+
+                            }
+                        };
+                    },
                     Command::Volume(vol) => SINK.with(|sink| {
                         if STATE.with(|state| state.borrow().player != PlayerState::Stopped) {
                             sink.borrow().as_ref().unwrap().set_volume((vol / 2) as f32);
@@ -116,7 +129,13 @@ mod handlers {
                             eprintln!("{}", e);
                             Vec::new()
                         });
-                    }
+                        if épisodes.len() == 0 {
+                            let message = format!("Erreur de la page {}", page);
+                            STATE.with(|state| state.borrow_mut().message = message);
+                        } else {
+                            STATE.with(|state| state.borrow_mut().episodes = épisodes);
+                        }
+                    },
                     Command::State => (),
                 };
                 reply_state()
