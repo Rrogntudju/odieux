@@ -31,7 +31,12 @@ struct State {
 thread_local! {
     static SINK: RefCell<Option<Sink>> = RefCell::new(None);
     static OUTPUTSTREAM: RefCell<Option<OutputStream>> = RefCell::new(None);
-    static STATE: RefCell<Option<State>> = RefCell::new(None);
+    static STATE: RefCell<State> = RefCell::new(State {
+        player: PlayerState::Stopped,
+        volume: 10,
+        page: 1,
+        episodes: Vec::new(),
+    });
 }
 
 pub mod filters {
@@ -60,18 +65,26 @@ mod handlers {
     use warp::http::{Error, Response, StatusCode};
 
     const CSB: &str = "https://ici.radio-canada.ca/ohdio/musique/emissions/1161/cestsibon?pageNumber=";
+    const VALIDATION: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianet&connectionType=hd&deviceType=ipad&idMedia={}&multibitrate=true&output=json&tech=hls";
 
+    fn valider(url:&str, id) -> String {
+
+    }
+    
     pub async fn command(body: Bytes) -> Result<impl warp::Reply, Infallible> {
         let response = match serde_json::from_slice::<Command>(body.as_ref()) {
             Ok(command) => {
                 match command {
                     Command::Start(id) => (),
                     Command::Volume(vol) => SINK.with(|sink| sink.borrow().as_ref().unwrap().set_volume((vol / 2) as f32)),
-                    Command::Pause => SINK.with(|sink| sink.borrow().as_ref().unwrap().pause()),
+                    Command::Pause => {
+                        SINK.with(|sink| sink.borrow().as_ref().unwrap().pause());
+                        STATE.with(|state| state.borrow_mut().player = PlayerState::Paused);
+                    }
                     Command::Stop => {
                         SINK.with(|sink| sink.borrow().as_ref().unwrap().stop());
-                        STATE.with(|state| state.borrow_mut().as_mut().unwrap().player = PlayerState::Stopped);
-                    },
+                        STATE.with(|state| state.borrow_mut().player = PlayerState::Stopped);
+                    }
                     Command::Play => SINK.with(|s| s.borrow().as_ref().unwrap().play()),
                     Command::Page(page) => (),
                     Command::State => (),
@@ -88,21 +101,21 @@ mod handlers {
     }
 
     fn reply_state() -> Result<Response<String>, Error> {
-        STATE.with(|state| {
+        /*         STATE.with(|state| {
             if state.borrow().is_none() {
                 let épisodes = gratte(CSB, 1).unwrap_or_else(|e| {
                     eprintln!("{}", e);
                     Vec::new()
                 });
-                *state.borrow_mut() = Some(State {
+                *state.borrow_mut() = State {
                     player: PlayerState::Stopped,
                     volume: 100,
                     page: 1,
                     episodes: épisodes,
-                });
+                };
             }
-        });
-        let state = STATE.with(|state| state.borrow().clone().unwrap());
+        }); */
+        let state = STATE.with(|state| state.borrow().clone());
         Response::builder().status(StatusCode::OK).body(serde_json::to_string(&state).unwrap())
     }
 }
