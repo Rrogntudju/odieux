@@ -1,10 +1,10 @@
 use anyhow::{anyhow, Result};
-use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde::Serialize;
+use serde_json::Value;
 use soup::prelude::*;
 use std::default::Default;
 
-#[derive(Deserialize, Serialize, Default, Clone)]
+#[derive(Serialize, Default, Clone)]
 #[allow(dead_code)]
 pub struct Episode {
     titre: String,
@@ -14,14 +14,7 @@ pub struct Episode {
 pub fn gratte(url: &str, page: usize) -> Result<Vec<Episode>> {
     let mut épisodes = Vec::new();
     let url = format!("{}{}", url, page);
-    let page = match minreq::get(&url).with_timeout(10).send() {
-        Ok(response) => match response.status_code {
-            200 => response,
-            403 => return Err(anyhow!("Page {} inexistante", page)),
-            _ => return Err(anyhow!("{} a retourné {}", url, response.reason_phrase)),
-        },
-        Err(e) => return Err(e.into()),
-    };
+    let page = minreq::get(&url).with_timeout(10).send()?;
     let soup = Soup::new(page.as_str().unwrap_or("DOH!"));
     let script = soup
         .tag("script")
@@ -42,11 +35,10 @@ pub fn gratte(url: &str, page: usize) -> Result<Vec<Episode>> {
                 match &items[j] {
                     item if item.is_object() => {
                         let item_id = &item["playlistItemId"];
-                        let épisode = json!({
-                            "titre": &item_id["title"],
-                            "media_id": &item_id["mediaId"]
+                        épisodes.push(Episode {
+                            titre: item_id["title"].to_string(),
+                            media_id: item_id["mediaId"].to_string(),
                         });
-                        épisodes.push(serde_json::from_value(épisode).unwrap_or_default());
                     }
                     _ => break,
                 }

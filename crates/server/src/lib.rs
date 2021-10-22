@@ -60,18 +60,22 @@ pub mod filters {
 
 mod handlers {
     use super::*;
+    use anyhow::{anyhow, Context, Result};
     use bytes::Bytes;
+    use serde_json::value::Value;
     use std::convert::Infallible;
     use warp::http::{Error, Response, StatusCode};
-    use anyhow::{Result, Context, anyhow};
-    use serde_json::value::Value;
 
     const TIME_OUT: u64 = 10;
     const CSB: &str = "https://ici.radio-canada.ca/ohdio/musique/emissions/1161/cestsibon?pageNumber=";
     const URL_VALIDER: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianet&connectionType=hd&deviceType=ipad&idMedia={}&multibitrate=true&output=json&tech=hls";
 
-    fn valider(url:&str, id: &str) -> Result<String> {
-        let value: Value = minreq::get(url).with_timeout(TIME_OUT).send().context(format!("Échec: get {}", url))?.json()?;
+    fn valider(url: &str, id: &str) -> Result<String> {
+        let value: Value = minreq::get(url)
+            .with_timeout(TIME_OUT)
+            .send()
+            .context(format!("Échec: get {}", url))?
+            .json()?;
         Ok(value["url"].to_string())
     }
 
@@ -98,7 +102,7 @@ mod handlers {
                             STATE.with(|state| state.borrow_mut().player = PlayerState::Stopped);
                         }
                     }),
-                    Command::Play =>SINK.with(|sink| {
+                    Command::Play => SINK.with(|sink| {
                         if STATE.with(|state| state.borrow().player == PlayerState::Paused) {
                             sink.borrow().as_ref().unwrap().play();
                             STATE.with(|state| state.borrow_mut().player = PlayerState::Playing);
@@ -109,7 +113,7 @@ mod handlers {
                             eprintln!("{}", e);
                             Vec::new()
                         });
-                    },
+                    }
                     Command::State => (),
                 };
                 reply_state()
