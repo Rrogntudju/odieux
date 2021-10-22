@@ -14,7 +14,7 @@ enum Command {
     Page(usize),
     State,
 }
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Clone, PartialEq)]
 enum PlayerState {
     Playing,
     Paused,
@@ -63,29 +63,44 @@ mod handlers {
     use bytes::Bytes;
     use std::convert::Infallible;
     use warp::http::{Error, Response, StatusCode};
+    use anyhow::Result;
 
     const CSB: &str = "https://ici.radio-canada.ca/ohdio/musique/emissions/1161/cestsibon?pageNumber=";
     const VALIDATION: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianet&connectionType=hd&deviceType=ipad&idMedia={}&multibitrate=true&output=json&tech=hls";
 
-    fn valider(url:&str, id) -> String {
+    fn valider(url:&str, id: &str) -> Result<String> {
 
     }
-    
+
     pub async fn command(body: Bytes) -> Result<impl warp::Reply, Infallible> {
         let response = match serde_json::from_slice::<Command>(body.as_ref()) {
             Ok(command) => {
                 match command {
                     Command::Start(id) => (),
-                    Command::Volume(vol) => SINK.with(|sink| sink.borrow().as_ref().unwrap().set_volume((vol / 2) as f32)),
-                    Command::Pause => {
-                        SINK.with(|sink| sink.borrow().as_ref().unwrap().pause());
-                        STATE.with(|state| state.borrow_mut().player = PlayerState::Paused);
-                    }
-                    Command::Stop => {
-                        SINK.with(|sink| sink.borrow().as_ref().unwrap().stop());
-                        STATE.with(|state| state.borrow_mut().player = PlayerState::Stopped);
-                    }
-                    Command::Play => SINK.with(|s| s.borrow().as_ref().unwrap().play()),
+                    Command::Volume(vol) => SINK.with(|sink| {
+                        if STATE.with(|state| state.borrow().player != PlayerState::Stopped) {
+                            sink.borrow().as_ref().unwrap().set_volume((vol / 2) as f32);
+                            STATE.with(|state| state.borrow_mut().volume = vol);
+                        }
+                    }),
+                    Command::Pause => SINK.with(|sink| {
+                        if STATE.with(|state| state.borrow().player == PlayerState::Playing) {
+                            sink.borrow().as_ref().unwrap().pause();
+                            STATE.with(|state| state.borrow_mut().player = PlayerState::Paused);
+                        }
+                    }),
+                    Command::Stop => SINK.with(|sink| {
+                        if STATE.with(|state| state.borrow().player != PlayerState::Stopped) {
+                            sink.borrow().as_ref().unwrap().stop();
+                            STATE.with(|state| state.borrow_mut().player = PlayerState::Stopped);
+                        }
+                    }),
+                    Command::Play =>SINK.with(|sink| {
+                        if STATE.with(|state| state.borrow().player == PlayerState::Paused) {
+                            sink.borrow().as_ref().unwrap().pause();
+                            STATE.with(|state| state.borrow_mut().player = PlayerState::Playing);
+                        }
+                    }),
                     Command::Page(page) => (),
                     Command::State => (),
                 };
