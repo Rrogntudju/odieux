@@ -9,4 +9,7 @@ rodio = { git = "https://github.com/RustAudio/rodio.git", default-features = fal
 anyhow = "1"
 hls_handler = {path = "../hls_handler"}
 
+[features]
+throttling = []
+
  

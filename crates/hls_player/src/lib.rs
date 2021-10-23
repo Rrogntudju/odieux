@@ -1,4 +1,7 @@
+#[cfg(not(feature = "throttling"))]
 mod rxcursor;
+#[cfg(feature = "throttling")]
+mod rxcursor2;
 use anyhow::{Context, Result};
 use rodio::Decoder;
 pub use rodio::{OutputStream, Sink};
