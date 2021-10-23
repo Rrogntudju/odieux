@@ -95,9 +95,9 @@ mod handlers {
                             }
                         });
                         match start(&id) {
-                            Ok((new_sink, new_output_stream)) => {
+                            Ok((new_sink, new_os)) => {
                                 SINK.with(|sink| *sink.borrow_mut() = Some(new_sink));
-                                OUTPUT_STREAM.with(|output_stream| *output_stream.borrow_mut() = Some(new_output_stream));
+                                OUTPUT_STREAM.with(|output_stream| *output_stream.borrow_mut() = Some(new_os));
                                 STATE.with(|state| state.borrow_mut().player = PlayerState::Playing);
                             },
                             Err(e) => {
