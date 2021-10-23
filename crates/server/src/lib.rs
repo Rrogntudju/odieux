@@ -73,10 +73,11 @@ mod handlers {
     const URL_VALIDEUR: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianet&connectionType=hd&deviceType=ipad&idMedia={}&multibitrate=true&output=json&tech=hls";
 
     fn start(id: &str) -> Result<(Sink, OutputStream)> {
-        let value: Value = minreq::get(URL_VALIDEUR)
+        let url = URL_VALIDEUR.replace("{}", id);
+        let value: Value = minreq::get(&url)
             .with_timeout(TIME_OUT)
             .send()
-            .context(format!("Échec: get {}", URL_VALIDEUR))?
+            .context(format!("Échec: get {}", url))?
             .json()?;
         Ok(hls_player::start(value["url"].as_str().unwrap_or_default()).context("Échec du démarrage")?)
     }
