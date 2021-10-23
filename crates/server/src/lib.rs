@@ -95,11 +95,14 @@ mod handlers {
                             }
                         });
                         match start(&id) {
-                            Ok((sink, output_stream)) => {
-                                
+                            Ok((new_sink, new_output_stream)) => {
+                                SINK.with(|sink| *sink.borrow_mut() = Some(new_sink));
+                                OUTPUT_STREAM.with(|output_stream| *output_stream.borrow_mut() = Some(new_output_stream));
+                                STATE.with(|state| state.borrow_mut().player = PlayerState::Playing);
                             },
                             Err(e) => {
-
+                                eprintln!("{}", e);
+                                STATE.with(|state| state.borrow_mut().message = "Échec du démarrage".to_string());
                             }
                         };
                     },
