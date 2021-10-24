@@ -61,35 +61,18 @@
         </div>
         
         <script>
-            if (sessionStorage.length > 0) {
-                document.onreadystatechange = function () {
-                    if (document.readyState === 'interactive') {
-                        userInfosViewModel.fournisseur(sessionStorage.getItem("fournisseur"));
-                        const actionAfterAuth = sessionStorage.getItem("actionAfterAuth");
-                        if (actionAfterAuth) {
-                            sessionStorage.removeItem("actionAfterAuth");
-                            userInfosViewModel[actionAfterAuth]();
-                        }
-                    }
-                }
-            }
-
             const csbViewModel = {
-                  player: "",
-                  volume: 10,
-                  page: 1,
-                  episodes: ko.observableArray([ /* { titre: 'name' } */ ]),
-                  message: ko.observable(""),
+                player: "",
+                volume: 10,
+                page: 1,
+                episodes: ko.observableArray([ /* { titre: 'name' } */ ]),
+                message: ko.observable(""),
 
-                clicFournisseur : function() {
-                    this.propriétés.removeAll();
-                    sessionStorage.setItem("fournisseur", this.fournisseur());
-                    return true;
-                },
+                enableCommand: ko.observable(false),
 
                 command: function(verb, param) {
-                    this.enableUserInfos(false);
-                    this.erreurFetch("");
+                    this.enableCommand(false);
+                    this.message("");
 
                     const headers = new Headers({
                         'Content-Type': 'application/json',
@@ -118,10 +101,10 @@
                         }
                     })
                     .catch((error) => {
-                        console.log("Erreur Fetch: " + error);
-                        this.erreurFetch(error);
-                        this.propriétés.removeAll();
-                        this.enableUserInfos(true);
+                        message = "Échec de fetch: " + error;
+                        console.log(message);
+                        this.message(message);
+                        this.enableCommand(true);
                     });
                 }
             }
