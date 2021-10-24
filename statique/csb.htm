@@ -1,71 +1,132 @@
-<!doctype html>
-<html lang="fr">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="">
-    <meta name="author" content="">
-    <link rel="icon" href="/docs/4.0/assets/img/favicons/favicon.ico">
+<html>
+    <head>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script src="dist/knockout-3.5.1.js"></script>
+        <link rel="stylesheet" href="dist/w3.css">
+        <link rel="icon" type="image/gif" href="https://openid.net/images/logo/openid-16x16.gif"/>
+        <style>
+          header {
+            position: sticky; top: 0; left: 0; width: 100%;
+          }
+          footer {
+            position: sticky; bottom: 0; left: 0; width: 100%;
+          }
+        </style>
+    </head>
 
-    <title>Sticky Footer Navbar Template for Bootstrap</title>
+    <body>
+        <header>
+          
+        </header>
+        <div class="w3-container w3-cell">
+            <img src="https://openid.net/images/logo/openid-icon-100x100.png">
+            <div class="w3-panel w3-round w3-orange w3-text-white">
+                <h1><b>OpenID Connect</b></h1>
+            </div>
 
-    <link rel="canonical" href="https://getbootstrap.com/docs/4.0/examples/sticky-footer-navbar/">
+            <div class="w3-text-orange">
+                <h5><b>Fournisseur:</b></h5>
+                <div>
+                    <input class="w3-radio" type="radio" name="fournisseurs" value="Microsoft" data-bind="checked: fournisseur, click: clicFournisseur" />
+                    <b>Microsoft</b>
+                </div>
+                <div>
+                    <input class="w3-radio" type="radio" name="fournisseurs" value="Google" data-bind="checked: fournisseur, click: clicFournisseur" />
+                    <b>Google</b>
+                </div>
+            </div>
 
-    <!-- Bootstrap core CSS -->
-    <link href="../../dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Custom styles for this template -->
-    <link href="sticky-footer-navbar.css" rel="stylesheet">
-  </head>
-
-  <body>
-
-    <header>
-      <!-- Fixed navbar -->
-      <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
-        <a class="navbar-brand" href="#">Fixed navbar</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarCollapse">
-          <ul class="navbar-nav mr-auto">
-            <li class="nav-item active">
-              <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#">Link</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link disabled" href="#">Disabled</a>
-            </li>
-          </ul>
-          <form class="form-inline mt-2 mt-md-0">
-            <input class="form-control mr-sm-2" type="text" placeholder="Search" aria-label="Search">
-            <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
-          </form>
+            <button class="w3-button w3-round w3-orange w3-hover-amber w3-margin-top" data-bind="click: getUserInfos, enable: enableUserInfos">
+                <b>UserInfos</b>
+            </button>  
+            <br><span class="w3-text-red" data-bind="text: erreurFetch"></span></br>
         </div>
-      </nav>
-    </header>
 
-    <!-- Begin page content -->
-    <main role="main" class="container">
-      <h1 class="mt-5">Sticky footer with fixed navbar</h1>
-      <p class="lead">Pin a fixed-height footer to the bottom of the viewport in desktop browsers with this custom HTML and CSS. A fixed navbar has been added with <code>padding-top: 60px;</code> on the <code>body &gt; .container</code>.</p>
-      <p>Back to <a href="../sticky-footer/">the default sticky footer</a> minus the navbar.</p>
-    </main>
+        <div class="w3-container w3-cell w3-animate-right" data-bind="visible: propriétés().length > 0">
+            <hr>
+            <h3><b>UserInfos</b> <span data-bind="text: fournisseur"></span></h3>
 
-    <footer class="footer">
-      <div class="container">
-        <span class="text-muted">Place sticky footer content here.</span>
-      </div>
-    </footer>
+            <table class="w3-table-all">
+                <thead>
+                    <tr class="w3-text-orange"><th>Propriété</th><th>Valeur</th></tr>
+                </thead>
+                <tbody data-bind="foreach: propriétés">
+                    <tr>
+                        <td data-bind="text: propriété"></td>
+                        <td data-bind="text: valeur"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <script>
+            if (sessionStorage.length > 0) {
+                document.onreadystatechange = function () {
+                    if (document.readyState === 'interactive') {
+                        userInfosViewModel.fournisseur(sessionStorage.getItem("fournisseur"));
+                        const actionAfterAuth = sessionStorage.getItem("actionAfterAuth");
+                        if (actionAfterAuth) {
+                            sessionStorage.removeItem("actionAfterAuth");
+                            userInfosViewModel[actionAfterAuth]();
+                        }
+                    }
+                }
+            }
 
-    <!-- Bootstrap core JavaScript
-    ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
-    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
-    <script>window.jQuery || document.write('<script src="../../assets/js/vendor/jquery-slim.min.js"><\/script>')</script>
-    <script src="../../assets/js/vendor/popper.min.js"></script>
-    <script src="../../dist/js/bootstrap.min.js"></script>
-  </body>
+            const csbViewModel = {
+                  player: "",
+                  volume: 10,
+                  page: 1,
+                  episodes: ko.observableArray([ /* { titre: 'name' } */ ]),
+                  message: ko.observable(""),
+
+                clicFournisseur : function() {
+                    this.propriétés.removeAll();
+                    sessionStorage.setItem("fournisseur", this.fournisseur());
+                    return true;
+                },
+
+                command: function(verb, param) {
+                    this.enableUserInfos(false);
+                    this.erreurFetch("");
+
+                    const headers = new Headers({
+                        'Content-Type': 'application/json',
+                    });
+
+                    const request = new Request('/command', {
+                        method: 'POST',
+                        headers: headers,
+                        cache: 'no-cache',
+                        redirect: 'error',
+                        body: '{ "' + verb + '": "' + param + '" }'
+                    });
+
+                    fetch(request)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.hasOwnProperty("redirectOP")) {
+                            sessionStorage.setItem("actionAfterAuth", "getUserInfos");
+                            window.location.replace(data.redirectOP);
+                        } else {
+                            this.propriétés.removeAll();
+                            for (const propriété of data) {
+                                this.propriétés.push(propriété)
+                            }
+                            this.enableUserInfos(true);
+                        }
+                    })
+                    .catch((error) => {
+                        console.log("Erreur Fetch: " + error);
+                        this.erreurFetch(error);
+                        this.propriétés.removeAll();
+                        this.enableUserInfos(true);
+                    });
+                }
+            }
+            
+            ko.applyBindings(csbViewModel);
+        </script>
+    </body>
 </html>
