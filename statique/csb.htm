@@ -61,17 +61,23 @@
         </div>
         
         <script>
+            document.onreadystatechange = function () {
+              csbViewModel.command("State", "");
+              if (csbViewModel.épisodes().len() == 0) {
+                csbViewModel.command("Page", "1")
+              }
+            }
+
             const csbViewModel = {
-                player: "",
-                volume: 10,
-                page: 1,
-                episodes: ko.observableArray([ /* { titre: 'name' } */ ]),
+                player: ko.observable(""),
+                volume: ko.observable(0),
+                page: ko.observable(0),
+                épisodes: ko.observableArray([ /* { titre: 'blabla', media_id: '00000000'  } */ ]),
                 message: ko.observable(""),
 
                 enableCommand: ko.observable(false),
 
                 command: function(verb, param) {
-                    this.enableCommand(false);
                     this.message("");
 
                     const headers = new Headers({
@@ -83,28 +89,26 @@
                         headers: headers,
                         cache: 'no-cache',
                         redirect: 'error',
-                        body: '{ "' + verb + '": "' + param + '" }'
+                        body: ko.toJSON({ verb: verb })
                     });
 
                     fetch(request)
                     .then(response => response.json())
                     .then(data => {
-                        if (data.hasOwnProperty("redirectOP")) {
-                            sessionStorage.setItem("actionAfterAuth", "getUserInfos");
-                            window.location.replace(data.redirectOP);
-                        } else {
-                            this.propriétés.removeAll();
-                            for (const propriété of data) {
-                                this.propriétés.push(propriété)
+                            this.player(data.player);
+                            this.volume(data.volume);
+                            this.page(data.page);
+                            this.épisodes.removeAll();
+                            for (const épisode of data.episodes) {
+                                this.épisodes.push(épisode)
                             }
-                            this.enableUserInfos(true);
+                            this.message(data.nessage);
                         }
-                    })
+                    )
                     .catch((error) => {
                         message = "Échec de fetch: " + error;
                         console.log(message);
                         this.message(message);
-                        this.enableCommand(true);
                     });
                 }
             }
