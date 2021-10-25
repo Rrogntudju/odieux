@@ -4,7 +4,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <script src="dist/knockout-3.5.1.js"></script>
         <link rel="stylesheet" href="dist/w3.css">
-        <link rel="icon" type="image/gif" href="https://openid.net/images/logo/openid-16x16.gif"/>
+        <link rel="icon" type="image/x-icon" href="dist/favicon.ico"/>
         <style>
           header {
             position: sticky; top: 0; left: 0; width: 100%;
@@ -16,104 +16,93 @@
     </head>
 
     <body>
-        <header>
-          
-        </header>
-        <div class="w3-container w3-cell">
-            <img src="https://openid.net/images/logo/openid-icon-100x100.png">
-            <div class="w3-panel w3-round w3-orange w3-text-white">
-                <h1><b>OpenID Connect</b></h1>
-            </div>
+      <header>
+        <div class="w3-card w3-round w3-teal header">
+          <div class="w3-container w3-cell">
 
-            <div class="w3-text-orange">
-                <h5><b>Fournisseur:</b></h5>
-                <div>
-                    <input class="w3-radio" type="radio" name="fournisseurs" value="Microsoft" data-bind="checked: fournisseur, click: clicFournisseur" />
-                    <b>Microsoft</b>
-                </div>
-                <div>
-                    <input class="w3-radio" type="radio" name="fournisseurs" value="Google" data-bind="checked: fournisseur, click: clicFournisseur" />
-                    <b>Google</b>
-                </div>
-            </div>
-
-            <button class="w3-button w3-round w3-orange w3-hover-amber w3-margin-top" data-bind="click: getUserInfos, enable: enableUserInfos">
-                <b>UserInfos</b>
-            </button>  
-            <br><span class="w3-text-red" data-bind="text: erreurFetch"></span></br>
+          </div>
         </div>
+      </header>
+      <div class="w3-container" data-bind="foreach: épisodes">
+        <div class="w3-panel w3-round w3-text-teal">
+          <p  data-bind="text: titre"></p>
+          <button class="w3-button w3-round w3-hover-amber w3-margin-top" data-bind="click: command('Start', media_id), enable: enableUserInfos">
 
-        <div class="w3-container w3-cell w3-animate-right" data-bind="visible: propriétés().length > 0">
-            <hr>
-            <h3><b>UserInfos</b> <span data-bind="text: fournisseur"></span></h3>
-
-            <table class="w3-table-all">
-                <thead>
-                    <tr class="w3-text-orange"><th>Propriété</th><th>Valeur</th></tr>
-                </thead>
-                <tbody data-bind="foreach: propriétés">
-                    <tr>
-                        <td data-bind="text: propriété"></td>
-                        <td data-bind="text: valeur"></td>
-                    </tr>
-                </tbody>
-            </table>
+          </button>
         </div>
-        
-        <script>
-            document.onreadystatechange = function () {
-              csbViewModel.command("State", "");
-              if (csbViewModel.épisodes().len() == 0) {
-                csbViewModel.command("Page", "1")
-              }
-            }
-
-            const csbViewModel = {
-                player: ko.observable(""),
-                volume: ko.observable(0),
-                page: ko.observable(0),
-                épisodes: ko.observableArray([ /* { titre: 'blabla', media_id: '00000000'  } */ ]),
-                message: ko.observable(""),
-
-                enableCommand: ko.observable(false),
-
-                command: function(verb, param) {
-                    this.message("");
-
-                    const headers = new Headers({
-                        'Content-Type': 'application/json',
-                    });
-
-                    const request = new Request('/command', {
-                        method: 'POST',
-                        headers: headers,
-                        cache: 'no-cache',
-                        redirect: 'error',
-                        body: ko.toJSON({ verb: verb })
-                    });
-
-                    fetch(request)
-                    .then(response => response.json())
-                    .then(data => {
-                            this.player(data.player);
-                            this.volume(data.volume);
-                            this.page(data.page);
-                            this.épisodes.removeAll();
-                            for (const épisode of data.episodes) {
-                                this.épisodes.push(épisode)
-                            }
-                            this.message(data.nessage);
-                        }
-                    )
-                    .catch((error) => {
-                        message = "Échec de fetch: " + error;
-                        console.log(message);
-                        this.message(message);
-                    });
-                }
-            }
+      </div>
+      <footer>
+        <div class="w3-card w3-round w3-teal footer">
+          <div class="w3-container w3-cell">
             
-            ko.applyBindings(csbViewModel);
-        </script>
+          </div>
+        </div>
+      </footer>
+      
+      <script>
+          document.onreadystatechange = function () {
+            csbViewModel.command("State", "");
+            if (csbViewModel.épisodes().len() == 0) {
+              csbViewModel.command("Page", "1")
+            }
+          }
+
+          const csbViewModel = {
+              player: ko.observable(""),
+              volume: ko.observable(""),
+              page: ko.observable(""),
+              épisodes: ko.observableArray([ /* { titre: 'blabla', media_id: '00000000'  } */ ]),
+              message: ko.observable(""),
+
+              enableCommand: ko.observable(false),
+
+              command: function(verb, param) {
+                  this.message("");
+
+                  const headers = new Headers({
+                      'Content-Type': 'application/json',
+                  });
+
+                  switch (verb) {
+                    case "Start":
+                      body = '{ "Start": "' + param + '" }'
+                      break;
+                    case "Page":
+                      body = '{ "Page": ' + param + ' }'
+                      break;
+                    default:
+                      body = '{ "' + verb + '": null }'
+                  }
+                  const request = new Request('/command', {
+                      method: 'POST',
+                      headers: headers,
+                      cache: 'no-cache',
+                      redirect: 'error',
+                      body: body
+                  });
+
+                  fetch(request)
+                  .then(response => response.json())
+                  .then(data => {
+                          this.player(data.player);
+                          this.volume(data.volume.toString());
+                          this.page(data.page.toString());
+                          this.épisodes.removeAll();
+                          for (const épisode of data.episodes) {
+                              this.épisodes.push(épisode)
+                          }
+                          this.message(data.nessage);
+                      }
+                  )
+                  .catch((error) => {
+                      message = "Échec de fetch: " + error;
+                      console.log(message);
+                      this.message(message);
+                  });
+              }
+          }
+          
+          ko.applyBindings(csbViewModel);
+      </script>
     </body>
 </html>
