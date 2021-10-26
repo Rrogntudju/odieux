@@ -17,11 +17,12 @@
 
     <body>
       <header>
-        <div class="w3-card w3-round w3-teal header">
-          <div class="w3-container w3-cell">
-            <img src="dist/csb.jpg" alt="C'est si bon" class="w3-image">
-            <div class="w3-container w3-cell">
-
+        <div class="w3-round w3-teal header">
+          <div class="w3-cell">
+            <img src="dist/csb.jpg" alt="C'est si bon" class="w3-image" style="width: 30%;">
+          </div>
+            <div class="w3-cell">
+              <p class="w3-margin-right"> LOL </p>
             </div>
           </div>
         </div>
@@ -32,8 +33,8 @@
         </div>
       </div>
       <footer>
-        <div class="w3-card w3-round w3-teal footer">
-          <div class="w3-container w3-cell">
+        <div class="w3-round w3-teal footer">
+          <div class="w3-cell">
             
           </div>
         </div>
@@ -51,8 +52,20 @@
               player: ko.observable(""),
               volume: ko.observable(""),
               page: ko.observable(""),
-              épisodes: ko.observableArray([ /* { titre: 'blabla', media_id: '00000000'  } */ ]),
+              épisodes: ko.observableArray([]),
               message: ko.observable(""),
+              
+              player: ko.observable("Stopped"),
+              volume: ko.observable("10"),
+              page: ko.observable("1"),
+              épisodes: ko.observableArray([
+                { titre: 'Toune 1', media_id: '00000000'  },
+                { titre: 'Toune 2', media_id: '00000000'  },
+                { titre: 'Toune 2', media_id: '00000000'  },
+                { titre: 'Toune 4', media_id: '00000000'  },
+                { titre: 'Toune 5', media_id: '00000000'  },
+              ]),
+              message: ko.observable("BEUH!"),
 
               enableCommand: ko.observable(false),
 
