@@ -18,23 +18,28 @@
           </div>
         </div>
       </header>
+
       <div class= "w3-container" data-bind="foreach: épisodes">
         <div class="w3-card w3-round w3-margin-top w3-margin-bottom w3-text-teal w3-btn w3-block" 
              data-bind="text: titre, click: csbViewModel.command('Start', media_id)">
         </div>
       </div>
+
       <footer>
         <div class="w3-container w3-round w3-teal footer">
           <div class="w3-container w3-cell">
             <p> Page <span class="w3-badge w3-white" data-bind="text: page"></span></p>
           </div>
+          
           <div class="w3-container w3-cell">
-            <button class="w3-button w3-green w3-round-xlarge">Aller à la page
-              <div class="w3-container w3-cell">
-                <input class="w3-input w3-round w3-border-0" style="height: 1.5em; width: 4em;" type="number" min="1" max="68" step="1" value="1">
-              </div>
-            </button>
+            <span class="w3-button w3-green w3-round-large">Aller à la page <span data-bind="text: page"></span></span>
           </div>
+
+          <div class="w3-container w3-cell">
+            <span class="w3-button w3-green w3-round-large">+</span>
+            <span class="w3-button w3-green w3-round-large">-</span>
+          </div>
+
           <div class="w3-container w3-cell w3-text-orange">
             <p data-bind="text: message"></p>
           </div>
