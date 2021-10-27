@@ -5,14 +5,6 @@
         <script src="dist/knockout-3.5.1.js"></script>
         <link rel="stylesheet" href="dist/w3.css">
         <link rel="icon" type="image/x-icon" href="dist/favicon.ico"/>
-        <style>
-          header {
-            position: sticky; top: 0; left: 0; width: 100%;
-          }
-          footer {
-            position: sticky; bottom: 0; left: 0; width: 100%;
-          }
-        </style>
     </head>
 
     <body>
@@ -27,7 +19,8 @@
         </div>
       </header>
       <div class= "w3-container" data-bind="foreach: épisodes">
-        <div class="w3-card w3-round w3-margin-top w3-margin-bottom w3-text-teal w3-btn w3-block" data-bind="text: titre">
+        <div class="w3-card w3-round w3-margin-top w3-margin-bottom w3-text-teal w3-btn w3-block" 
+             data-bind="text: titre, click: csbViewModel.command('Start', media_id)">
         </div>
       </div>
       <footer>
@@ -36,6 +29,9 @@
             <p> Page <span class="w3-badge w3-white" data-bind="text: page"></span></p>
           </div>
           <div class="w3-container w3-cell">
+            <input type="number" min="1" max="68" step="1" value="1">
+          </div>
+          <div class="w3-container w3-cell w3-text-orange">
             <p data-bind="text: message"></p>
           </div>
         </div>
@@ -68,8 +64,6 @@
             { titre: 'Toune 5', media_id: '00000000'  },
           ]),
           message: ko.observable("BEUH!"),
-
-          enableCommand: ko.observable(false),
 
           command: function(verb, param) {
             this.message("");
