@@ -142,7 +142,14 @@ mod handlers {
                             STATE.with(|state| state.borrow_mut().episodes = épisodes);
                         }
                     },
-                    Command::State => (),
+                    Command::State => {
+                        // Vérifier si la lecture s'est terminée
+                        SINK.with(|sink| {
+                            if sink.borrow().as_ref().unwrap().empty() {
+                                STATE.with(|state| state.borrow_mut().player = PlayerState::Stopped);
+                            }
+                        });
+                    },
                 };
                 reply_state()
             }
