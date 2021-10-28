@@ -5,6 +5,7 @@
       <script src="dist/knockout-3.5.1.js"></script>
       <link rel="stylesheet" href="dist/w3.css">
       <link rel="icon" type="image/x-icon" href="dist/favicon.ico"/>
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
     </head>
 
     <body>
@@ -15,17 +16,14 @@
           </div>
 
           <div class="w3-container w3-cell w3-border-left">
-            <span class="w3-button w3-green w3-round-large">Play/Pause</span>
-            <span class="w3-button w3-green w3-round-large">Stop</span>
+            <span class="w3-button w3-green w3-round-large"><i class="fa fa-play"></i></span>
+            <span class="w3-button w3-green w3-round-large"><i class="fa fa-stop"></i></span>
           </div>
 
           <div class="w3-container w3-cell">
-            <p>Volume  <span class="w3-badge w3-white" data-bind="text: page"></span></p>
-          </div>
-
-          <div class="w3-container w3-cell">
-            <span class="w3-button w3-green w3-round-large">+</span>
-            <span class="w3-button w3-green w3-round-large">-</span>
+            <span class="w3-button w3-green w3-round-large"><i class="fa fa-volume-down"></i></span>
+            <span class="w3-badge w3-white" data-bind="text: page"></span>
+            <span class="w3-button w3-green w3-round-large"><i class="fa fa-volume-up"></i></span>
           </div>
 
           <div class="w3-container w3-cell">
@@ -47,9 +45,12 @@
           </div>
 
           <div class="w3-container w3-cell">
-            <span class="w3-button w3-green w3-round-large">Aller à la page <span data-bind="text: page"></span></span>
-            <span class="w3-button w3-green w3-round-large">+</span>
-            <span class="w3-button w3-green w3-round-large">-</span>
+            
+            <span class="w3-button w3-green w3-round-large">-10</span>
+            <span class="w3-button w3-green w3-round-large">-1</span>
+            <span class="w3-button w3-green w3-round-large">Page <span data-bind="text: page"></span></span>
+            <span class="w3-button w3-green w3-round-large">+1</span>
+            <span class="w3-button w3-green w3-round-large">+10</span>
           </div>
 
           <div class="w3-container w3-cell w3-text-orange">
