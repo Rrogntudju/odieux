@@ -16,9 +16,7 @@
     <body>
       <header>
         <div class="w3-container w3-round w3-teal">
-          <div class="w3-container w3-cell">
-            <p>C'est si bon</p>
-          </div>
+          <div class="w3-container w3-cell middle">C'est si bon</div>
 
           <div class="w3-container w3-cell w3-border-left middle">
             <span class="w3-button w3-green w3-round-large"><i class="fa fa-play"></i></span>
@@ -31,8 +29,8 @@
             <span class="w3-button w3-green w3-round-large"><i class="fa fa-volume-up"></i></span>
           </div>
 
-          <div class="w3-container w3-cell">
-            <p data-bind="text: enLecture"></p>
+          <div class="w3-container w3-cell middle">
+            <span data-bind="text: enLecture"></span>
           </div>
         </div>
       </header>
@@ -45,12 +43,11 @@
 
       <footer>
         <div class="w3-container w3-round w3-teal">
-          <div class="w3-container w3-cell">
-            <p>Page <span class="w3-badge w3-white" data-bind="text: page"></span></p>
+          <div class="w3-container w3-cell middle">
+            <span>Page <span class="w3-badge w3-white" data-bind="text: page"></span></span>
           </div>
 
-          <div class="w3-container w3-cell">
-            
+          <div class="w3-container w3-cell middle">
             <span class="w3-button w3-green w3-round-large">-10</span>
             <span class="w3-button w3-green w3-round-large">-1</span>
             <span class="w3-button w3-green w3-round-large">Page <span data-bind="text: page"></span></span>
@@ -58,8 +55,8 @@
             <span class="w3-button w3-green w3-round-large">+10</span>
           </div>
 
-          <div class="w3-container w3-cell w3-text-orange">
-            <p data-bind="text: message"></p>
+          <div class="w3-container w3-cell w3-text-orange middle">
+            <span data-bind="text: message"></span>
           </div>
         </div>
       </footer>
