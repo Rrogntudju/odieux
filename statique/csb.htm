@@ -1,10 +1,10 @@
 <html>
     <head>
-        <meta charset="utf-8"/>
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <script src="dist/knockout-3.5.1.js"></script>
-        <link rel="stylesheet" href="dist/w3.css">
-        <link rel="icon" type="image/x-icon" href="dist/favicon.ico"/>
+      <meta charset="utf-8"/>
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <script src="dist/knockout-3.5.1.js"></script>
+      <link rel="stylesheet" href="dist/w3.css">
+      <link rel="icon" type="image/x-icon" href="dist/favicon.ico"/>
     </head>
 
     <body>
@@ -13,8 +13,27 @@
           <div class="w3-container w3-cell">
             <p>C'est si bon</p>
           </div>
+
           <div class="w3-container w3-cell w3-border-left">
-            <p>Les joies du CSS</p>
+            <span class="w3-button w3-green w3-round-large">Play/Pause</span>
+            <span class="w3-button w3-green w3-round-large">Stop</span>
+          </div>
+
+          <div class="w3-container w3-cell">
+            <div class="w3-cell-row">
+              <p>Volume:</p>
+              <div class="w3-container w3-green w3-cell w3-border">
+              </div>
+            </div>
+          </div>
+
+          <div class="w3-container w3-cell">
+            <span class="w3-button w3-green w3-round-large">+</span>
+            <span class="w3-button w3-green w3-round-large">-</span>
+          </div>
+
+          <div class="w3-container w3-cell">
+            <p data-bind="text: enLecture"></p>
           </div>
         </div>
       </header>
@@ -70,6 +89,7 @@
             { titre: 'Toune 5', media_id: '00000000'  },
           ]),
           message: ko.observable("BEUH!"),
+          enLecture: "Toune 1",
 
           command: function(verb, param) {
             this.message("");
