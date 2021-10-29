@@ -92,23 +92,31 @@ mod handlers {
         });
     }
 
+    fn set_playing_state(épisode: Episode) {
+        STATE.with(|state| {
+            let mut s = state.borrow_mut();
+            s.player = PlayerState::Playing;
+            s.en_lecture = épisode;
+        });
+    }
+
     pub async fn command(body: Bytes) -> Result<impl warp::Reply, Infallible> {
         let response = match serde_json::from_slice::<Command>(body.as_ref()) {
             Ok(command) => {
                 STATE.with(|state| state.borrow_mut().message = String::default());
                 match command {
-                    Command::Start(episode) => {
+                    Command::Start(épisode) => {
                         SINK.with(|sink| {
                             if STATE.with(|state| state.borrow().player != PlayerState::Stopped) {
                                 sink.borrow().as_ref().unwrap().stop();
                                 STATE.with(|state| state.borrow_mut().player = PlayerState::Stopped);
                             }
                         });
-                        match start(&episode.media_id) {
+                        match start(&épisode.media_id) {
                             Ok((new_sink, new_os)) => {
                                 SINK.with(|sink| *sink.borrow_mut() = Some(new_sink));
                                 OUTPUT_STREAM.with(|output_stream| *output_stream.borrow_mut() = Some(new_os));
-                                STATE.with(|state| state.borrow_mut().player = PlayerState::Playing);
+                                set_playing_state(épisode);
                             }
                             Err(e) => {
                                 eprintln!("{}", e);
