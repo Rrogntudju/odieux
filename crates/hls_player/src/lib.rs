@@ -7,7 +7,6 @@ use rodio::Decoder;
 pub use rodio::{OutputStream, Sink};
 use rxcursor::RxCursor;
 
-
 pub fn start(url: &str) -> Result<(Sink, OutputStream)> {
     let rx = hls_handler::start(url)?;
     let (_output_stream, stream_handle) = OutputStream::try_default().context("Échec: création de OutputStream")?;

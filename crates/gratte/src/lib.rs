@@ -1,13 +1,13 @@
 use anyhow::{anyhow, Result};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use soup::prelude::*;
 use std::default::Default;
 
-#[derive(Serialize, Default, Clone)]
+#[derive(Deserialize, Serialize, Default, Clone, PartialEq)]
 pub struct Episode {
-    titre: String,
-    media_id: String,
+    pub titre: String,
+    pub media_id: String,
 }
 
 pub fn gratte(url: &str, page: usize) -> Result<Vec<Episode>> {

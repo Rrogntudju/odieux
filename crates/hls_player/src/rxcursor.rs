@@ -16,7 +16,7 @@ pub struct RxCursor {
 impl RxCursor {
     pub fn new(rx: Receiver<Result<Vec<u8>>>) -> Result<Self> {
         let mut buf: Vec<u8> = Vec::new();
-        let mut stream = rx.recv()??;  // Wait for first TS packet
+        let mut stream = rx.recv()??; // Wait for first TS packet
         buf.append(&mut stream);
         let inner = Arc::new(Mutex::new(buf));
         let inner2 = inner.clone();
@@ -28,7 +28,7 @@ impl RxCursor {
                 match rx.recv() {
                     Ok(message) => {
                         match message {
-                            Ok(mut stream) =>  inner2.lock().expect("Poisoned lock").append(&mut stream),
+                            Ok(mut stream) => inner2.lock().expect("Poisoned lock").append(&mut stream),
                             Err(e) => return eprintln!("{:?}", e),
                         };
                     }

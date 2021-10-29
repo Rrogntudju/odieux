@@ -27,7 +27,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             Err(e) => return Err(e.into()),
         };
     }
-    
+
     file.flush()?;
 
     Ok(())

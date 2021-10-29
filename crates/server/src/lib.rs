@@ -6,7 +6,7 @@ use std::thread_local;
 
 #[derive(Deserialize)]
 enum Command {
-    Start(String),
+    Start(Episode),
     Volume(usize),
     Pause,
     Stop,
@@ -27,6 +27,7 @@ struct State {
     page: usize,
     episodes: Vec<Episode>,
     message: String,
+    en_lecture: Episode,
 }
 
 thread_local! {
@@ -38,6 +39,7 @@ thread_local! {
         page: 1,
         episodes: Vec::new(),
         message: String::default(),
+        en_lecture: Episode::default(),
     });
 }
 
@@ -65,7 +67,7 @@ mod handlers {
     use anyhow::{Context, Result};
     use bytes::Bytes;
     use serde_json::value::Value;
-    use std::{convert::Infallible};
+    use std::convert::Infallible;
     use warp::http::{Error, Response, StatusCode};
 
     const TIME_OUT: u64 = 10;
@@ -82,30 +84,38 @@ mod handlers {
         Ok(hls_player::start(value["url"].as_str().unwrap_or_default()).context("Échec du démarrage")?)
     }
 
+    fn set_stop_state() {
+        STATE.with(|state| {
+            let mut s = state.borrow_mut();
+            s.player = PlayerState::Stopped;
+            s.en_lecture = Episode::default();
+        });
+    }
+
     pub async fn command(body: Bytes) -> Result<impl warp::Reply, Infallible> {
         let response = match serde_json::from_slice::<Command>(body.as_ref()) {
             Ok(command) => {
                 STATE.with(|state| state.borrow_mut().message = String::default());
                 match command {
-                    Command::Start(id) => {
+                    Command::Start(episode) => {
                         SINK.with(|sink| {
                             if STATE.with(|state| state.borrow().player != PlayerState::Stopped) {
                                 sink.borrow().as_ref().unwrap().stop();
                                 STATE.with(|state| state.borrow_mut().player = PlayerState::Stopped);
                             }
                         });
-                        match start(&id) {
+                        match start(&episode.media_id) {
                             Ok((new_sink, new_os)) => {
                                 SINK.with(|sink| *sink.borrow_mut() = Some(new_sink));
                                 OUTPUT_STREAM.with(|output_stream| *output_stream.borrow_mut() = Some(new_os));
                                 STATE.with(|state| state.borrow_mut().player = PlayerState::Playing);
-                            },
+                            }
                             Err(e) => {
                                 eprintln!("{}", e);
                                 STATE.with(|state| state.borrow_mut().message = "Échec du démarrage".to_string());
                             }
                         };
-                    },
+                    }
                     Command::Volume(vol) => SINK.with(|sink| {
                         if STATE.with(|state| state.borrow().player != PlayerState::Stopped) {
                             sink.borrow().as_ref().unwrap().set_volume((vol / 2) as f32);
@@ -121,7 +131,7 @@ mod handlers {
                     Command::Stop => SINK.with(|sink| {
                         if STATE.with(|state| state.borrow().player != PlayerState::Stopped) {
                             sink.borrow().as_ref().unwrap().stop();
-                            STATE.with(|state| state.borrow_mut().player = PlayerState::Stopped);
+                            set_stop_state();
                         }
                     }),
                     Command::Play => SINK.with(|sink| {
@@ -141,15 +151,17 @@ mod handlers {
                         } else {
                             STATE.with(|state| state.borrow_mut().episodes = épisodes);
                         }
-                    },
+                    }
                     Command::State => {
                         // Vérifier si la lecture s'est terminée
-                        SINK.with(|sink| {
-                            if sink.borrow().as_ref().unwrap().empty() {
-                                STATE.with(|state| state.borrow_mut().player = PlayerState::Stopped);
-                            }
-                        });
-                    },
+                        if STATE.with(|state| state.borrow().en_lecture != Episode::default()) {
+                            SINK.with(|sink| {
+                                if sink.borrow().as_ref().unwrap().empty() {
+                                    set_stop_state();
+                                }
+                            });
+                        }
+                    }
                 };
                 reply_state()
             }
