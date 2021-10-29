@@ -30,8 +30,8 @@
             <span class="w3-button w3-green w3-round-large"><i class="fa fa-volume-up"></i></span>
           </div>
 
-          <div class="w3-container w3-cell middle">
-            <span data-bind="text: enLecture"></span>
+          <div class="w3-container w3-cell middle" data-bind="using: enLecture">
+            <span data-bind="text: titre"></span>
           </div>
         </div>
       </header>
@@ -78,7 +78,7 @@
           page: ko.observable(""),
           épisodes: ko.observableArray([]),
           message: ko.observable(""),
-          enLecture: ko.observable(""),
+          enLecture: ko.observable({titre: "", media_id: ""}),
           */
           self.player = ko.observable("Stopped");
           self.volume = ko.observable("10");
@@ -91,7 +91,7 @@
             { titre: 'Toune 5', media_id: '00000000'  },
           ]);
           self.message = ko.observable("BEUH!");
-          self.enLecture = ko.observable("Toune 1");
+          self.enLecture = ko.observable({titre: "Toune 1", media_id: "0000000"});
           
           self.play = function(épisode) {
             self.command("Start", épisode);
