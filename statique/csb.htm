@@ -37,7 +37,7 @@
 
       <div class= "w3-container" data-bind="foreach: épisodes">
         <div class="w3-card w3-round w3-margin-top w3-margin-bottom w3-text-teal w3-btn w3-block" 
-             data-bind="text: titre, click: play">
+             data-bind="text: titre, click: $parent.play">
         </div>
       </div>
 
@@ -63,13 +63,14 @@
       
       <script>
         document.onreadystatechange = function () {
-          csbViewModel.command("State", "");
-          if (csbViewModel.épisodes().length == 0) {
-            csbViewModel.command("Page", "1");
+          csb.command("State", "");
+          if (csb.épisodes().length == 0) {
+            csb.command("Page", "1");
           }
         }
 
-        const csbViewModel = {
+        function csbViewModel() {
+          var self = this;
           /*
           player: ko.observable(""),
           volume: ko.observable(""),
@@ -78,26 +79,31 @@
           message: ko.observable(""),
           enLecture: ko.observable(""),
           */
-          player: ko.observable("Stopped"),
-          volume: ko.observable("10"),
-          page: ko.observable("1"),
-          épisodes: ko.observableArray([
+          self.player = ko.observable("Stopped");
+          self.volume = ko.observable("10");
+          self.page = ko.observable("1");
+          self.épisodes = ko.observableArray([
             { titre: 'Toune 1', media_id: '00000000'  },
             { titre: 'Toune 2', media_id: '00000000'  },
             { titre: 'Toune 2', media_id: '00000000'  },
             { titre: 'Toune 4', media_id: '00000000'  },
             { titre: 'Toune 5', media_id: '00000000'  },
-          ]),
-          message: ko.observable("BEUH!"),
-          enLecture: ko.observable("Toune 1"),
+          ]);
+          self.message = ko.observable("BEUH!");
+          self.enLecture = ko.observable("Toune 1");
+          
+          self.play = function(épisode) {
+            self.command("Start", épisode);
+          }; 
 
-          command: function(verb, param) {
-            this.message("");
+          self.command = function(verb, param) {
+            self.message("");
 
             const headers = new Headers({
                 'Content-Type': 'application/json',
             });
 
+            var body;
             switch (verb) {
               case "Start":
                 body = '{ "Start": "' + param + '" }'
@@ -108,6 +114,7 @@
               default:
                 body = '{ "' + verb + '": null }'
             }
+
             const request = new Request('/command', {
               method: 'POST',
               headers: headers,
@@ -119,26 +126,25 @@
             fetch(request)
             .then(response => response.json())
             .then(data => {
-              this.player(data.player);
-              this.volume(data.volume.toString());
-              this.page(data.page.toString());
-              this.épisodes.removeAll();
+              self.player(data.player);
+              self.volume(data.volume.toString());
+              self.page(data.page.toString());
+              self.épisodes.removeAll();
               for (const épisode of data.episodes) {
-                  this.épisodes.push(épisode)
+                  self.épisodes.push(épisode)
               }
-              this.message(data.nessage);
+              self.message(data.nessage);
             })
             .catch((error) => {
               message = "Échec de fetch: " + error;
               console.log(message);
-              this.message(message);
+              self.message(message);
             });
-          }
-
-          play(data, : 
+          };
         }
         
-        ko.applyBindings(csbViewModel);
+        var csb = new csbViewModel();
+        ko.applyBindings(csb);
       </script>
     </body>
 </html>
