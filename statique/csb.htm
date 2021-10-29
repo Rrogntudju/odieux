@@ -19,7 +19,8 @@
           <div class="w3-container w3-cell middle">C'est si bon</div>
 
           <div class="w3-container w3-cell w3-border-left middle">
-            <span class="w3-button w3-green w3-round-large"><i class="fa fa-play"></i></span>
+            <span data-bind="hidden: player() == 'Playing'" class="w3-button w3-green w3-round-large"><i class="fa fa-play"></i></span>
+            <span data-bind="visible: player() == 'Playing'" class="w3-button w3-green w3-round-large"><i class="fa fa-pause"></i></span>
             <span class="w3-button w3-green w3-round-large"><i class="fa fa-stop"></i></span>
           </div>
 
