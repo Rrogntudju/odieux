@@ -133,7 +133,8 @@
               for (const épisode of data.episodes) {
                   self.épisodes.push(épisode)
               }
-              self.message(data.nessage);
+              self.message(data.message);
+              self.enLecture(data.enLecture);
             })
             .catch((error) => {
               message = "Échec de fetch: " + error;
