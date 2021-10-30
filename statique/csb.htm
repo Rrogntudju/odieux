@@ -68,7 +68,7 @@
           <div class="w3-container w3-cell middle">
             <span class="w3-button w3-green w3-round-large" data-bind="click: setSpinPage.bind($data, -10)">-10</span>
             <span class="w3-button w3-green w3-round-large" data-bind="click: setSpinPage.bind($data, -1)">-1</span>
-            <span class="w3-button w3-green w3-round-large">Page <span data-bind="text: spinPage"></span></span>
+            <span class="w3-button w3-green w3-round-large">Page <span data-bind="text: spinPage, click: setPage"></span></span>
             <span class="w3-button w3-green w3-round-large" data-bind="click: setSpinPage.bind($data, 1)">+1</span>
             <span class="w3-button w3-green w3-round-large" data-bind="click: setSpinPage.bind($data, 10)">+10</span>
           </div>
@@ -127,8 +127,8 @@
           }
 
           self.setPage = function () {
-            self.command("Page", spinnerPage);
-            self.page("2"); // temporaire
+            self.command("Page", self.spinPage());
+            self.page(self.spinPage().toString()); // temporaire
           }
 
           self.toggle = function () {
@@ -149,7 +149,7 @@
               vol = 10;
             }
             self.command("Volume", vol);
-            self.volume(8); //temporaire
+            self.volume(vol.toString()); //temporaire
           }
 
           self.spinPage = ko.observable(1);
