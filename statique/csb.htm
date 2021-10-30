@@ -22,22 +22,22 @@
             <span class="w3-button w3-green w3-round-large" data-bind="hidden: player() == 'Playing', css: { 'w3-disabled': playerOff }">
               <i class="fa fa-play"></i>
             </span>
-            <span class="w3-button w3-green w3-round-large" data-bind="visible: player() == 'Playing'">
+            <span class="w3-button w3-green w3-round-large" data-bind="visible: player() == 'Playing', css: { 'w3-disabled': playerOff }">
               <i class="fa fa-pause"></i>
             </span>
-            <span class="w3-button w3-green w3-round-large" data-bind="disable: playerOff">
+            <span class="w3-button w3-green w3-round-large" data-bind="css: { 'w3-disabled': playerOff }">
               <i class="fa fa-stop"></i>
             </span>
           </div>
 
           <div class="w3-container w3-cell middle">
-            <span class="w3-button w3-green w3-round-large">
+            <span class="w3-button w3-green w3-round-large" data-bind="css: { 'w3-disabled': playerOff }">
               <i class="fa fa-volume-down"></i>
             </span>
-            <span class="w3-badge w3-white" data-bind="text: page">
+            <span class="w3-badge w3-white" data-bind="text: page, css: { 'w3-disabled': playerOff }">
 
             </span>
-            <span class="w3-button w3-green w3-round-large">
+            <span class="w3-button w3-green w3-round-large" data-bind="css: { 'w3-disabled': playerOff }">
               <i class="fa fa-volume-up"></i>
             </span>
           </div>
@@ -112,7 +112,22 @@
           self.playerOff = ko.computed(function () {
             return this.enLecture().titre == "";
           }, self);
-          console.log(self.playerOff());
+
+          self.stop = function () {
+
+          }
+
+          self.toggle = function () {
+            
+          }
+
+          self.set_volume = function (offset) {
+
+          }
+
+          self.set_page = function (offset) {
+
+          }
 
           self.command = function(verb, param) {
             self.message("");
