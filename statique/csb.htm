@@ -34,13 +34,15 @@
           </div>
 
           <div class="w3-container w3-cell middle">
-            <span class="w3-button w3-green w3-round-large" data-bind="css: { 'w3-disabled': playerOff }">
+            <span class="w3-button w3-green w3-round-large" 
+                  data-bind="css: { 'w3-disabled': playerOff }, click: setVolume.bind($data, -1)">
               <i class="fa fa-volume-down"></i>
             </span>
-            <span class="w3-badge w3-white" data-bind="text: page, css: { 'w3-disabled': playerOff }">
+            <span class="w3-badge w3-white" data-bind="text: volume, css: { 'w3-disabled': playerOff }">
 
             </span>
-            <span class="w3-button w3-green w3-round-large" data-bind="css: { 'w3-disabled': playerOff }">
+            <span class="w3-button w3-green w3-round-large" 
+                  data-bind="css: { 'w3-disabled': playerOff }, click: setVolume.bind($data, 1)">
               <i class="fa fa-volume-up"></i>
             </span>
           </div>
@@ -65,10 +67,10 @@
 
           <div class="w3-container w3-cell middle">
             <span class="w3-button w3-green w3-round-large" data-bind="click: setSpinPage.bind($data, -10)">-10</span>
-            <span class="w3-button w3-green w3-round-large">-1</span>
+            <span class="w3-button w3-green w3-round-large" data-bind="click: setSpinPage.bind($data, -1)">-1</span>
             <span class="w3-button w3-green w3-round-large">Page <span data-bind="text: spinPage"></span></span>
-            <span class="w3-button w3-green w3-round-large">+1</span>
-            <span class="w3-button w3-green w3-round-large">+10</span>
+            <span class="w3-button w3-green w3-round-large" data-bind="click: setSpinPage.bind($data, 1)">+1</span>
+            <span class="w3-button w3-green w3-round-large" data-bind="click: setSpinPage.bind($data, 10)">+10</span>
           </div>
 
           <div class="w3-container w3-cell w3-text-orange middle">
@@ -139,8 +141,8 @@
             } 
           }
 
-          self.setVolume = function (data, offset) {
-            var vol = self.volume + offset;
+          self.setVolume = function (offset) {
+            var vol = self.volume() + offset;
             if (vol < 0) {
               vol = 0;
             } else if (vol > 10) {
