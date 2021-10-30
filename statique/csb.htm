@@ -19,13 +19,16 @@
           <div class="w3-container w3-cell middle">C'est si bon</div>
 
           <div class="w3-container w3-cell w3-border-left middle">
-            <span class="w3-button w3-green w3-round-large" data-bind="hidden: player() == 'Playing', css: { 'w3-disabled': playerOff }">
+            <span class="w3-button w3-green w3-round-large" 
+                  data-bind="hidden: player() == 'Playing', css: { 'w3-disabled': playerOff }, click: toggle">
               <i class="fa fa-play"></i>
             </span>
-            <span class="w3-button w3-green w3-round-large" data-bind="visible: player() == 'Playing', css: { 'w3-disabled': playerOff }">
+            <span class="w3-button w3-green w3-round-large" 
+                  data-bind="hidden: player() == 'Paused', css: { 'w3-disabled': playerOff }, click: toggle">
               <i class="fa fa-pause"></i>
             </span>
-            <span class="w3-button w3-green w3-round-large" data-bind="css: { 'w3-disabled': playerOff }">
+            <span class="w3-button w3-green w3-round-large" 
+                  data-bind="css: { 'w3-disabled': playerOff }, click: stop">
               <i class="fa fa-stop"></i>
             </span>
           </div>
@@ -103,22 +106,32 @@
             { titre: 'Toune 5', media_id: '00000000'  },
           ]);
           self.message = ko.observable("BEUH!");
-          self.enLecture = ko.observable({titre: "", media_id: "0000000"});
+          self.enLecture = ko.observable({titre: "", media_id: ""});
           
           self.play = function(épisode) {
             self.command("Start", épisode);
+            self.player("Playing"); // temporaire
+            self.enLecture(épisode); //temporaire
           }
           
           self.playerOff = ko.computed(function () {
-            return this.enLecture().titre == "";
-          }, self);
+            return self.enLecture().titre == "";
+          });
 
           self.stop = function () {
-
+            self.command("Stop", "");
+            self.player("Stopped"); // temporaire
+            self.enLecture({titre: "", media_id: ""}); // temporaire
           }
 
           self.toggle = function () {
-            
+            if (self.player() == "Playing") {
+              self.command("Pause", "");
+              self.player("Paused"); // temporaire
+            } else if (self.player() == "Paused") {
+              self.command("Play", "");
+              self.player("Playing"); // temporaire
+            } 
           }
 
           self.set_volume = function (offset) {
