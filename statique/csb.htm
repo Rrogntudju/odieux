@@ -64,9 +64,9 @@
           </div>
 
           <div class="w3-container w3-cell middle">
-            <span class="w3-button w3-green w3-round-large" data-bind="click: setPage.bind($data, -10)">-10</span>
+            <span class="w3-button w3-green w3-round-large" data-bind="click: setSpinPage.bind($data, -10)">-10</span>
             <span class="w3-button w3-green w3-round-large">-1</span>
-            <span class="w3-button w3-green w3-round-large">Page <span data-bind="text: page"></span></span>
+            <span class="w3-button w3-green w3-round-large">Page <span data-bind="text: spinPage"></span></span>
             <span class="w3-button w3-green w3-round-large">+1</span>
             <span class="w3-button w3-green w3-round-large">+10</span>
           </div>
@@ -124,7 +124,7 @@
             self.enLecture({titre: "", media_id: ""}); // temporaire
           }
 
-          self.page = function () {
+          self.setPage = function () {
             self.command("Page", spinnerPage);
             self.page("2"); // temporaire
           }
@@ -150,14 +150,15 @@
             self.volume(8); //temporaire
           }
 
-          var spinnerPage = 1;
-          self.setPage = function (data, offset) {
-            spinnerPage = spinnerPage + offset;
-            if (spinnerPage < 1) {
-              spinnerPage = 1;
-            } else if (spinnerPage > 68) {
-              spinnerPage = 68;
+          self.spinPage = ko.observable(1);
+          self.setSpinPage = function (offset) {
+            var p = self.spinPage() + offset;
+            if (p < 1) {
+              p = 1;
+            } else if (p > 68) {
+              p = 68;
             }
+            self.spinPage(p);
           }
 
           self.command = function(verb, param) {
