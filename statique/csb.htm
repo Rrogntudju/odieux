@@ -64,7 +64,7 @@
           </div>
 
           <div class="w3-container w3-cell middle">
-            <span class="w3-button w3-green w3-round-large">-10</span>
+            <span class="w3-button w3-green w3-round-large" data-bind="click: setPage.bind($data, -10)">-10</span>
             <span class="w3-button w3-green w3-round-large">-1</span>
             <span class="w3-button w3-green w3-round-large">Page <span data-bind="text: page"></span></span>
             <span class="w3-button w3-green w3-round-large">+1</span>
@@ -124,6 +124,11 @@
             self.enLecture({titre: "", media_id: ""}); // temporaire
           }
 
+          self.page = function () {
+            self.command("Page", spinnerPage);
+            self.page("2"); // temporaire
+          }
+
           self.toggle = function () {
             if (self.player() == "Playing") {
               self.command("Pause", "");
@@ -134,12 +139,25 @@
             } 
           }
 
-          self.set_volume = function (offset) {
-
+          self.setVolume = function (data, offset) {
+            var vol = self.volume + offset;
+            if (vol < 0) {
+              vol = 0;
+            } else if (vol > 10) {
+              vol = 10;
+            }
+            self.command("Volume", vol);
+            self.volume(8); //temporaire
           }
 
-          self.set_page = function (offset) {
-
+          var spinnerPage = 1;
+          self.setPage = function (data, offset) {
+            spinnerPage = spinnerPage + offset;
+            if (spinnerPage < 1) {
+              spinnerPage = 1;
+            } else if (spinnerPage > 68) {
+              spinnerPage = 68;
+            }
           }
 
           self.command = function(verb, param) {
@@ -155,7 +173,8 @@
                 body = '{ "Start": "' + param + '" }'
                 break;
               case "Page":
-                body = '{ "Page": ' + param + ' }'
+              case "Volume":
+                body = '{ "' + verb + '": ' + param.toString() + ' }'
                 break;
               default:
                 body = '{ "' + verb + '": null }'
