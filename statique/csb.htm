@@ -83,7 +83,7 @@
         document.onreadystatechange = function () {
           csb.command("State", "");
           if (csb.épisodes().length == 0) {
-            csb.command("Page", "1");
+            csb.command("Page", 1);
           }
         }
 
@@ -98,8 +98,8 @@
           enLecture: ko.observable({titre: "", media_id: ""}),
           */
           self.player = ko.observable("Stopped");
-          self.volume = ko.observable("10");
-          self.page = ko.observable("1");
+          self.volume = ko.observable(10);
+          self.page = ko.observable(1);
           self.épisodes = ko.observableArray([
             { titre: 'Toune 1', media_id: '00000000'  },
             { titre: 'Toune 2', media_id: '00000000'  },
@@ -128,7 +128,7 @@
 
           self.setPage = function () {
             self.command("Page", self.spinPage());
-            self.page(self.spinPage().toString()); // temporaire
+            self.page(self.spinPage()); // temporaire
           }
 
           self.toggle = function () {
@@ -149,7 +149,7 @@
               vol = 10;
             }
             self.command("Volume", vol);
-            self.volume(vol.toString()); //temporaire
+            self.volume(vol); //temporaire
           }
 
           self.spinPage = ko.observable(1);
