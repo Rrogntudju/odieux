@@ -100,6 +100,14 @@ mod handlers {
         });
     }
 
+    fn set_page(page: usize, épisodes: Vec<Episode>) {
+        STATE.with(|state| {
+            let mut s = state.borrow_mut();
+            s.episodes = épisodes;
+            s.page = page;
+        });
+    }
+
     pub async fn command(body: Bytes) -> Result<impl warp::Reply, Infallible> {
         let response = match serde_json::from_slice::<Command>(body.as_ref()) {
             Ok(command) => {
@@ -157,7 +165,7 @@ mod handlers {
                             let message = format!("Erreur de la page {}", page);
                             STATE.with(|state| state.borrow_mut().message = message);
                         } else {
-                            STATE.with(|state| state.borrow_mut().episodes = épisodes);
+                            set_page(page, épisodes);
                         }
                     }
                     Command::State => {
