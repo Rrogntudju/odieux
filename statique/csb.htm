@@ -89,31 +89,15 @@
 
         function csbViewModel() {
           var self = this;
-          /*
-          player: ko.observable(""),
-          volume: ko.observable(""),
-          page: ko.observable(""),
-          épisodes: ko.observableArray([]),
-          message: ko.observable(""),
-          enLecture: ko.observable({titre: "", media_id: ""}),
-          */
           self.player = ko.observable("Stopped");
           self.volume = ko.observable(10);
           self.page = ko.observable(1);
-          self.épisodes = ko.observableArray([
-            { titre: 'Toune 1', media_id: '00000000'  },
-            { titre: 'Toune 2', media_id: '00000000'  },
-            { titre: 'Toune 2', media_id: '00000000'  },
-            { titre: 'Toune 4', media_id: '00000000'  },
-            { titre: 'Toune 5', media_id: '00000000'  },
-          ]);
-          self.message = ko.observable("BEUH!");
+          self.épisodes = ko.observableArray([]);
+          self.message = ko.observable("");
           self.enLecture = ko.observable({titre: "", media_id: ""});
           
           self.play = function(épisode) {
             self.command("Start", épisode);
-            self.player("Playing"); // temporaire
-            self.enLecture(épisode); //temporaire
           }
           
           self.playerOff = ko.computed(function () {
@@ -122,23 +106,18 @@
 
           self.stop = function () {
             self.command("Stop", "");
-            self.player("Stopped"); // temporaire
-            self.enLecture({titre: "", media_id: ""}); // temporaire
           }
 
           self.setPage = function () {
             self.command("Page", self.spinPage());
-            self.page(self.spinPage()); // temporaire
           }
 
           self.toggle = function () {
             if (self.player() == "Playing") {
               self.command("Pause", "");
-              self.player("Paused"); // temporaire
             } else if (self.player() == "Paused") {
               self.command("Play", "");
-              self.player("Playing"); // temporaire
-            } 
+             } 
           }
 
           self.setVolume = function (offset) {
@@ -149,7 +128,6 @@
               vol = 10;
             }
             self.command("Volume", vol);
-            self.volume(vol); //temporaire
           }
 
           self.spinPage = ko.observable(1);
@@ -177,7 +155,7 @@
                 break;
               case "Page":
               case "Volume":
-                body = '{ "' + verb + '": ' + param.toString() + ' }'
+                body = '{ "' + verb + '": ' + param + ' }'
                 break;
               default:
                 body = '{ "' + verb + '": null }'
