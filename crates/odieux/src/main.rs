@@ -1,4 +1,5 @@
 use anyhow::{anyhow, Result};
+use warp::Filter;
 use std::env::{args, Args};
 use std::net::SocketAddr;
 use std::path::PathBuf;
@@ -26,7 +27,7 @@ async fn main() -> Result<()> {
     use server::filters::*;
 
     let (addr, path_static) = parse_args(&mut args())?;
-    let routes = static_file(path_static);
+    let routes = static_file(path_static).or(command());
     let server = warp::serve(routes);
     server.run(addr).await;
     Ok(())

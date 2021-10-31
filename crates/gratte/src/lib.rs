@@ -35,8 +35,8 @@ pub fn gratte(url: &str, page: usize) -> Result<Vec<Episode>> {
                     item if item.is_object() => {
                         let item_id = &item["playlistItemId"];
                         épisodes.push(Episode {
-                            titre: item_id["title"].to_string(),
-                            media_id: item_id["mediaId"].to_string(),
+                            titre: item_id["title"].as_str().unwrap_or_default().to_owned(),
+                            media_id: item_id["mediaId"].as_str().unwrap_or_default().to_owned(),
                         });
                     }
                     _ => break,

@@ -17,8 +17,10 @@
       <header>
         <div class="w3-container w3-round w3-teal">
           <div class="w3-container w3-cell middle">C'est si bon</div>
+        </div>
 
-          <div class="w3-container w3-cell w3-border-left middle">
+        <div class="w3-container w3-round w3-teal"></div>
+          <div class="w3-container w3-cell middle">
             <span class="w3-button w3-green w3-round-large" 
                   data-bind="hidden: player() == 'Playing', css: { 'w3-disabled': playerOff }, click: toggle">
               <i class="fa fa-play"></i>
@@ -46,7 +48,9 @@
               <i class="fa fa-volume-up"></i>
             </span>
           </div>
+        </div>
 
+        <div class="w3-container w3-round w3-teal"></div>
           <div class="w3-container w3-cell middle" data-bind="using: enLecture">
             <span data-bind="text: titre"></span>
           </div>
@@ -72,7 +76,9 @@
             <span class="w3-button w3-green w3-round-large" data-bind="click: setSpinPage.bind($data, 1)">+1</span>
             <span class="w3-button w3-green w3-round-large" data-bind="click: setSpinPage.bind($data, 10)">+10</span>
           </div>
+        </div>
 
+        <div class="w3-container w3-round w3-teal"></div>
           <div class="w3-container w3-cell w3-text-orange middle">
             <span data-bind="text: message"></span>
           </div>
@@ -173,14 +179,15 @@
             .then(response => response.json())
             .then(data => {
               self.player(data.player);
-              self.volume(data.volume.toString());
-              self.page(data.page.toString());
+              self.volume(data.volume);
+              self.page(data.page);
               self.épisodes.removeAll();
               for (const épisode of data.episodes) {
                   self.épisodes.push(épisode)
               }
               self.message(data.message);
-              self.enLecture(data.enLecture);
+              console.log(data);
+              self.enLecture(data.en_lecture);
             })
             .catch((error) => {
               message = "Échec de fetch: " + error;
