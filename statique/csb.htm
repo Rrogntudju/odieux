@@ -15,11 +15,11 @@
 
     <body>
       <header>
-        <div class="w3-container w3-round w3-teal">
+        <div class="w3-container w3-teal">
           <div class="w3-container w3-cell middle"><h4>C'est si bon</h4></div>
         </div>
 
-        <div class="w3-container w3-round w3-teal">
+        <div class="w3-container w3-teal">
           <div class="w3-container w3-cell middle">
             <span class="w3-button w3-green w3-round-large" 
                   data-bind="hidden: player() == 'Playing', css: { 'w3-disabled': playerOff }, click: toggle">
@@ -48,9 +48,9 @@
           </div>
         </div>
 
-        <div class="w3-container w3-round w3-teal"></div>
-          <div class="w3-container w3-cell middle" data-bind="using: enLecture">
-            <span data-bind="text: titre"></span>
+        <div class="w3-container w3-teal">
+          <div class="w3-container middle" data-bind="using: enLecture">
+            <p data-bind="text: titre"></p>
           </div>
         </div>
       </header>
@@ -62,11 +62,13 @@
       </div>
 
       <footer>
-        <div class="w3-container w3-round w3-teal">
+        <div class="w3-container w3-teal">
           <div class="w3-container w3-cell middle">
-            <span>Page <span class="w3-badge w3-white" data-bind="text: page"></span></span>
+            <p>Page <span class="w3-badge w3-white" data-bind="text: page"></span></p>
           </div>
+        </div>
 
+        <div class="w3-container w3-teal">
           <div class="w3-container w3-cell middle">
             <span class="w3-button w3-green w3-round-large" data-bind="click: setSpinPage.bind($data, -10)">-10</span>
             <span class="w3-button w3-green w3-round-large" data-bind="click: setSpinPage.bind($data, -1)">-1</span>
@@ -76,16 +78,16 @@
           </div>
         </div>
 
-        <div class="w3-container w3-round w3-teal">
+        <div class="w3-container w3-teal">
           <div class="w3-container w3-cell w3-text-orange middle">
-            <span data-bind="text: message"></span>
+            <p data-bind="text: message"></p>
           </div>
         </div>
       </footer>
       
       <script>
         document.onreadystatechange = function () {
-          csb.command("State", "");
+          csb.command("State", null);
           if (csb.épisodes().length == 0) {
             csb.command("Page", 1);
           }
@@ -109,7 +111,7 @@
           });
 
           self.stop = function () {
-            self.command("Stop", "");
+            self.command("Stop", null);
           }
 
           self.setPage = function () {
@@ -118,9 +120,9 @@
 
           self.toggle = function () {
             if (self.player() == "Playing") {
-              self.command("Pause", "");
+              self.command("Pause", null);
             } else if (self.player() == "Paused") {
-              self.command("Play", "");
+              self.command("Play", null);
              } 
           }
 
@@ -152,26 +154,15 @@
                 'Content-Type': 'application/json',
             });
 
-            var body;
-            switch (verb) {
-              case "Start":
-                body = '{ "Start": "' + param + '" }'
-                break;
-              case "Page":
-              case "Volume":
-                body = '{ "' + verb + '": ' + param + ' }'
-                console.log(body);
-                break;
-              default:
-                body = '{ "' + verb + '": null }'
-            }
+            var command = {};
+            command[verb] = param;
 
             const request = new Request('/command', {
               method: 'POST',
               headers: headers,
               cache: 'no-cache',
               redirect: 'error',
-              body: body
+              body: JSON.stringify(command),
             });
 
             fetch(request)
@@ -181,11 +172,11 @@
               self.volume(data.volume);
               self.page(data.page);
               self.épisodes.removeAll();
+              
               for (const épisode of data.episodes) {
-                  self.épisodes.push(épisode)
+                self.épisodes.push(épisode);
               }
               self.message(data.message);
-              console.log(data);
               self.enLecture(data.en_lecture);
             })
             .catch((error) => {
