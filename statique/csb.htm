@@ -86,18 +86,11 @@
       </footer>
       
       <script>
-        document.onreadystatechange = function () {
-          csb.command("State", null);
-          if (csb.épisodes().length == 0) {
-            csb.command("Page", 1);
-          }
-        }
-
         function csbViewModel() {
           var self = this;
           self.player = ko.observable("Stopped");
-          self.volume = ko.observable(10);
-          self.page = ko.observable(1);
+          self.volume = ko.observable(1);
+          self.page = ko.observable(0);
           self.épisodes = ko.observableArray([]);
           self.message = ko.observable("");
           self.enLecture = ko.observable({titre: "", media_id: ""});
@@ -170,6 +163,7 @@
             .then(data => {
               self.player(data.player);
               self.volume(data.volume);
+              console.log(data.page);
               self.page(data.page);
               self.épisodes.removeAll();
               ko.utils.arrayPushAll(self.épisodes, data.episodes);
@@ -178,14 +172,18 @@
             })
             .catch((error) => {
               message = "Échec de fetch: " + error;
-              console.log(message);
               self.message(message);
             });
           };
         }
-        
+
         var csb = new csbViewModel();
         ko.applyBindings(csb);
+        csb.command("State", null);
+        setTimeout(() => {
+          if (csb.page == 0) {
+            csb.command("Page", 1);
+          }}, 300);
       </script>
     </body>
 </html>
