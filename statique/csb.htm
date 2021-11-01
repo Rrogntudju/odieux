@@ -172,10 +172,7 @@
               self.volume(data.volume);
               self.page(data.page);
               self.épisodes.removeAll();
-              
-              for (const épisode of data.episodes) {
-                self.épisodes.push(épisode);
-              }
+              ko.utils.arrayPushAll(self.épisodes, data.episodes);
               self.message(data.message);
               self.enLecture(data.en_lecture);
             })
