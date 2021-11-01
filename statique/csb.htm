@@ -183,7 +183,10 @@
         setTimeout(() => {
           if (csb.page == 0) {
             csb.command("Page", 1);
-          }}, 300);
+        }}, 300);
+        setInterval(() => {
+          csb.command("State", null);
+        }, 1000);
       </script>
     </body>
 </html>
