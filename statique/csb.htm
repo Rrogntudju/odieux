@@ -5,13 +5,16 @@
       <script src="dist/knockout-3.5.1.js"></script>
       <link rel="stylesheet" href="dist/w3.css">
       <link rel="icon" type="image/x-icon" href="dist/favicon.ico"/>
-      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
      </head>
 
     <body>
       <header>
         <div class="w3-container w3-teal">
           <div class="w3-container w3-cell"><h4>C'est si bon</h4></div>
+          <div class="w3-container w3-cell" style="vertical-align: middle" data-bind="visible: longCommand">
+            <h4><i class="fa fa-spinner fa-spin" style="color: white"></i></h4>
+          </div>
         </div>
 
         <div class="w3-container w3-teal">
@@ -89,20 +92,22 @@
           self.épisodes = ko.observableArray([]);
           self.message = ko.observable("");
           self.enLecture = ko.observable({titre: "", media_id: ""});
-          
-          self.play = function(épisode) {
-            self.command("Start", épisode);
-          }
-          
           self.playerOff = ko.computed(function () {
             return self.enLecture().titre == "";
           });
+          self.longCommand = ko.observable(false);
+
+          self.play = function(épisode) {
+            self.longCommand(true);
+            self.command("Start", épisode);
+          }
 
           self.stop = function () {
             self.command("Stop", null);
           }
 
           self.setPage = function () {
+            self.longCommand(true);
             self.command("Page", self.spinPage());
           }
 
@@ -116,8 +121,8 @@
 
           self.setVolume = function (offset) {
             var vol = self.volume() + offset;
-            if (vol < 1) {
-              vol = 1;
+            if (vol < 0) {
+              vol = 0;
             } else if (vol > 10) {
               vol = 10;
             }
@@ -162,10 +167,12 @@
               ko.utils.arrayPushAll(self.épisodes, data.episodes);
               self.message(data.message);
               self.enLecture(data.en_lecture);
+              self.longCommand(false);
             })
             .catch((error) => {
               message = "Échec de fetch: " + error;
               self.message(message);
+              self.longCommand(false);
             });
           };
         }
@@ -175,6 +182,7 @@
         csb.command("State", null);
         setTimeout(() => {
           if (csb.page() == 0) {
+            csb.longCommand(true);
             csb.command("Page", 1);
         }}, 100);
         setInterval(() => {
