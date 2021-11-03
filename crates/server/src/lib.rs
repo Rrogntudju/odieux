@@ -35,7 +35,7 @@ thread_local! {
     static OUTPUT_STREAM: RefCell<Option<OutputStream>> = RefCell::new(None);
     static STATE: RefCell<State> = RefCell::new(State {
         player: PlayerState::Stopped,
-        volume: 1,
+        volume: 2,
         page: 0,
         episodes: Vec::new(),
         message: String::default(),
@@ -120,7 +120,7 @@ mod handlers {
                     }
                     Command::Volume(vol) => SINK.with(|sink| {
                         if STATE.with(|state| state.borrow().player != PlayerState::Stopped) {
-                            sink.borrow().as_ref().unwrap().set_volume(vol as f32);
+                            sink.borrow().as_ref().unwrap().set_volume((vol as f32) / 2.0);
                             // Set volume
                             STATE.with(|state| state.borrow_mut().volume = vol);
                         }
