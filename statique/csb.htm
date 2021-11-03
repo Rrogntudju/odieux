@@ -96,6 +96,7 @@
             return self.enLecture().titre == "";
           });
           self.longCommand = ko.observable(false);
+          self.spinPage = ko.observable(1);
 
           self.refresh = function () {
             self.command("State", null);
@@ -138,7 +139,6 @@
             self.command("Volume", vol);
           }
 
-          self.spinPage = ko.observable(1);
           self.setSpinPage = function (offset) {
             var p = self.spinPage() + offset;
             if (p < 1) {
