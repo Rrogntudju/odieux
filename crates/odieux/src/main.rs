@@ -1,11 +1,11 @@
 use anyhow::{anyhow, Result};
-use warp::Filter;
 use std::env::{args, Args};
 use std::net::SocketAddr;
 use std::path::PathBuf;
+use warp::Filter;
 
 fn parse_args(args: &mut Args) -> Result<(SocketAddr, PathBuf)> {
-    let addr = match args.skip(1).next() {
+    let addr = match args.nth(1) {
         Some(arg) => arg.parse::<SocketAddr>()?,
         None => return Err(anyhow!("IP:Port est manquant")),
     };
