@@ -81,7 +81,7 @@ mod handlers {
             .send()
             .context(format!("Échec: get {}", url))?
             .json()?;
-        Ok(hls_player::start(value["url"].as_str().unwrap_or_default()).context("Échec du démarrage")?)
+        hls_player::start(value["url"].as_str().unwrap_or_default()).context("Échec du démarrage")
     }
 
     pub async fn command(body: Bytes) -> Result<impl warp::Reply, Infallible> {
@@ -155,7 +155,7 @@ mod handlers {
                             eprintln!("{}", e);
                             Vec::new()
                         });
-                        if épisodes.len() == 0 {
+                        if épisodes.is_empty() {
                             let message = format!("Erreur de la page {}", page);
                             STATE.with(|state| state.borrow_mut().message = message);
                         } else {
