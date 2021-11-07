@@ -179,8 +179,7 @@
               self.longCommand(false);
             })
             .catch((error) => {
-              message = "Échec de fetch: " + error;
-              self.message(message);
+              self.message(error);
               self.longCommand(false);
             });
           };
