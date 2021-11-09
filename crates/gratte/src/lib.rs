@@ -18,11 +18,10 @@ pub fn gratte(url: &str, page: usize) -> Result<Vec<Episode>> {
     let script = soup
         .tag("script")
         .find_all()
-        .filter_map(|s| match s.text() {
+        .find_map(|s| match s.text() {
             t if t.starts_with("window._rcState_") => Some(t),
             _ => None,
-        })
-        .next();
+        });
     let valeur: Value = match script {
         Some(s) => serde_json::from_str(s.trim_start_matches("window._rcState_ = /*bns*/ ").trim_end_matches(" /*bne*/;"))?,
         None => return Err(anyhow!("script introuvable")),
