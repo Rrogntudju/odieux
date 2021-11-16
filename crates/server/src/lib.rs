@@ -115,8 +115,9 @@ mod handlers {
                                 });
                             }
                             Err(e) => {
-                                eprintln!("{}", e);
-                                STATE.with(|state| state.borrow_mut().message = e.to_string());
+                                let message = format!("{:#}", e);
+                                eprintln!("{}", &message);
+                                STATE.with(|state| state.borrow_mut().message = message);
                             }
                         };
                     }
@@ -154,12 +155,11 @@ mod handlers {
                     }),
                     Command::Page(page) => {
                         let épisodes = gratte(CSB, page).context("Échec du grattage").unwrap_or_else(|e| {
-                            eprintln!("{}", e);
+                            eprintln!("{:#}", e);
                             Vec::new()
                         });
                         if épisodes.is_empty() {
-                            let message = format!("Erreur de la page {}", page);
-                            STATE.with(|state| state.borrow_mut().message = message);
+                            STATE.with(|state| state.borrow_mut().message = format!("Erreur de la page {}", page));
                         } else {
                             // Set page
                             STATE.with(|state| {
