@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::thread_local;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, PartialEq)]
 enum Command {
     Start(Episode),
     Volume(usize),
@@ -87,7 +87,9 @@ mod handlers {
     pub async fn command(body: Bytes) -> Result<impl warp::Reply, Infallible> {
         let response = match serde_json::from_slice::<Command>(body.as_ref()) {
             Ok(command) => {
-                STATE.with(|state| state.borrow_mut().message = String::default());
+                if command != Command::State {
+                    STATE.with(|state| state.borrow_mut().message = String::default());
+                }
                 match command {
                     Command::Start(épisode) => {
                         SINK.with(|sink| {
@@ -132,6 +134,13 @@ mod handlers {
                             STATE.with(|state| state.borrow_mut().player = PlayerState::Paused);
                         }
                     }),
+                    Command::Play => SINK.with(|sink| {
+                        if STATE.with(|state| state.borrow().player == PlayerState::Paused) {
+                            sink.borrow().as_ref().unwrap().play();
+                            // Set playing state
+                            STATE.with(|state| state.borrow_mut().player = PlayerState::Playing);
+                        }
+                    }),
                     Command::Stop => SINK.with(|sink| {
                         if STATE.with(|state| state.borrow().player != PlayerState::Stopped) {
                             sink.borrow().as_ref().unwrap().stop();
@@ -141,13 +150,6 @@ mod handlers {
                                 s.player = PlayerState::Stopped;
                                 s.en_lecture = Episode::default();
                             });
-                        }
-                    }),
-                    Command::Play => SINK.with(|sink| {
-                        if STATE.with(|state| state.borrow().player == PlayerState::Paused) {
-                            sink.borrow().as_ref().unwrap().play();
-                            // Set playing state
-                            STATE.with(|state| state.borrow_mut().player = PlayerState::Playing);
                         }
                     }),
                     Command::Page(page) => {
