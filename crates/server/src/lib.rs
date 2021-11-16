@@ -79,9 +79,9 @@ mod handlers {
         let value: Value = minreq::get(&url)
             .with_timeout(TIME_OUT)
             .send()
-            .context(format!("Échec: get {}", url))?
+            .with_context(|| format!("Échec: get {}", url))?
             .json()?;
-        hls_player::start(value["url"].as_str().unwrap_or_default()).context("Échec du démarrage")
+        hls_player::start(value["url"].as_str().unwrap_or_default())
     }
 
     pub async fn command(body: Bytes) -> Result<impl warp::Reply, Infallible> {
@@ -116,7 +116,7 @@ mod handlers {
                             }
                             Err(e) => {
                                 eprintln!("{}", e);
-                                STATE.with(|state| state.borrow_mut().message = "Échec du démarrage".to_string());
+                                STATE.with(|state| state.borrow_mut().message = e.to_string());
                             }
                         };
                     }

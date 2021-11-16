@@ -18,7 +18,7 @@ fn get(url: &str) -> Result<Vec<u8>> {
     Ok(minreq::get(url)
         .with_timeout(TIME_OUT)
         .send()
-        .context(format!("Échec: get {}", url))?
+        .with_context(|| format!("Échec: get {}", url))?
         .into_bytes())
 }
 

@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::{bail, Result};
 use std::env::{args, Args};
 use std::net::SocketAddr;
 use std::path::PathBuf;
@@ -7,16 +7,16 @@ use warp::Filter;
 fn parse_args(args: &mut Args) -> Result<(SocketAddr, PathBuf)> {
     let addr = match args.nth(1) {
         Some(arg) => arg.parse::<SocketAddr>()?,
-        None => return Err(anyhow!("IP:Port est manquant")),
+        None => bail!("IP:Port est manquant"),
     };
 
     let path_static = match args.next() {
         Some(arg) => arg.parse::<PathBuf>()?,
-        None => return Err(anyhow!("Le chemin du répertoire statique est manquant")),
+        None => bail!("Le chemin du répertoire statique est manquant"),
     };
 
     if !path_static.is_dir() {
-        return Err(anyhow!("{} n'existe pas ou n'est pas accessible", path_static.to_string_lossy()));
+        bail!("{} n'existe pas ou n'est pas accessible", path_static.to_string_lossy());
     }
 
     Ok((addr, path_static))

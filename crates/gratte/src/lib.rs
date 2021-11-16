@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::{Result, bail};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use soup::prelude::*;
@@ -24,7 +24,7 @@ pub fn gratte(url: &str, page: usize) -> Result<Vec<Episode>> {
         });
     let valeur: Value = match script {
         Some(s) => serde_json::from_str(s.trim_start_matches("window._rcState_ = /*bns*/ ").trim_end_matches(" /*bne*/;"))?,
-        None => return Err(anyhow!("script introuvable")),
+        None => bail!("script introuvable"),
     };
     let items = &valeur["pagesV2"]["pages"][url.trim_start_matches("https://ici.radio-canada.ca")]["data"]["content"]["contentDetail"]["items"];
     match items {
@@ -42,7 +42,7 @@ pub fn gratte(url: &str, page: usize) -> Result<Vec<Episode>> {
                 }
             }
         }
-        _ => return Err(anyhow!("items inexistant")),
+        _ => bail!("items inexistant"),
     }
     Ok(épisodes)
 }
