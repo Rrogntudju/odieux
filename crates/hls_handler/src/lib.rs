@@ -39,7 +39,7 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
         }
     };
 
-    // Select the mp4a.40.2 audio stream with the highest bitrate
+    // Select the mp4a.40.2 (AAC-LC) audio stream with the highest bitrate
     let vs = match master
         .variant_streams
         .iter()
@@ -59,7 +59,7 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
     let media_url = match vs {
         VariantStream::ExtXStreamInf { uri, .. } => uri,
         _ => {
-            tx.send(Err(anyhow!("DOH!: ExtXIFrame"))).unwrap_or_default();
+            tx.send(Err(anyhow!("ExtXIFrameInf manquant"))).unwrap_or_default();
             return;
         }
     };
