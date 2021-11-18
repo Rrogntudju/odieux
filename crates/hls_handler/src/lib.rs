@@ -3,13 +3,18 @@ use decrypt_aes128::decrypt_aes128;
 use hls_m3u8::tags::VariantStream;
 use hls_m3u8::types::EncryptionMethod;
 use hls_m3u8::{Decryptable, MasterPlaylist, MediaPlaylist};
-use mpeg2ts::ts::{ReadTsPacket, TsPacketReader, TsPayload};
+use mpeg2ts::ts::{ReadTsPacket, TsPacketReader, TsPayload, Pid};
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::thread;
 use url::Url;
 
+enum EsState {
+    Pid0,
+    Pat(Pid),
+    Pmt(Pid),
+}
 type Message = Result<Vec<u8>>;
 const TIME_OUT: u64 = 10;
 const BOUND: usize = 3;
@@ -140,6 +145,63 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
         let mut ts = TsPacketReader::new(decrypted.as_slice());
         let mut stream: Vec<u8> = Vec::new();
 
+        // Obtenir le pid du premier programme
+        let mut state = EsState::Pid0;
+        let program_pid = loop {
+            let packet = match ts.read_ts_packet().context("Échec: lecture d'un paquet TS") {
+                Ok(packet) => {
+                    match packet {
+                        Some(packet) => packet,
+                        None => { 
+                            tx.send(Err(anyhow!("Fin prématurée des paquets"))).unwrap_or_default();
+                            return;
+                        }
+                    }
+                }
+                Err(e) => {
+                    tx.send(Err(e)).unwrap_or_default();
+                    return;
+                }
+            };
+
+            match state {
+                EsState::Pid0 => {
+                    match packet.header.pid.as_u16() {
+                        0 => match packet.payload {
+                            Some(payload) => {
+                                match payload {
+                                    TsPayload::Pat(pat) => {
+                                        state = EsState::Pat(pat.table[0].program_map_pid);
+                                        continue;
+                                    },
+                                    _ => {
+
+                                    },
+                                }
+                            },
+                            None => {
+                                tx.send(Err(anyhow!("Pas de payload dans le PID 0"))).unwrap_or_default();
+                                return;
+                            }
+                        }
+                        _ => {
+                            tx.send(Err(anyhow!("Pas de PID 0"))).unwrap_or_default();
+                            return;
+                        },
+                    };
+                },
+                EsState::Pat(pid) => {
+
+                },
+                EsState::Pmt(pid) => {
+
+                },
+            }
+            
+        };
+
+        let mut debug_count = 0;
+
         loop {
             let packet = match ts.read_ts_packet().context("Échec: lecture d'un paquet TS") {
                 Ok(packet) => {
@@ -153,6 +215,11 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
                     return;
                 }
             };
+
+            if debug_count < 0 {
+                dbg!(&packet);
+                debug_count += 1;
+            }
 
             // Assuming just one AAC stream with pid 256
             if packet.header.pid.as_u16() == 256 {
