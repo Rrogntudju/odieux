@@ -1,4 +1,4 @@
-use anyhow::{Result, bail};
+use anyhow::{bail, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use soup::prelude::*;
@@ -15,13 +15,10 @@ pub fn gratte(url: &str, page: usize) -> Result<Vec<Episode>> {
     let url = format!("{}{}", url, page);
     let page = minreq::get(&url).with_timeout(10).send()?;
     let soup = Soup::new(page.as_str().unwrap_or("DOH!"));
-    let script = soup
-        .tag("script")
-        .find_all()
-        .find_map(|s| match s.text() {
-            t if t.starts_with("window._rcState_") => Some(t),
-            _ => None,
-        });
+    let script = soup.tag("script").find_all().find_map(|s| match s.text() {
+        t if t.starts_with("window._rcState_") => Some(t),
+        _ => None,
+    });
     let valeur: Value = match script {
         Some(s) => serde_json::from_str(s.trim_start_matches("window._rcState_ = /*bns*/ ").trim_end_matches(" /*bne*/;"))?,
         None => bail!("script introuvable"),
