@@ -6,4 +6,6 @@ edition = "2021"
 
 [dependencies]
 hls_handler = {path = "../hls_handler"}
+gratte = {path = "../gratte"}
+minreq = { version = "2", features = ["https", "json-using-serde"] }
 
