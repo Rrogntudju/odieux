@@ -18,7 +18,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let num = match args().nth(2) {
         Some(arg) => arg,
-        None => return Err("Fournir le numéro de l'émission".into()),
+        None => return Err("Fournir le numéro de l'épisode".into()),
     };
 
     let page = page.parse::<usize>()?.clamp(1, 68);
@@ -28,13 +28,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     let url = URL_VALIDEUR.replace("{}", &épisodes[num - 1].media_id);
     let value: Value = minreq::get(&url).with_timeout(TIME_OUT).send()?.json()?;
 
-    let rx = hls_handler::start(&value["url"].as_str().unwrap_or_default())?;
-
     let mut aac = env::temp_dir();
     aac.set_file_name(&épisodes[num - 1].titre);
     aac.set_extension("aac");
     let mut file = BufWriter::new(File::create(aac)?);
-
+    
+    let rx = hls_handler::start(&value["url"].as_str().unwrap_or_default())?;
     for message in rx {
         match message {
             Ok(stream) => file.write_all(&stream)?,
