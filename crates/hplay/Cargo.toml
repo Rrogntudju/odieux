@@ -5,5 +5,5 @@ authors = ["Rrogntudju"]
 edition = "2021"
 
 [dependencies]
-hls_player = {path = "../hls_player"}
+rodio = { git = "https://github.com/RustAudio/rodio.git", default-features = false, features = ["symphonia-aac"] }
 
