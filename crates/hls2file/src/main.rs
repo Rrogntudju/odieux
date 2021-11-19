@@ -1,9 +1,10 @@
+use gratte::gratte;
+use serde_json::value::Value;
 use std::env;
 use std::env::args;
 use std::error::Error;
 use std::fs::File;
 use std::io::{BufWriter, Write};
-use gratte::gratte;
 
 const TIME_OUT: u64 = 10;
 const CSB: &str = "https://ici.radio-canada.ca/ohdio/musique/emissions/1161/cestsibon?pageNumber=";
@@ -26,15 +27,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     };
 
     let émissions = gratte(CSB, page.parse::<usize>()?)?;
-    let url = URL_VALIDEUR.replace("{}", &émissions[numéro.parse::<usize>()? + 1].media_id);
-    let value = minreq::get(&url)
-        .with_timeout(TIME_OUT)
-        .send()?
-        .json()?;
-    let rx = hls_handler::start(&master_url)?;
+    let url = URL_VALIDEUR.replace("{}", &émissions[numéro.parse::<usize>()? - 1].media_id);
+    let value: Value = minreq::get(&url).with_timeout(TIME_OUT).send()?.json()?;
+    let rx = hls_handler::start(&value["url"].as_str().unwrap_or_default())?;
+
     let mut aac = env::temp_dir();
     aac.push(aac_filename);
-
     let mut file = BufWriter::new(File::create(aac)?);
 
     for message in rx {
