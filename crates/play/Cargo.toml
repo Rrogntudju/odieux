@@ -1,5 +1,5 @@
 [package]
-name = "hplay"
+name = "play"
 version = "0.1.0"
 authors = ["Rrogntudju"]
 edition = "2021"
