@@ -112,6 +112,7 @@ mod handlers {
                                     let mut s = state.borrow_mut();
                                     s.player = PlayerState::Playing;
                                     s.en_lecture = épisode;
+                                    SINK.with(|sink| sink.borrow().as_ref().unwrap().set_volume((s.volume as f32) / 2.0));
                                 });
                             }
                             Err(e) => {

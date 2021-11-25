@@ -10,7 +10,7 @@ pub fn decrypt_aes128(key: &[u8], iv: &[u8], data: &[u8]) -> Result<Vec<u8>> {
     let len = encrypted_data.len();
     if len % 16 != 0 {
         let size = (len / 16 + 1) * 16;
-        encrypted_data.resize_with(size, Default::default) ;
+        encrypted_data.resize_with(size, Default::default);
     }
     let cipher = Aes128Cbc::new_from_slices(key, iv).context("Création du chiffre AES-128 CBC")?;
     Ok(cipher.decrypt(&mut encrypted_data).context("Décryption")?.to_vec())

@@ -32,7 +32,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     aac.set_file_name(&épisodes[num - 1].titre);
     aac.set_extension("aac");
     let mut file = BufWriter::new(File::create(aac)?);
-    
+
     let rx = hls_handler::start(value["url"].as_str().unwrap_or_default())?;
     for message in rx {
         match message {
