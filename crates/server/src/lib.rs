@@ -1,5 +1,6 @@
 use gratte::{gratte, Episode};
 use hls_player::{OutputStream, Sink};
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::thread_local;
@@ -11,6 +12,7 @@ enum Command {
     Pause,
     Stop,
     Play,
+    Random,
     Page(usize),
     State,
 }
@@ -84,6 +86,38 @@ mod handlers {
         hls_player::start(value["url"].as_str().unwrap_or_default())
     }
 
+    fn command_start(épisode: Episode) {
+        SINK.with(|sink| {
+            if STATE.with(|state| state.borrow().player != PlayerState::Stopped) {
+                sink.borrow().as_ref().unwrap().stop();
+                // Set stopped state
+                STATE.with(|state| {
+                    let mut s = state.borrow_mut();
+                    s.player = PlayerState::Stopped;
+                    s.en_lecture = Episode::default();
+                });
+            }
+        });
+        match start(&épisode.media_id) {
+            Ok((new_sink, new_os)) => {
+                SINK.with(|sink| *sink.borrow_mut() = Some(new_sink));
+                OUTPUT_STREAM.with(|output_stream| *output_stream.borrow_mut() = Some(new_os));
+                // Set playing state
+                STATE.with(|state| {
+                    let mut s = state.borrow_mut();
+                    s.player = PlayerState::Playing;
+                    s.en_lecture = épisode;
+                    SINK.with(|sink| sink.borrow().as_ref().unwrap().set_volume((s.volume as f32) / 2.0));
+                });
+            }
+            Err(e) => {
+                let message = format!("{:#}", e);
+                eprintln!("{}", &message);
+                STATE.with(|state| state.borrow_mut().message = message);
+            }
+        };
+    }
+
     pub async fn command(body: Bytes) -> Result<impl warp::Reply, Infallible> {
         let response = match serde_json::from_slice::<Command>(body.as_ref()) {
             Ok(command) => {
@@ -91,37 +125,7 @@ mod handlers {
                     STATE.with(|state| state.borrow_mut().message = String::default());
                 }
                 match command {
-                    Command::Start(épisode) => {
-                        SINK.with(|sink| {
-                            if STATE.with(|state| state.borrow().player != PlayerState::Stopped) {
-                                sink.borrow().as_ref().unwrap().stop();
-                                // Set stopped state
-                                STATE.with(|state| {
-                                    let mut s = state.borrow_mut();
-                                    s.player = PlayerState::Stopped;
-                                    s.en_lecture = Episode::default();
-                                });
-                            }
-                        });
-                        match start(&épisode.media_id) {
-                            Ok((new_sink, new_os)) => {
-                                SINK.with(|sink| *sink.borrow_mut() = Some(new_sink));
-                                OUTPUT_STREAM.with(|output_stream| *output_stream.borrow_mut() = Some(new_os));
-                                // Set playing state
-                                STATE.with(|state| {
-                                    let mut s = state.borrow_mut();
-                                    s.player = PlayerState::Playing;
-                                    s.en_lecture = épisode;
-                                    SINK.with(|sink| sink.borrow().as_ref().unwrap().set_volume((s.volume as f32) / 2.0));
-                                });
-                            }
-                            Err(e) => {
-                                let message = format!("{:#}", e);
-                                eprintln!("{}", &message);
-                                STATE.with(|state| state.borrow_mut().message = message);
-                            }
-                        };
-                    }
+                    Command::Start(épisode) => command_start(épisode),
                     Command::Volume(vol) => SINK.with(|sink| {
                         if STATE.with(|state| state.borrow().player != PlayerState::Stopped) {
                             sink.borrow().as_ref().unwrap().set_volume((vol as f32) / 2.0);
@@ -143,6 +147,20 @@ mod handlers {
                             STATE.with(|state| state.borrow_mut().player = PlayerState::Playing);
                         }
                     }),
+                    Command::Random => {
+                        let mut rng = rand::thread_rng();
+                        let page: usize = rng.gen_range(1..=68);
+                        let mut épisodes = gratte(CSB, page).context("Échec du grattage").unwrap_or_else(|e| {
+                            eprintln!("{:#}", e);
+                            Vec::new()
+                        });
+                        if épisodes.is_empty() {
+                            STATE.with(|state| state.borrow_mut().message = format!("Erreur de la page {} dans Random", page));
+                        } else {
+                            let i = rng.gen_range(0..épisodes.len());
+                            command_start(épisodes.swap_remove(i));
+                        }
+                    }
                     Command::Stop => SINK.with(|sink| {
                         if STATE.with(|state| state.borrow().player != PlayerState::Stopped) {
                             sink.borrow().as_ref().unwrap().stop();

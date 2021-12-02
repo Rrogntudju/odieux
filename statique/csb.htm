@@ -31,6 +31,10 @@
                   data-bind="css: { 'w3-disabled': playerOff }, click: stop">
               <i class="fa fa-stop"></i>
             </span>
+            <span class="w3-button w3-green w3-round-large" 
+                  data-bind="click: random">
+              <i class="fa fa-random"></i>
+            </span>
           </div>
 
           <div class="w3-container w3-cell">
@@ -114,6 +118,11 @@
 
           self.stop = function () {
             self.command("Stop", null);
+          }
+
+          self.random = function () {
+            self.longCommand(true);
+            self.command("Random", null);
           }
 
           self.setPage = function () {
