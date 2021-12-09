@@ -209,8 +209,8 @@ fn hls_live(media_url: &str, tx: SyncSender<Message>) {
 
 }
 
-fn handle_hls(url: Url, tx: SyncSender<Message>) {
-    let response = match get(url.as_str()) {
+fn handle_hls(master_url: Url, tx: SyncSender<Message>) {
+    let response = match get(master_url.as_str()) {
         Ok(response) => String::from_utf8(response).unwrap_or_default(),
         Err(e) => {
             tx.send(Err(e)).unwrap_or_default();
@@ -238,7 +238,7 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
     {
         Some(vs) => vs,
         None => {
-            tx.send(Err(anyhow!("Pas de stream mp4a.40.2 dans {}", url.as_str()))).unwrap_or_default();
+            tx.send(Err(anyhow!("Pas de stream mp4a.40.2 dans {}", master_url.as_str()))).unwrap_or_default();
             return;
         }
     };
@@ -254,10 +254,13 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
     match Url::try_from(media_url.as_ref()) {
         Ok(url) => hls_on_demand(url.as_str(), tx),
         Err(ParseError::RelativeUrlWithoutBase) => {
-            let url = "";
-            hls_live(url, tx);
+            match master_url.join(&media_url).context("Échec: conversion de l'url MediaPlaylist") {
+                Ok(url) => hls_live(url.as_str(), tx),
+                Err(e) => tx.send(Err(e)).unwrap_or_default(),
+            }
+            
         }
-        Err(e) => tx.send(Err(anyhow!("{}\nÉchec: validation de l'url MediaPlaylist", e))).unwrap_or_default(),
+        Err(e) => tx.send(Err(anyhow!("{:?}\nÉchec: validation de l'url MediaPlaylist", e))).unwrap_or_default(),
     }
 }
 
