@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::thread;
-use url::Url;
+use url::{Url,ParseError};
 
 enum InitState {
     Pid0,
@@ -253,10 +253,11 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
 
     match Url::try_from(media_url.as_ref()) {
         Ok(url) => hls_on_demand(url.as_str(), tx),
-        Err(_) => {
+        Err(ParseError::RelativeUrlWithoutBase) => {
             let url = "";
             hls_live(url, tx);
         }
+        Err(e) => tx.send(Err(anyhow!("{}\nÉchec: validation de l'url MediaPlaylist", e))).unwrap_or_default(),
     }
 }
 
