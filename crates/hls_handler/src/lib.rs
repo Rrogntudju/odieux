@@ -26,49 +26,8 @@ fn get(url: &str) -> Result<Vec<u8>> {
         .into_bytes())
 }
 
-fn handle_hls(url: Url, tx: SyncSender<Message>) {
-    let response = match get(url.as_str()) {
-        Ok(response) => String::from_utf8(response).unwrap_or_default(),
-        Err(e) => {
-            tx.send(Err(e)).unwrap_or_default();
-            return;
-        }
-    };
-
-    let master = match MasterPlaylist::try_from(response.as_str()).context("Échec: validation de MasterPlayList") {
-        Ok(master) => master,
-        Err(e) => {
-            tx.send(Err(e)).unwrap_or_default();
-            return;
-        }
-    };
-
-    // Select the mp4a.40.2 (AAC-LC) audio stream with the highest bitrate
-    let vs = match master
-        .variant_streams
-        .iter()
-        .filter(|vs| match vs.codecs() {
-            Some(codecs) if codecs.len() == 1 => codecs[0] == "mp4a.40.2",
-            _ => false,
-        })
-        .max_by_key(|vs| vs.bandwidth())
-    {
-        Some(vs) => vs,
-        None => {
-            tx.send(Err(anyhow!("Pas de stream mp4a.40.2 dans {}", url.as_str()))).unwrap_or_default();
-            return;
-        }
-    };
-
-    let media_url = match vs {
-        VariantStream::ExtXStreamInf { uri, .. } => uri,
-        _ => {
-            tx.send(Err(anyhow!("ExtXIFrameInf manquant"))).unwrap_or_default();
-            return;
-        }
-    };
-
-    let response = match get(media_url.as_ref()) {
+fn hls_on_demand(media_url: &str, tx: SyncSender<Message>) {
+    let response = match get(media_url) {
         Ok(response) => String::from_utf8(response).unwrap_or_default(),
         Err(e) => {
             tx.send(Err(e)).unwrap_or_default();
@@ -242,6 +201,61 @@ fn handle_hls(url: Url, tx: SyncSender<Message>) {
 
         if tx.send(Ok(stream)).is_err() {
             return; // rx was dropped
+        }
+    }
+}
+
+fn hls_live(media_url: &str, tx: SyncSender<Message>) {
+
+}
+
+fn handle_hls(url: Url, tx: SyncSender<Message>) {
+    let response = match get(url.as_str()) {
+        Ok(response) => String::from_utf8(response).unwrap_or_default(),
+        Err(e) => {
+            tx.send(Err(e)).unwrap_or_default();
+            return;
+        }
+    };
+
+    let master = match MasterPlaylist::try_from(response.as_str()).context("Échec: validation de MasterPlayList") {
+        Ok(master) => master,
+        Err(e) => {
+            tx.send(Err(e)).unwrap_or_default();
+            return;
+        }
+    };
+
+    // Select the mp4a.40.2 (AAC-LC) audio stream with the highest bitrate
+    let vs = match master
+        .variant_streams
+        .iter()
+        .filter(|vs| match vs.codecs() {
+            Some(codecs) if codecs.len() == 1 => codecs[0] == "mp4a.40.2",
+            _ => false,
+        })
+        .max_by_key(|vs| vs.bandwidth())
+    {
+        Some(vs) => vs,
+        None => {
+            tx.send(Err(anyhow!("Pas de stream mp4a.40.2 dans {}", url.as_str()))).unwrap_or_default();
+            return;
+        }
+    };
+
+    let media_url = match vs {
+        VariantStream::ExtXStreamInf { uri, .. } => uri,
+        _ => {
+            tx.send(Err(anyhow!("ExtXIFrameInf manquant"))).unwrap_or_default();
+            return;
+        }
+    };
+
+    match Url::try_from(media_url.as_ref()) {
+        Ok(url) => hls_on_demand(url.as_str(), tx),
+        Err(_) => {
+            let url = "";
+            hls_live(url, tx);
         }
     }
 }
