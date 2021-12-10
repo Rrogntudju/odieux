@@ -7,7 +7,7 @@ use mpeg2ts::ts::{Pid, ReadTsPacket, TsPacketReader, TsPayload};
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
-use std::thread;
+use std::{thread, time};
 use url::{ParseError, Url};
 
 enum InitState {
@@ -246,12 +246,14 @@ fn hls_live(media_url: Url, tx: SyncSender<Message>) {
                 sequence = segment_url.to_string();
             }
         }
+        
         if stream.is_empty() {
-            
+            thread::sleep(time::Duration::from_millis(500));
         } else {
             if tx.send(Ok(stream)).is_err() {
                 return; // rx was dropped
             }
+            thread::sleep(media.target_duration);
         }
     }
 }
