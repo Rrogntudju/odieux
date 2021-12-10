@@ -206,21 +206,46 @@ fn hls_on_demand(media_url: Url, tx: SyncSender<Message>) {
 }
 
 fn hls_live(media_url: Url, tx: SyncSender<Message>) {
-    let response = match get(media_url.as_str()) {
-        Ok(response) => String::from_utf8(response).unwrap_or_default(),
-        Err(e) => {
-            tx.send(Err(e)).unwrap_or_default();
-            return;
-        }
-    };
+    let mut media_sequence: usize = 0;
+    let mut stream: Vec<u8> = Vec::new();
+    loop {
+        let response = match get(media_url.as_str()) {
+            Ok(response) => String::from_utf8(response).unwrap_or_default(),
+            Err(e) => {
+                tx.send(Err(e)).unwrap_or_default();
+                return;
+            }
+        };
 
-    let media = match MediaPlaylist::try_from(response.as_str()).context("Échec: validation de MediaPlayList") {
-        Ok(media) => media,
-        Err(e) => {
-            tx.send(Err(e)).unwrap_or_default();
-            return;
+        let media = match MediaPlaylist::try_from(response.as_str()).context("Échec: validation de MediaPlayList") {
+            Ok(media) => media,
+            Err(e) => {
+                tx.send(Err(e)).unwrap_or_default();
+                return;
+            }
+        };
+
+        for (_, media_segment) in media.segments {
+            let segment_url = match media_url.join(media_segment.uri().as_ref()).context("Échec: join de l'url media segment") {
+                Ok(url) => url,
+                Err(e) => {
+                    tx.send(Err(e)).unwrap_or_default();
+                    return;
+                }
+            };
+
+            let mut segment_response = match get(segment_url.as_str()) {
+                Ok(response) => response,
+                Err(e) => {
+                    tx.send(Err(e)).unwrap_or_default();
+                    return;
+                }
+            };
+            stream.append(&mut segment_response);
+
+
         }
-    };
+    }
 }
 
 fn handle_hls(master_url: Url, tx: SyncSender<Message>) {
