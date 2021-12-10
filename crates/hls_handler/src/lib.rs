@@ -246,7 +246,7 @@ fn hls_live(media_url: Url, tx: SyncSender<Message>) {
                 sequence = segment_url.to_string();
             }
         }
-        
+
         if stream.is_empty() {
             thread::sleep(time::Duration::from_millis(500));
         } else {
@@ -303,7 +303,7 @@ fn handle_hls(master_url: Url, tx: SyncSender<Message>) {
 
     match Url::try_from(media_url.as_ref()) {
         Ok(url) => hls_on_demand(url, tx),
-        Err(ParseError::RelativeUrlWithoutBase) => match master_url.join(&media_url).context("Échec: join de l'url MediaPlaylist") {
+        Err(ParseError::RelativeUrlWithoutBase) => match master_url.join(media_url).context("Échec: join de l'url MediaPlaylist") {
             Ok(url) => hls_live(url, tx),
             Err(e) => tx.send(Err(e)).unwrap_or_default(),
         },
