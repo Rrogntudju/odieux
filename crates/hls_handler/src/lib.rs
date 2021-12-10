@@ -254,7 +254,7 @@ fn handle_hls(master_url: Url, tx: SyncSender<Message>) {
     match Url::try_from(media_url.as_ref()) {
         Ok(url) => hls_on_demand(url.as_str(), tx),
         Err(ParseError::RelativeUrlWithoutBase) => {
-            match master_url.join(&media_url).context("Échec: conversion de l'url MediaPlaylist") {
+            match master_url.join(&media_url).context("Échec: join de l'url MediaPlaylist") {
                 Ok(url) => hls_live(url.as_str(), tx),
                 Err(e) => tx.send(Err(e)).unwrap_or_default(),
             }
