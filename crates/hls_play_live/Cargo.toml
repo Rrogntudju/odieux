@@ -1,0 +1,11 @@
+[package]
+name = "hls_play_live"
+version = "0.1.0"
+authors = ["Rrogntudju"]
+edition = "2021"
+
+[dependencies]
+hls_player = {path = "../hls_player"}
+minreq = { version = "2", features = ["https", "json-using-serde"] }
+serde_json = "1"
+

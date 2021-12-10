@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::thread;
-use url::{Url,ParseError};
+use url::{ParseError, Url};
 
 enum InitState {
     Pid0,
@@ -205,9 +205,7 @@ fn hls_on_demand(media_url: &str, tx: SyncSender<Message>) {
     }
 }
 
-fn hls_live(media_url: &str, tx: SyncSender<Message>) {
-
-}
+fn hls_live(media_url: &str, tx: SyncSender<Message>) {}
 
 fn handle_hls(master_url: Url, tx: SyncSender<Message>) {
     let response = match get(master_url.as_str()) {
@@ -238,7 +236,8 @@ fn handle_hls(master_url: Url, tx: SyncSender<Message>) {
     {
         Some(vs) => vs,
         None => {
-            tx.send(Err(anyhow!("Pas de stream mp4a.40.2 dans {}", master_url.as_str()))).unwrap_or_default();
+            tx.send(Err(anyhow!("Pas de stream mp4a.40.2 dans {}", master_url.as_str())))
+                .unwrap_or_default();
             return;
         }
     };
@@ -253,14 +252,13 @@ fn handle_hls(master_url: Url, tx: SyncSender<Message>) {
 
     match Url::try_from(media_url.as_ref()) {
         Ok(url) => hls_on_demand(url.as_str(), tx),
-        Err(ParseError::RelativeUrlWithoutBase) => {
-            match master_url.join(&media_url).context("Échec: join de l'url MediaPlaylist") {
-                Ok(url) => hls_live(url.as_str(), tx),
-                Err(e) => tx.send(Err(e)).unwrap_or_default(),
-            }
-            
-        }
-        Err(e) => tx.send(Err(anyhow!("{:?}\nÉchec: validation de l'url MediaPlaylist", e))).unwrap_or_default(),
+        Err(ParseError::RelativeUrlWithoutBase) => match master_url.join(&media_url).context("Échec: join de l'url MediaPlaylist") {
+            Ok(url) => hls_live(url.as_str(), tx),
+            Err(e) => tx.send(Err(e)).unwrap_or_default(),
+        },
+        Err(e) => tx
+            .send(Err(anyhow!("{:?}\nÉchec: validation de l'url MediaPlaylist", e)))
+            .unwrap_or_default(),
     }
 }
 
