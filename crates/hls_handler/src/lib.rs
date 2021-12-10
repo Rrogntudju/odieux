@@ -26,8 +26,8 @@ fn get(url: &str) -> Result<Vec<u8>> {
         .into_bytes())
 }
 
-fn hls_on_demand(media_url: &str, tx: SyncSender<Message>) {
-    let response = match get(media_url) {
+fn hls_on_demand(media_url: Url, tx: SyncSender<Message>) {
+    let response = match get(media_url.as_str()) {
         Ok(response) => String::from_utf8(response).unwrap_or_default(),
         Err(e) => {
             tx.send(Err(e)).unwrap_or_default();
@@ -205,7 +205,23 @@ fn hls_on_demand(media_url: &str, tx: SyncSender<Message>) {
     }
 }
 
-fn hls_live(media_url: &str, tx: SyncSender<Message>) {}
+fn hls_live(media_url: Url, tx: SyncSender<Message>) {
+    let response = match get(media_url.as_str()) {
+        Ok(response) => String::from_utf8(response).unwrap_or_default(),
+        Err(e) => {
+            tx.send(Err(e)).unwrap_or_default();
+            return;
+        }
+    };
+
+    let media = match MediaPlaylist::try_from(response.as_str()).context("Échec: validation de MediaPlayList") {
+        Ok(media) => media,
+        Err(e) => {
+            tx.send(Err(e)).unwrap_or_default();
+            return;
+        }
+    };
+}
 
 fn handle_hls(master_url: Url, tx: SyncSender<Message>) {
     let response = match get(master_url.as_str()) {
@@ -251,9 +267,9 @@ fn handle_hls(master_url: Url, tx: SyncSender<Message>) {
     };
 
     match Url::try_from(media_url.as_ref()) {
-        Ok(url) => hls_on_demand(url.as_str(), tx),
+        Ok(url) => hls_on_demand(url, tx),
         Err(ParseError::RelativeUrlWithoutBase) => match master_url.join(&media_url).context("Échec: join de l'url MediaPlaylist") {
-            Ok(url) => hls_live(url.as_str(), tx),
+            Ok(url) => hls_live(url, tx),
             Err(e) => tx.send(Err(e)).unwrap_or_default(),
         },
         Err(e) => tx
