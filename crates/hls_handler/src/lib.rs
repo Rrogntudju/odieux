@@ -242,8 +242,6 @@ fn hls_live(media_url: Url, tx: SyncSender<Message>) {
                 }
             };
             stream.append(&mut segment_response);
-
-
         }
     }
 }
