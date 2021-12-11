@@ -23,7 +23,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     let épisodes = gratte(CSB, page)?;
 
     let num = num.parse::<usize>()?.clamp(1, épisodes.len());
-    let url = URL_VALIDEUR.replace("{}", &épisodes[num - 1].media_id);
+    let media_id = &épisodes[num - 1].media_id;
+    if media_id.is_empty() {
+        return Err("Aucune musique diffusée disponible".into());
+    }
+    let url = URL_VALIDEUR.replace("{}", media_id);
     let value: Value = minreq::get(&url).with_timeout(TIME_OUT).send()?.json()?;
 
     let (sink, _output_stream) = hls_player::start(value["url"].as_str().unwrap_or_default())?;

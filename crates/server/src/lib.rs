@@ -105,7 +105,12 @@ mod handlers {
         let result = if épisode.titre == "En direct" {
             start(None)
         } else {
-            start(Some(&épisode.media_id))
+            if épisode.media_id.is_empty() {
+                STATE.with(|state| state.borrow_mut().message = "Aucune musique diffusée disponible".to_owned());
+                return;
+            } else {
+                start(Some(&épisode.media_id))
+            }
         };
         match result {
             Ok((new_sink, new_os)) => {
