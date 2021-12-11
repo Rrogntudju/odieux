@@ -226,15 +226,15 @@ fn hls_live(media_url: Url, tx: SyncSender<Message>) {
 
         let mut stream: Vec<u8> = Vec::new();
         for (_, media_segment) in media.segments {
-            let segment_url = match media_url.join(media_segment.uri().as_ref()).context("Échec: join de l'url media segment") {
-                Ok(url) => url,
-                Err(e) => {
-                    tx.send(Err(e)).unwrap_or_default();
-                    return;
-                }
-            };
-
-            if sequence.as_str() < segment_url.as_str() {
+            let uri = media_segment.uri().as_ref();
+            if sequence.as_str() < uri {
+                let segment_url = match media_url.join(uri).context("Échec: join de l'url media segment") {
+                    Ok(url) => url,
+                    Err(e) => {
+                        tx.send(Err(e)).unwrap_or_default();
+                        return;
+                    }
+                };
                 let mut segment_response = match get(segment_url.as_str()) {
                     Ok(response) => response,
                     Err(e) => {
@@ -243,7 +243,7 @@ fn hls_live(media_url: Url, tx: SyncSender<Message>) {
                     }
                 };
                 stream.append(&mut segment_response);
-                sequence = segment_url.to_string();
+                sequence = uri.to_owned();
             }
         }
 
