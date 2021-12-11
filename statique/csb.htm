@@ -35,6 +35,10 @@
                   data-bind="click: random">
               <i class="fa fa-random"></i>
             </span>
+            <span class="w3-button w3-green w3-round-large" 
+            data-bind="click: live">
+              <i class="fa fa-microphone"></i>
+            </span>
           </div>
           <div class="w3-cell" style="padding-left: 16px">
             <span class="w3-button w3-green w3-round-large" 
@@ -100,6 +104,7 @@
           });
           self.longCommand = ko.observable(false);
           self.spinPage = ko.observable(1);
+          self.pages = 68;
 
           self.refresh = function () {
             self.command("State", null);
@@ -121,7 +126,12 @@
 
           self.random = function () {
             self.longCommand(true);
-            self.command("Random", null);
+            self.command("Random", self.pages);
+          }
+
+          self.live = function () {
+            self.longCommand(true);
+            self.command("Start", {titre: "En direct", media_id: ""});
           }
 
           self.setPage = function () {
@@ -151,8 +161,8 @@
             var p = self.spinPage() + offset;
             if (p < 1) {
               p = 1;
-            } else if (p > 68) {
-              p = 68;
+            } else if (p > self.pages) {
+              p = self.pages;
             }
             self.spinPage(p);
           }

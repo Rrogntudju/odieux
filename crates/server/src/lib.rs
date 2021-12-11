@@ -12,7 +12,7 @@ enum Command {
     Pause,
     Stop,
     Play,
-    Random,
+    Random(usize),
     Page(usize),
     State,
 }
@@ -74,10 +74,13 @@ mod handlers {
 
     const TIME_OUT: u64 = 10;
     const CSB: &str = "https://ici.radio-canada.ca/ohdio/musique/emissions/1161/cestsibon?pageNumber=";
-    const URL_VALIDEUR: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianet&connectionType=hd&deviceType=ipad&idMedia={}&multibitrate=true&output=json&tech=hls";
-
-    fn start(id: &str) -> Result<(Sink, OutputStream)> {
-        let url = URL_VALIDEUR.replace("{}", id);
+    const URL_VALIDEUR_OD: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianet&connectionType=hd&deviceType=ipad&idMedia={}&multibitrate=true&output=json&tech=hls";
+    const URL_VALIDEUR_LIVE: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianetlive&connectionType=hd&deviceType=ipad&idMedia=cbvx&multibitrate=true&output=json&tech=hls";
+    fn start(id: Option<&str>) -> Result<(Sink, OutputStream)> {
+        let url = match id {
+            Some(id) => URL_VALIDEUR_OD.replace("{}", id),
+            None => URL_VALIDEUR_LIVE.to_owned(),
+        };
         let value: Value = minreq::get(&url)
             .with_timeout(TIME_OUT)
             .send()
@@ -98,7 +101,7 @@ mod handlers {
                 });
             }
         });
-        match start(&épisode.media_id) {
+        match start(Some(&épisode.media_id)) {
             Ok((new_sink, new_os)) => {
                 SINK.with(|sink| *sink.borrow_mut() = Some(new_sink));
                 OUTPUT_STREAM.with(|output_stream| *output_stream.borrow_mut() = Some(new_os));
@@ -147,9 +150,9 @@ mod handlers {
                             STATE.with(|state| state.borrow_mut().player = PlayerState::Playing);
                         }
                     }),
-                    Command::Random => {
+                    Command::Random(pages) => {
                         let mut rng = rand::thread_rng();
-                        let page: usize = rng.gen_range(1..=68);
+                        let page: usize = rng.gen_range(1..=pages);
                         let mut épisodes = gratte(CSB, page).context("Échec du grattage").unwrap_or_else(|e| {
                             eprintln!("{:#}", e);
                             Vec::new()
