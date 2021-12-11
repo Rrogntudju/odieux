@@ -66,7 +66,7 @@ pub mod filters {
 
 mod handlers {
     use super::*;
-    use anyhow::{Context, Result};
+    use anyhow::{anyhow, Context, Result};
     use bytes::Bytes;
     use serde_json::value::Value;
     use std::convert::Infallible;
@@ -106,8 +106,7 @@ mod handlers {
             start(None)
         } else {
             if épisode.media_id.is_empty() {
-                STATE.with(|state| state.borrow_mut().message = "Aucune musique diffusée disponible".to_owned());
-                return;
+                Err(anyhow!("Aucune musique diffusée disponible"))
             } else {
                 start(Some(&épisode.media_id))
             }
