@@ -6,6 +6,7 @@ use std::error::Error;
 const TIME_OUT: u64 = 10;
 const CSB: &str = "https://ici.radio-canada.ca/ohdio/musique/emissions/1161/cestsibon?pageNumber=";
 const URL_VALIDEUR: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianet&connectionType=hd&deviceType=ipad&idMedia={}&multibitrate=true&output=json&tech=hls";
+const PAGES: usize = 68;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let page = match args().nth(1) {
@@ -18,7 +19,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         None => return Err("Fournir le numéro de l'épisode".into()),
     };
 
-    let page = page.parse::<usize>()?.clamp(1, 68);
+    let page = page.parse::<usize>()?.clamp(1, PAGES);
     let épisodes = gratte(CSB, page)?;
 
     let num = num.parse::<usize>()?.clamp(1, épisodes.len());
