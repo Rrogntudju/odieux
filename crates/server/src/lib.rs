@@ -76,7 +76,7 @@ mod handlers {
     const CSB: &str = "https://ici.radio-canada.ca/ohdio/musique/emissions/1161/cestsibon?pageNumber=";
     const URL_VALIDEUR_OD: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianet&connectionType=hd&deviceType=ipad&idMedia={}&multibitrate=true&output=json&tech=hls";
     const URL_VALIDEUR_LIVE: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianetlive&connectionType=hd&deviceType=ipad&idMedia=cbvx&multibitrate=true&output=json&tech=hls";
-    
+
     fn start(id: Option<&str>) -> Result<(Sink, OutputStream)> {
         let url = match id {
             Some(id) => URL_VALIDEUR_OD.replace("{}", id),
@@ -102,7 +102,12 @@ mod handlers {
                 });
             }
         });
-        match start(Some(&épisode.media_id)) {
+        let result = if épisode.titre == "En direct" {
+            start(None)
+        } else {
+            start(Some(&épisode.media_id))
+        };
+        match result {
             Ok((new_sink, new_os)) => {
                 SINK.with(|sink| *sink.borrow_mut() = Some(new_sink));
                 OUTPUT_STREAM.with(|output_stream| *output_stream.borrow_mut() = Some(new_os));
