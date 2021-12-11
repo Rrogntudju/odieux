@@ -90,7 +90,7 @@ mod handlers {
         hls_player::start(value["url"].as_str().unwrap_or_default())
     }
 
-    fn command_start(épisode: Episode) {
+    fn command_stop() {
         SINK.with(|sink| {
             if STATE.with(|state| state.borrow().player != PlayerState::Stopped) {
                 sink.borrow().as_ref().unwrap().stop();
@@ -102,14 +102,17 @@ mod handlers {
                 });
             }
         });
+    }
+
+    fn command_start(épisode: Episode) {
         let result = if épisode.titre == "En direct" {
+            command_stop();
             start(None)
+        } else if épisode.media_id.is_empty() {
+            Err(anyhow!("Aucune musique diffusée disponible"))
         } else {
-            if épisode.media_id.is_empty() {
-                Err(anyhow!("Aucune musique diffusée disponible"))
-            } else {
-                start(Some(&épisode.media_id))
-            }
+            command_stop();
+            start(Some(&épisode.media_id))
         };
         match result {
             Ok((new_sink, new_os)) => {
@@ -174,17 +177,7 @@ mod handlers {
                             command_start(épisodes.swap_remove(i));
                         }
                     }
-                    Command::Stop => SINK.with(|sink| {
-                        if STATE.with(|state| state.borrow().player != PlayerState::Stopped) {
-                            sink.borrow().as_ref().unwrap().stop();
-                            // Set stopped state
-                            STATE.with(|state| {
-                                let mut s = state.borrow_mut();
-                                s.player = PlayerState::Stopped;
-                                s.en_lecture = Episode::default();
-                            });
-                        }
-                    }),
+                    Command::Stop => command_stop(),
                     Command::Page(page) => {
                         let épisodes = gratte(CSB, page).context("Échec du grattage").unwrap_or_else(|e| {
                             eprintln!("{:#}", e);
