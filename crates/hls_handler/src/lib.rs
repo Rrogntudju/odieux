@@ -249,10 +249,9 @@ fn hls_live(media_url: Url, tx: SyncSender<Message>) {
 
         if stream.is_empty() {
             thread::sleep(time::Duration::from_millis(500));
+        } else if tx.send(Ok(stream)).is_err() {
+            return; // rx was dropped
         } else {
-            if tx.send(Ok(stream)).is_err() {
-                return; // rx was dropped
-            }
             thread::sleep(media.target_duration);
         }
     }
