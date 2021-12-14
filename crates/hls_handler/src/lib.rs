@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use decrypt_aes128::decrypt_aes128;
 use hls_m3u8::tags::VariantStream;
 use hls_m3u8::types::EncryptionMethod;
@@ -16,10 +16,25 @@ enum InitState {
 }
 type Message = Result<Vec<u8>>;
 const TIME_OUT: u64 = 10;
+const MAX_RETRIES: usize = 5;
 const BOUND: usize = 3;
 
 fn get(url: &str, client: &reqwest::blocking::Client) -> Result<Vec<u8>> {
-    let mut response = client.get(url).send().with_context(|| format!("Échec: get {}", url))?;
+    let mut retries = 0;
+    let mut response = loop {
+        match client.get(url).send() {
+            Ok(response) => break response,
+            Err(e) if e.is_timeout() => {
+                retries += 1;
+                if retries > MAX_RETRIES {
+                    bail!("get {} a échoué après {} tentatives", url, MAX_RETRIES);
+                } else {
+                    continue;
+                }
+            }
+            Err(e) => return Err(e.into()),
+        }
+    };
     let mut buf = Vec::<u8>::new();
     response.copy_to(&mut buf)?;
     Ok(buf)
