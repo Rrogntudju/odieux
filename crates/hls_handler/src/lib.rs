@@ -1,9 +1,10 @@
-use anyhow::{anyhow, bail, Context, Result, Error};
+use anyhow::{anyhow, bail, Context, Error, Result};
 use decrypt_aes128::decrypt_aes128;
 use hls_m3u8::tags::VariantStream;
 use hls_m3u8::types::EncryptionMethod;
 use hls_m3u8::{Decryptable, MasterPlaylist, MediaPlaylist};
 use mpeg2ts::ts::{Pid, ReadTsPacket, TsPacketReader, TsPayload};
+use reqwest::blocking::Client;
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
@@ -15,11 +16,11 @@ enum InitState {
     Pmt(Pid),
 }
 type Message = Result<Vec<u8>>;
-const TIME_OUT: u64 = 2;
-const MAX_RETRIES: usize = 5;
+const TIME_OUT: u64 = 3;
+const MAX_RETRIES: usize = 3;
 const BOUND: usize = 3;
 
-fn get(url: &str, client: &reqwest::blocking::Client) -> Result<Vec<u8>> {
+fn get(url: &str, client: &Client) -> Result<Vec<u8>> {
     let mut retries = 0;
     loop {
         match client.get(url).send() {
@@ -37,7 +38,7 @@ fn get(url: &str, client: &reqwest::blocking::Client) -> Result<Vec<u8>> {
     }
 }
 
-fn hls_on_demand(media_url: Url, client: reqwest::blocking::Client, tx: SyncSender<Message>) {
+fn hls_on_demand(media_url: Url, client: Client, tx: SyncSender<Message>) {
     let response = match get(media_url.as_str(), &client) {
         Ok(response) => String::from_utf8(response).unwrap_or_default(),
         Err(e) => {
@@ -81,11 +82,11 @@ fn hls_on_demand(media_url: Url, client: reqwest::blocking::Client, tx: SyncSend
             };
 
             let key = match cache.get(&uri) {
-                Some(key) => key.to_owned(),
+                Some(key) => key,
                 None => match get(&uri, &client) {
                     Ok(response) => {
-                        cache.insert(uri, response.clone());
-                        response
+                        cache.insert(uri.clone(), response.clone());
+                        cache.get(&uri).unwrap()
                     }
                     Err(e) => {
                         tx.send(Err(e)).unwrap_or_default();
@@ -102,7 +103,7 @@ fn hls_on_demand(media_url: Url, client: reqwest::blocking::Client, tx: SyncSend
                 }
             };
 
-            match decrypt_aes128(&key, &iv, &segment_response) {
+            match decrypt_aes128(key, &iv, &segment_response) {
                 Ok(decrypted) => decrypted,
                 Err(e) => {
                     tx.send(Err(e)).unwrap_or_default();
@@ -216,7 +217,7 @@ fn hls_on_demand(media_url: Url, client: reqwest::blocking::Client, tx: SyncSend
     }
 }
 
-fn hls_live(media_url: Url, client: reqwest::blocking::Client, tx: SyncSender<Message>) {
+fn hls_live(media_url: Url, client: Client, tx: SyncSender<Message>) {
     let mut sequence = String::new();
     loop {
         let response = match get(media_url.as_str(), &client) {
@@ -268,7 +269,7 @@ fn hls_live(media_url: Url, client: reqwest::blocking::Client, tx: SyncSender<Me
     }
 }
 
-fn handle_hls(master_url: Url, client: reqwest::blocking::Client, tx: SyncSender<Message>) {
+fn handle_hls(master_url: Url, client: Client, tx: SyncSender<Message>) {
     let response = match get(master_url.as_str(), &client) {
         Ok(response) => String::from_utf8(response).unwrap_or_default(),
         Err(e) => {
@@ -325,7 +326,7 @@ fn handle_hls(master_url: Url, client: reqwest::blocking::Client, tx: SyncSender
 
 pub fn start(url: &str) -> Result<Receiver<Message>> {
     let master_url = Url::try_from(url).context("Échec: validation de l'url MasterPlaylist")?;
-    let client = reqwest::blocking::Client::builder().timeout(Duration::from_secs(TIME_OUT)).build()?;
+    let client = Client::builder().timeout(Duration::from_secs(TIME_OUT)).build()?;
     let (tx, rx) = sync_channel::<Message>(BOUND);
     thread::spawn(move || handle_hls(master_url, client, tx));
 
