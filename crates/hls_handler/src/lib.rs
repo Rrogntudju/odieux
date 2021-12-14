@@ -74,19 +74,19 @@ fn hls_on_demand(media_url: Url, client: Client, tx: SyncSender<Message>) {
             let key = keys.iter().find(|k| k.method == EncryptionMethod::Aes128);
 
             let (uri, iv) = match key {
-                Some(key) => (key.uri().as_ref().to_string(), key.iv.to_slice()),
+                Some(key) => (key.uri().as_ref(), key.iv.to_slice()),
                 None => {
                     tx.send(Err(anyhow!("Le segment n'est pas chiffré avec AES-128"))).unwrap_or_default();
                     return;
                 }
             };
 
-            let key = match cache.get(&uri) {
+            let key = match cache.get(uri) {
                 Some(key) => key,
-                None => match get(&uri, &client) {
+                None => match get(uri, &client) {
                     Ok(response) => {
-                        cache.insert(uri.clone(), response);
-                        cache.get(&uri).unwrap()
+                        cache.insert(uri.to_string(), response);
+                        cache.get(uri).unwrap()
                     }
                     Err(e) => {
                         tx.send(Err(e)).unwrap_or_default();
