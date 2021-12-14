@@ -1,4 +1,4 @@
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{anyhow, bail, Context, Result, Error};
 use decrypt_aes128::decrypt_aes128;
 use hls_m3u8::tags::VariantStream;
 use hls_m3u8::types::EncryptionMethod;
@@ -15,15 +15,15 @@ enum InitState {
     Pmt(Pid),
 }
 type Message = Result<Vec<u8>>;
-const TIME_OUT: u64 = 10;
+const TIME_OUT: u64 = 2;
 const MAX_RETRIES: usize = 5;
 const BOUND: usize = 3;
 
 fn get(url: &str, client: &reqwest::blocking::Client) -> Result<Vec<u8>> {
     let mut retries = 0;
-    let mut response = loop {
+    loop {
         match client.get(url).send() {
-            Ok(response) => break response,
+            Ok(response) => break Ok(response.bytes()?.to_vec()),
             Err(e) if e.is_timeout() => {
                 retries += 1;
                 if retries > MAX_RETRIES {
@@ -32,12 +32,9 @@ fn get(url: &str, client: &reqwest::blocking::Client) -> Result<Vec<u8>> {
                     continue;
                 }
             }
-            Err(e) => return Err(e.into()),
+            Err(e) => return Err(Error::new(e).context(format!("Échec: get {}", url))),
         }
-    };
-    let mut buf = Vec::<u8>::new();
-    response.copy_to(&mut buf)?;
-    Ok(buf)
+    }
 }
 
 fn hls_on_demand(media_url: Url, client: reqwest::blocking::Client, tx: SyncSender<Message>) {
