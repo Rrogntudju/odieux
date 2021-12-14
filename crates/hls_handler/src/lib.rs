@@ -7,7 +7,7 @@ use mpeg2ts::ts::{Pid, ReadTsPacket, TsPacketReader, TsPayload};
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
-use std::{thread, time};
+use std::{thread, time::Duration};
 use url::{ParseError, Url};
 
 enum InitState {
@@ -18,16 +18,15 @@ type Message = Result<Vec<u8>>;
 const TIME_OUT: u64 = 10;
 const BOUND: usize = 3;
 
-fn get(url: &str) -> Result<Vec<u8>> {
-    Ok(minreq::get(url)
-        .with_timeout(TIME_OUT)
-        .send()
-        .with_context(|| format!("Échec: get {}", url))?
-        .into_bytes())
+fn get(url: &str, client: &reqwest::blocking::Client) -> Result<Vec<u8>> {
+    let mut response = client.get(url).send().with_context(|| format!("Échec: get {}", url))?;
+    let mut buf = Vec::<u8>::new();
+    response.copy_to(&mut buf)?;
+    Ok(buf)
 }
 
-fn hls_on_demand(media_url: Url, tx: SyncSender<Message>) {
-    let response = match get(media_url.as_str()) {
+fn hls_on_demand(media_url: Url, client: reqwest::blocking::Client, tx: SyncSender<Message>) {
+    let response = match get(media_url.as_str(), &client) {
         Ok(response) => String::from_utf8(response).unwrap_or_default(),
         Err(e) => {
             tx.send(Err(e)).unwrap_or_default();
@@ -46,7 +45,7 @@ fn hls_on_demand(media_url: Url, tx: SyncSender<Message>) {
     let mut cache: HashMap<String, Vec<u8>> = HashMap::new();
 
     for (_, media_segment) in media.segments {
-        let segment_response = match get(media_segment.uri().as_ref()) {
+        let segment_response = match get(media_segment.uri().as_ref(), &client) {
             Ok(response) => response,
             Err(e) => {
                 tx.send(Err(e)).unwrap_or_default();
@@ -71,7 +70,7 @@ fn hls_on_demand(media_url: Url, tx: SyncSender<Message>) {
 
             let key = match cache.get(&uri) {
                 Some(key) => key.to_owned(),
-                None => match get(&uri) {
+                None => match get(&uri, &client) {
                     Ok(response) => {
                         cache.insert(uri, response.clone());
                         response
@@ -205,10 +204,10 @@ fn hls_on_demand(media_url: Url, tx: SyncSender<Message>) {
     }
 }
 
-fn hls_live(media_url: Url, tx: SyncSender<Message>) {
+fn hls_live(media_url: Url, client: reqwest::blocking::Client, tx: SyncSender<Message>) {
     let mut sequence = String::new();
     loop {
-        let response = match get(media_url.as_str()) {
+        let response = match get(media_url.as_str(), &client) {
             Ok(response) => String::from_utf8(response).unwrap_or_default(),
             Err(e) => {
                 tx.send(Err(e)).unwrap_or_default();
@@ -235,7 +234,7 @@ fn hls_live(media_url: Url, tx: SyncSender<Message>) {
                         return;
                     }
                 };
-                let mut segment_response = match get(segment_url.as_str()) {
+                let mut segment_response = match get(segment_url.as_str(), &client) {
                     Ok(response) => response,
                     Err(e) => {
                         tx.send(Err(e)).unwrap_or_default();
@@ -248,7 +247,7 @@ fn hls_live(media_url: Url, tx: SyncSender<Message>) {
         }
 
         if stream.is_empty() {
-            thread::sleep(time::Duration::from_millis(500));
+            thread::sleep(Duration::from_millis(500));
         } else if tx.send(Ok(stream)).is_err() {
             return; // rx was dropped
         } else {
@@ -257,8 +256,8 @@ fn hls_live(media_url: Url, tx: SyncSender<Message>) {
     }
 }
 
-fn handle_hls(master_url: Url, tx: SyncSender<Message>) {
-    let response = match get(master_url.as_str()) {
+fn handle_hls(master_url: Url, client: reqwest::blocking::Client, tx: SyncSender<Message>) {
+    let response = match get(master_url.as_str(), &client) {
         Ok(response) => String::from_utf8(response).unwrap_or_default(),
         Err(e) => {
             tx.send(Err(e)).unwrap_or_default();
@@ -301,9 +300,9 @@ fn handle_hls(master_url: Url, tx: SyncSender<Message>) {
     };
 
     match Url::try_from(media_url.as_ref()) {
-        Ok(url) => hls_on_demand(url, tx),
+        Ok(url) => hls_on_demand(url, client, tx),
         Err(ParseError::RelativeUrlWithoutBase) => match master_url.join(media_url).context("Échec: join de l'url MediaPlaylist") {
-            Ok(url) => hls_live(url, tx),
+            Ok(url) => hls_live(url, client, tx),
             Err(e) => tx.send(Err(e)).unwrap_or_default(),
         },
         Err(e) => tx
@@ -314,8 +313,9 @@ fn handle_hls(master_url: Url, tx: SyncSender<Message>) {
 
 pub fn start(url: &str) -> Result<Receiver<Message>> {
     let master_url = Url::try_from(url).context("Échec: validation de l'url MasterPlaylist")?;
+    let client = reqwest::blocking::Client::builder().timeout(Duration::from_secs(TIME_OUT)).build()?;
     let (tx, rx) = sync_channel::<Message>(BOUND);
-    thread::spawn(move || handle_hls(master_url, tx));
+    thread::spawn(move || handle_hls(master_url, client, tx));
 
     Ok(rx)
 }
