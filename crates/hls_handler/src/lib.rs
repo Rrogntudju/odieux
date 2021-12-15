@@ -85,7 +85,7 @@ fn hls_on_demand(media_url: Url, client: Client, tx: SyncSender<Message>) {
                 Some(key) => key,
                 None => match get(uri, &client) {
                     Ok(response) => {
-                        cache.insert(uri.to_string(), response);
+                        cache.insert(uri.to_owned(), response);
                         cache.get(uri).unwrap()
                     }
                     Err(e) => {
