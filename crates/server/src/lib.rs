@@ -79,16 +79,13 @@ mod handlers {
     const URL_VALIDEUR_OD: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianet&connectionType=hd&deviceType=ipad&idMedia={}&multibitrate=true&output=json&tech=hls";
     const URL_VALIDEUR_LIVE: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianetlive&connectionType=hd&deviceType=ipad&idMedia=cbvx&multibitrate=true&output=json&tech=hls";
 
-    async fn start_player(id: Option<&str>) -> Result<(Sink, OutputStream)> {
+    async fn start_player(id: Option<&str>, client: &Client) -> Result<(Sink, OutputStream)> {
         let url = match id {
             Some(id) => URL_VALIDEUR_OD.replace("{}", id),
             None => URL_VALIDEUR_LIVE.to_owned(),
         };
-        let value: Value = minreq::get(&url)
-            .with_timeout(TIME_OUT)
-            .send()
-            .with_context(|| format!("Échec: get {}", url))?
-            .json()?;
+        let response = client.get(&url).send().await?.text().await?;
+        let value: Value = serde_json::from_str(&response)?;
         hls_player::start(value["url"].as_str().unwrap_or_default())
     }
 
@@ -106,15 +103,15 @@ mod handlers {
         });
     }
 
-    async fn command_start(épisode: Episode) {
+    async fn command_start(épisode: Episode, client: &Client) {
         let result = if épisode.titre == "En direct" {
             command_stop();
-            start_player(None).await
+            start_player(None, client).await
         } else if épisode.media_id.is_empty() {
             Err(anyhow!("Aucune musique diffusée disponible"))
         } else {
             command_stop();
-            start_player(Some(&épisode.media_id)).await
+            start_player(Some(&épisode.media_id), client).await
         };
         match result {
             Ok((new_sink, new_os)) => {
@@ -133,7 +130,7 @@ mod handlers {
                 eprintln!("{}", &message);
                 STATE.with(|state| state.borrow_mut().message = message);
             }
-        };
+        }
     }
 
     pub async fn command(body: Bytes) -> Result<impl warp::Reply, Infallible> {
@@ -143,7 +140,10 @@ mod handlers {
                     STATE.with(|state| state.borrow_mut().message = String::default());
                 }
                 match command {
-                    Command::Start(épisode) => command_start(épisode).await,
+                    Command::Start(épisode) => {
+                        let client = Client::builder().timeout(Duration::from_secs(TIME_OUT)).build().unwrap();
+                        command_start(épisode, &client).await;
+                    }
                     Command::Volume(vol) => SINK.with(|sink| {
                         if STATE.with(|state| state.borrow().player != PlayerState::Stopped) {
                             sink.borrow().as_ref().unwrap().set_volume((vol as f32) / 2.0);
@@ -166,23 +166,23 @@ mod handlers {
                         }
                     }),
                     Command::Random(pages) => {
-                        let mut rng = rand::thread_rng();
-                        let page: usize = rng.gen_range(1..=pages);
-                        let client = Client::builder().timeout(Duration::from_secs(TIME_OUT)).build()?;
-                        let mut épisodes = gratte(CSB, page).context("Échec du grattage").unwrap_or_else(|e| {
+                        let page: usize = rand::thread_rng().gen_range(1..=pages);
+                        let client = Client::builder().timeout(Duration::from_secs(TIME_OUT)).build().unwrap();
+                        let mut épisodes = gratte(CSB, page, &client).await.context("Échec du grattage").unwrap_or_else(|e| {
                             eprintln!("{:#}", e);
                             Vec::new()
                         });
                         if épisodes.is_empty() {
                             STATE.with(|state| state.borrow_mut().message = format!("Erreur de la page {} dans Random", page));
                         } else {
-                            let i = rng.gen_range(0..épisodes.len());
-                            command_start(épisodes.swap_remove(i));
+                            let i = rand::thread_rng().gen_range(0..épisodes.len());
+                            command_start(épisodes.swap_remove(i), &client).await;
                         }
                     }
                     Command::Stop => command_stop(),
                     Command::Page(page) => {
-                        let épisodes = gratte(CSB, page).context("Échec du grattage").unwrap_or_else(|e| {
+                        let client = Client::builder().timeout(Duration::from_secs(TIME_OUT)).build().unwrap();
+                        let épisodes = gratte(CSB, page, &client).await.context("Échec du grattage").unwrap_or_else(|e| {
                             eprintln!("{:#}", e);
                             Vec::new()
                         });
