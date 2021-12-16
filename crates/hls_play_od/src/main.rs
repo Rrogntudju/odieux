@@ -1,9 +1,9 @@
 use gratte::gratte;
+use reqwest::Client;
 use serde_json::value::Value;
 use std::env::args;
 use std::error::Error;
 use std::time::Duration;
-use reqwest::Client;
 
 const TIME_OUT: u64 = 10;
 const CSB: &str = "https://ici.radio-canada.ca/ohdio/musique/emissions/1161/cestsibon?pageNumber=";
