@@ -1,9 +1,9 @@
 use anyhow::{bail, Result};
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use soup::prelude::*;
 use std::default::Default;
-use reqwest::Client;
 
 #[derive(Deserialize, Serialize, Default, Clone, PartialEq)]
 pub struct Episode {
@@ -53,7 +53,13 @@ mod tests {
     #[tokio::test]
     async fn csb() {
         let client = Client::builder().timeout(Duration::from_secs(10)).build().unwrap();
-        match gratte("https://ici.radio-canada.ca/ohdio/musique/emissions/1161/cestsibon?pageNumber=", 1, &client).await {
+        match gratte(
+            "https://ici.radio-canada.ca/ohdio/musique/emissions/1161/cestsibon?pageNumber=",
+            1,
+            &client,
+        )
+        .await
+        {
             Ok(épisodes) => assert!(épisodes.len() > 0),
             Err(e) => {
                 println!("{:?}", e);
