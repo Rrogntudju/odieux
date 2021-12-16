@@ -14,8 +14,8 @@ pub struct Episode {
 pub async fn gratte(url: &str, page: usize, client: &Client) -> Result<Vec<Episode>> {
     let mut épisodes = Vec::new();
     let url = format!("{}{}", url, page);
-    let page = client.get(&url).send().await?.bytes().await?;
-    let soup = Soup::new(&String::from_utf8(page.to_vec()).unwrap_or_default());
+    let page = client.get(&url).send().await?.text().await?;
+    let soup = Soup::new(&page);
     let script = soup.tag("script").find_all().find_map(|s| match s.text() {
         t if t.starts_with("window._rcState_") => Some(t),
         _ => None,

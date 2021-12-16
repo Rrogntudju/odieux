@@ -1,6 +1,6 @@
 use gratte::gratte;
 use reqwest::Client;
-use serde_json::value::Value;
+use serde_json::Value;
 use std::env;
 use std::env::args;
 use std::error::Error;
@@ -35,7 +35,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
         return Err("Aucune musique diffusée disponible".into());
     }
     let url = URL_VALIDEUR.replace("{}", media_id);
-    let value: Value = client.get(&url).send().await?.json().await?;
+    let response = client.get(&url).send().await?;
+    let value: Value = serde_json::from_str(&response.text().await?)?;
 
     let mut aac = env::temp_dir();
     aac.set_file_name(&épisodes[num - 1].titre);
