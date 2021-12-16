@@ -32,8 +32,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
         return Err("Aucune musique diffusée disponible".into());
     }
     let url = URL_VALIDEUR.replace("{}", media_id);
-    let response = client.get(&url).send().await?;
-    let value: Value = serde_json::from_str(&response.text().await?)?;
+    let response = client.get(&url).send().await?.text().await?;
+    let value: Value = serde_json::from_str(&response)?;
 
     let (sink, _output_stream) = hls_player::start(value["url"].as_str().unwrap_or_default())?;
     sink.sleep_until_end();
