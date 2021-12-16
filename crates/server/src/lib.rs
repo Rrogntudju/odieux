@@ -68,11 +68,11 @@ mod handlers {
     use anyhow::{anyhow, Context, Result};
     use bytes::Bytes;
     use rand::Rng;
+    use reqwest::Client;
     use serde_json::Value;
     use std::convert::Infallible;
-    use warp::http::{Error, Response, StatusCode};
     use std::time::Duration;
-    use reqwest::Client;
+    use warp::http::{Error, Response, StatusCode};
 
     const TIME_OUT: u64 = 10;
     const CSB: &str = "https://ici.radio-canada.ca/ohdio/musique/emissions/1161/cestsibon?pageNumber=";
