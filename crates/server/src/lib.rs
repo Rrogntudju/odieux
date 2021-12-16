@@ -1,6 +1,5 @@
 use gratte::{gratte, Episode};
 use hls_player::{OutputStream, Sink};
-use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::thread_local;
@@ -68,7 +67,8 @@ mod handlers {
     use super::*;
     use anyhow::{anyhow, Context, Result};
     use bytes::Bytes;
-    use serde_json::value::Value;
+    use rand::Rng;
+    use serde_json::Value;
     use std::convert::Infallible;
     use warp::http::{Error, Response, StatusCode};
 
