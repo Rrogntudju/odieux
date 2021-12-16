@@ -71,13 +71,15 @@ mod handlers {
     use serde_json::Value;
     use std::convert::Infallible;
     use warp::http::{Error, Response, StatusCode};
+    use std::time::Duration;
+    use reqwest::Client;
 
     const TIME_OUT: u64 = 10;
     const CSB: &str = "https://ici.radio-canada.ca/ohdio/musique/emissions/1161/cestsibon?pageNumber=";
     const URL_VALIDEUR_OD: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianet&connectionType=hd&deviceType=ipad&idMedia={}&multibitrate=true&output=json&tech=hls";
     const URL_VALIDEUR_LIVE: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianetlive&connectionType=hd&deviceType=ipad&idMedia=cbvx&multibitrate=true&output=json&tech=hls";
 
-    fn start(id: Option<&str>) -> Result<(Sink, OutputStream)> {
+    async fn start_player(id: Option<&str>) -> Result<(Sink, OutputStream)> {
         let url = match id {
             Some(id) => URL_VALIDEUR_OD.replace("{}", id),
             None => URL_VALIDEUR_LIVE.to_owned(),
@@ -104,15 +106,15 @@ mod handlers {
         });
     }
 
-    fn command_start(épisode: Episode) {
+    async fn command_start(épisode: Episode) {
         let result = if épisode.titre == "En direct" {
             command_stop();
-            start(None)
+            start_player(None).await
         } else if épisode.media_id.is_empty() {
             Err(anyhow!("Aucune musique diffusée disponible"))
         } else {
             command_stop();
-            start(Some(&épisode.media_id))
+            start_player(Some(&épisode.media_id)).await
         };
         match result {
             Ok((new_sink, new_os)) => {
@@ -141,7 +143,7 @@ mod handlers {
                     STATE.with(|state| state.borrow_mut().message = String::default());
                 }
                 match command {
-                    Command::Start(épisode) => command_start(épisode),
+                    Command::Start(épisode) => command_start(épisode).await,
                     Command::Volume(vol) => SINK.with(|sink| {
                         if STATE.with(|state| state.borrow().player != PlayerState::Stopped) {
                             sink.borrow().as_ref().unwrap().set_volume((vol as f32) / 2.0);
@@ -166,6 +168,7 @@ mod handlers {
                     Command::Random(pages) => {
                         let mut rng = rand::thread_rng();
                         let page: usize = rng.gen_range(1..=pages);
+                        let client = Client::builder().timeout(Duration::from_secs(TIME_OUT)).build()?;
                         let mut épisodes = gratte(CSB, page).context("Échec du grattage").unwrap_or_else(|e| {
                             eprintln!("{:#}", e);
                             Vec::new()
