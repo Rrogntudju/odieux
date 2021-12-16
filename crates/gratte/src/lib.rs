@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use soup::prelude::*;
 use std::default::Default;
+use reqwest::Client;
 
 #[derive(Deserialize, Serialize, Default, Clone, PartialEq)]
 pub struct Episode {
@@ -10,11 +11,11 @@ pub struct Episode {
     pub media_id: String,
 }
 
-pub fn gratte(url: &str, page: usize) -> Result<Vec<Episode>> {
+pub async fn gratte(url: &str, page: usize, client: &Client) -> Result<Vec<Episode>> {
     let mut épisodes = Vec::new();
     let url = format!("{}{}", url, page);
-    let page = minreq::get(&url).with_timeout(10).send()?;
-    let soup = Soup::new(page.as_str().unwrap_or("DOH!"));
+    let page = client.get(&url).send().await?.bytes().await?;
+    let soup = Soup::new(&String::from_utf8(page.to_vec()).unwrap_or_default());
     let script = soup.tag("script").find_all().find_map(|s| match s.text() {
         t if t.starts_with("window._rcState_") => Some(t),
         _ => None,
@@ -47,10 +48,12 @@ pub fn gratte(url: &str, page: usize) -> Result<Vec<Episode>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::time::Duration;
 
-    #[test]
-    fn csb() {
-        match gratte("https://ici.radio-canada.ca/ohdio/musique/emissions/1161/cestsibon?pageNumber=", 1) {
+    #[tokio::test]
+    async fn csb() {
+        let client = Client::builder().timeout(Duration::from_secs(10)).build().unwrap();
+        match gratte("https://ici.radio-canada.ca/ohdio/musique/emissions/1161/cestsibon?pageNumber=", 1, &client).await {
             Ok(épisodes) => assert!(épisodes.len() > 0),
             Err(e) => {
                 println!("{:?}", e);
