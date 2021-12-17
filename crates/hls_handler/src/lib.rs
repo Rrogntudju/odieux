@@ -16,7 +16,7 @@ enum InitState {
     Pmt(Pid),
 }
 type Message = Result<Vec<u8>>;
-const TIME_OUT: u64 = 10;
+const TIME_OUT: u64 = 15;
 const MAX_RETRIES: usize = 5;
 const WAIT: u64 = 1;
 const BOUND: usize = 3;
