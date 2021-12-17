@@ -16,9 +16,8 @@ enum InitState {
     Pmt(Pid),
 }
 type Message = Result<Vec<u8>>;
-const TIME_OUT: u64 = 15;
-const MAX_RETRIES: usize = 5;
-const WAIT: u64 = 1;
+const TIME_OUT: u64 = 30;
+const MAX_RETRIES: usize = 4;
 const BOUND: usize = 3;
 
 fn get(url: &str, client: &Client) -> Result<Vec<u8>> {
@@ -32,7 +31,6 @@ fn get(url: &str, client: &Client) -> Result<Vec<u8>> {
                     bail!("get {} a échoué après {} tentatives", url, MAX_RETRIES);
                 } else {
                     eprintln!("Timeout {} secs: get {}", TIME_OUT, url);
-                    thread::sleep(Duration::from_secs(WAIT));
                     continue;
                 }
             }
