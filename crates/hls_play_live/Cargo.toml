@@ -6,6 +6,7 @@ edition = "2021"
 
 [dependencies]
 hls_player = {path = "../hls_player"}
-minreq = { version = "2", features = ["https", "json-using-serde"] }
+reqwest = "0.11"
 serde_json = "1"
+tokio = {version = "1", features = ["macros"]}
 
