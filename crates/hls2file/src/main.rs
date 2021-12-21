@@ -47,7 +47,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     };
     let handle = tokio::spawn(async move { client.get(&url).send().await?.text().await });
     let mut aac = env::temp_dir();
-    aac.set_file_name(&titre);
+    aac.push(&titre);
     aac.set_extension("aac");
     let mut file = BufWriter::new(File::create(aac).await?);
     let value: Value = serde_json::from_str(&handle.await??)?;
