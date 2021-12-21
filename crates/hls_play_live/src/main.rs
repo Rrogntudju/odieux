@@ -1,7 +1,7 @@
+use reqwest::Client;
 use serde_json::value::Value;
 use std::error::Error;
 use std::time::Duration;
-use reqwest::Client;
 
 const TIME_OUT: u64 = 10;
 const URL_VALIDEUR: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianetlive&connectionType=hd&deviceType=ipad&idMedia=cbvx&multibitrate=true&output=json&tech=hls";
