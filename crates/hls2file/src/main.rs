@@ -4,7 +4,9 @@ use serde_json::Value;
 use std::env;
 use std::env::args;
 use std::error::Error;
+use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
 use std::time::Duration;
+use std::{io, thread};
 use tokio::fs::File;
 use tokio::io::{AsyncWriteExt, BufWriter};
 
@@ -41,19 +43,30 @@ async fn main() -> Result<(), Box<dyn Error>> {
         (URL_VALIDEUR_LIVE.to_owned(), "direct".to_owned())
     };
     let handle = tokio::spawn(async move { client.get(&url).send().await?.text().await });
-
     let mut aac = env::temp_dir();
     aac.set_file_name(&titre);
     aac.set_extension("aac");
     let mut file = BufWriter::new(File::create(aac).await?);
-
     let value: Value = serde_json::from_str(&handle.await??)?;
     let rx = hls_handler::start(value["url"].as_str().unwrap_or_default())?;
+
+    let signal = Arc::new(AtomicBool::new(false));
+    let signal2 = signal.clone();
+    thread::spawn(move || {
+        println!("Faites <Enter> pour interrompre...");
+        let mut input = String::new();
+        let _ = io::stdin().read_line(&mut input);
+        signal2.store(true, Ordering::Relaxed);
+    });
+
     for message in rx {
         match message {
             Ok(stream) => file.write_all(&stream).await?,
             Err(e) => return Err(e.into()),
         };
+        if signal.load(Ordering::Relaxed) {
+            return Ok(());
+        }
     }
     file.flush().await?;
 
