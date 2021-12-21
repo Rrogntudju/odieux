@@ -4,7 +4,10 @@ use serde_json::Value;
 use std::env;
 use std::env::args;
 use std::error::Error;
-use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc,
+};
 use std::time::Duration;
 use std::{io, thread};
 use tokio::fs::File;
@@ -65,7 +68,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             Err(e) => return Err(e.into()),
         };
         if signal.load(Ordering::Relaxed) {
-            return Ok(());
+            break;
         }
     }
     file.flush().await?;
