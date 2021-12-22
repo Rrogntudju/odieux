@@ -41,7 +41,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         if media_id.is_empty() {
             return Err("Aucune musique diffusée disponible".into());
         }
-        (URL_VALIDEUR_OD.replace("{}", media_id), épisodes[num - 1].titre.clone())
+        (URL_VALIDEUR_OD.replace("{}", media_id), épisodes[num - 1].titre.trim().to_owned())
     } else {
         (URL_VALIDEUR_LIVE.to_owned(), "direct".to_owned())
     };
