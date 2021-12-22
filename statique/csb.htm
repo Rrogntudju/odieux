@@ -24,7 +24,7 @@
               <i class="fa fa-play"></i>
             </span>
             <span class="w3-button w3-green w3-round-large" 
-                  data-bind="hidden: player() == 'Paused', css: { 'w3-disabled': playerOff }, click: toggle">
+                  data-bind="hidden: player() != 'Playing', css: { 'w3-disabled': playerOff }, click: toggle">
               <i class="fa fa-pause"></i>
             </span>
             <span class="w3-button w3-green w3-round-large" 
