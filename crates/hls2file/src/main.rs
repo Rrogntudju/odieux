@@ -45,12 +45,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
     } else {
         (URL_VALIDEUR_LIVE.to_owned(), "direct".to_owned())
     };
-    let handle = tokio::spawn(async move { client.get(&url).send().await?.text().await });
+    let task = tokio::spawn(async move { client.get(&url).send().await?.text().await });
     let mut aac = env::temp_dir();
     aac.push(&titre);
     aac.set_extension("aac");
     let mut file = BufWriter::new(File::create(aac).await?);
-    let value: Value = serde_json::from_str(&handle.await??)?;
+    let value: Value = serde_json::from_str(&task.await??)?;
     let rx = hls_handler::start(value["url"].as_str().unwrap_or_default())?;
 
     let signal = Arc::new(AtomicBool::new(false));
