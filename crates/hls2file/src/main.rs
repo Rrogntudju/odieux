@@ -9,7 +9,7 @@ use std::sync::{
     Arc,
 };
 use std::time::Duration;
-use std::{io, thread};
+use std::io;
 use tokio::fs::File;
 use tokio::io::{AsyncWriteExt, BufWriter};
 
@@ -55,7 +55,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let signal = Arc::new(AtomicBool::new(false));
     let signal2 = signal.clone();
-    thread::spawn(move || {
+    tokio::task::spawn_blocking(move || {
         println!("Faites <Enter> pour interrompre...");
         let mut input = String::new();
         let _ = io::stdin().read_line(&mut input);
