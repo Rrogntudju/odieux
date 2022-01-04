@@ -4,12 +4,12 @@ use serde_json::Value;
 use std::env;
 use std::env::args;
 use std::error::Error;
+use std::io;
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc,
 };
 use std::time::Duration;
-use std::io;
 use tokio::fs::File;
 use tokio::io::{AsyncWriteExt, BufWriter};
 

@@ -1,8 +1,13 @@
 use gratte::{gratte, Episode};
 use hls_player::{OutputStream, Sink};
+use once_cell::sync::Lazy;
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::thread_local;
+use std::time::Duration;
+
+const TIME_OUT: u64 = 15;
 
 #[derive(Deserialize, PartialEq)]
 enum Command {
@@ -44,6 +49,8 @@ thread_local! {
     });
 }
 
+static CLIENT: Lazy<Client> = Lazy::new(|| Client::builder().timeout(Duration::from_secs(TIME_OUT)).build().unwrap());
+
 pub mod filters {
     use super::*;
     use std::path::PathBuf;
@@ -68,23 +75,20 @@ mod handlers {
     use anyhow::{anyhow, Context, Result};
     use bytes::Bytes;
     use rand::Rng;
-    use reqwest::Client;
     use serde_json::Value;
     use std::convert::Infallible;
-    use std::time::Duration;
     use warp::http::{Error, Response, StatusCode};
 
-    const TIME_OUT: u64 = 15;
     const CSB: &str = "https://ici.radio-canada.ca/ohdio/musique/emissions/1161/cestsibon?pageNumber=";
     const URL_VALIDEUR_OD: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianet&connectionType=hd&deviceType=ipad&idMedia={}&multibitrate=true&output=json&tech=hls";
     const URL_VALIDEUR_LIVE: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianetlive&connectionType=hd&deviceType=ipad&idMedia=cbvx&multibitrate=true&output=json&tech=hls";
 
-    async fn start_player(id: Option<&str>, client: &Client) -> Result<(Sink, OutputStream)> {
+    async fn start_player(id: Option<&str>) -> Result<(Sink, OutputStream)> {
         let url = match id {
             Some(id) => URL_VALIDEUR_OD.replace("{}", id),
             None => URL_VALIDEUR_LIVE.to_owned(),
         };
-        let response = client.get(&url).send().await?.text().await?;
+        let response = &CLIENT.get(&url).send().await?.text().await?;
         let value: Value = serde_json::from_str(&response)?;
         hls_player::start(value["url"].as_str().unwrap_or_default())
     }
@@ -103,15 +107,15 @@ mod handlers {
         });
     }
 
-    async fn command_start(épisode: Episode, client: &Client) {
+    async fn command_start(épisode: Episode) {
         let result = if épisode.titre == "En direct" {
             command_stop();
-            start_player(None, client).await
+            start_player(None).await
         } else if épisode.media_id.is_empty() {
             Err(anyhow!("Aucune musique diffusée disponible"))
         } else {
             command_stop();
-            start_player(Some(&épisode.media_id), client).await
+            start_player(Some(&épisode.media_id)).await
         };
         match result {
             Ok((new_sink, new_os)) => {
@@ -140,10 +144,7 @@ mod handlers {
                     STATE.with(|state| state.borrow_mut().message = String::default());
                 }
                 match command {
-                    Command::Start(épisode) => {
-                        let client = Client::builder().timeout(Duration::from_secs(TIME_OUT)).build().unwrap();
-                        command_start(épisode, &client).await;
-                    }
+                    Command::Start(épisode) => command_start(épisode).await,
                     Command::Volume(vol) => SINK.with(|sink| {
                         if STATE.with(|state| state.borrow().player != PlayerState::Stopped) {
                             sink.borrow().as_ref().unwrap().set_volume((vol as f32) / 2.0);
@@ -167,8 +168,7 @@ mod handlers {
                     }),
                     Command::Random(pages) => {
                         let page: usize = rand::thread_rng().gen_range(1..=pages);
-                        let client = Client::builder().timeout(Duration::from_secs(TIME_OUT)).build().unwrap();
-                        let mut épisodes = gratte(CSB, page, &client).await.context("Échec du grattage").unwrap_or_else(|e| {
+                        let mut épisodes = gratte(CSB, page, &CLIENT).await.context("Échec du grattage").unwrap_or_else(|e| {
                             eprintln!("{:#}", e);
                             Vec::new()
                         });
@@ -176,13 +176,12 @@ mod handlers {
                             STATE.with(|state| state.borrow_mut().message = format!("Erreur de la page {} dans Random", page));
                         } else {
                             let i = rand::thread_rng().gen_range(0..épisodes.len());
-                            command_start(épisodes.swap_remove(i), &client).await;
+                            command_start(épisodes.swap_remove(i)).await;
                         }
                     }
                     Command::Stop => command_stop(),
                     Command::Page(page) => {
-                        let client = Client::builder().timeout(Duration::from_secs(TIME_OUT)).build().unwrap();
-                        let épisodes = gratte(CSB, page, &client).await.context("Échec du grattage").unwrap_or_else(|e| {
+                        let épisodes = gratte(CSB, page, &CLIENT).await.context("Échec du grattage").unwrap_or_else(|e| {
                             eprintln!("{:#}", e);
                             Vec::new()
                         });
