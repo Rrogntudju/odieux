@@ -114,7 +114,6 @@ fn hls_on_demand(media_url: Url, client: Client, tx: SyncSender<Message>) {
         };
 
         let mut ts = TsPacketReader::new(decrypted.as_slice());
-        let mut stream: Vec<u8> = Vec::new();
 
         // Obtenir le pid du premier programme
         let mut state = InitState::Pid0;
@@ -182,6 +181,7 @@ fn hls_on_demand(media_url: Url, client: Client, tx: SyncSender<Message>) {
             }
         };
 
+        let mut stream: Vec<u8> = Vec::new();
         loop {
             let packet = match ts.read_ts_packet().context("Échec: lecture d'un paquet TS") {
                 Ok(packet) => {
