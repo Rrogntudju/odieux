@@ -237,7 +237,6 @@ fn hls_live(media_url: Url, client: Client, tx: SyncSender<Message>) {
             }
         };
 
-        let mut stream: Vec<u8> = Vec::new();
         for (_, media_segment) in media.segments {
             let uri = media_segment.uri().as_ref();
             if sequence.as_str() < uri {
@@ -248,25 +247,20 @@ fn hls_live(media_url: Url, client: Client, tx: SyncSender<Message>) {
                         return;
                     }
                 };
-                let mut segment_response = match get(segment_url.as_str(), &client) {
+                let segment_response = match get(segment_url.as_str(), &client) {
                     Ok(response) => response,
                     Err(e) => {
                         tx.send(Err(e)).unwrap_or_default();
                         return;
                     }
                 };
-                stream.append(&mut segment_response);
+                if tx.send(Ok(segment_response)).is_err() {
+                    return; // rx was dropped
+                }
                 sequence = uri.to_owned();
             }
         }
-
-        if stream.is_empty() {
-            thread::sleep(Duration::from_millis(500));
-        } else if tx.send(Ok(stream)).is_err() {
-            return; // rx was dropped
-        } else {
-            thread::sleep(media.target_duration);
-        }
+        thread::sleep(media.target_duration);
     }
 }
 
