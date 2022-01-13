@@ -8,10 +8,8 @@ use reqwest::blocking::Client;
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
-use std::{
-    thread,
-    time::{Duration, Instant},
-};
+use std::thread;
+use std::time::{Duration, Instant};
 use url::{ParseError, Url};
 
 enum InitState {
