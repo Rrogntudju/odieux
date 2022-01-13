@@ -21,6 +21,7 @@ enum InitState {
 type Message = Result<Vec<u8>>;
 const TIME_OUT: u64 = 30;
 const MAX_RETRIES: usize = 4;
+const RETRY_DELAY: u64 = 250;
 const BOUND: usize = 3;
 
 fn get(url: &str, client: &Client) -> Result<Vec<u8>> {
@@ -28,16 +29,16 @@ fn get(url: &str, client: &Client) -> Result<Vec<u8>> {
     loop {
         match client.get(url).send() {
             Ok(response) => break Ok(response.bytes()?.to_vec()),
-            Err(e) if e.is_timeout() => {
+            Err(e) => {
                 retries += 1;
                 if retries > MAX_RETRIES {
                     bail!("get {} a échoué après {} tentatives", url, MAX_RETRIES);
                 } else {
-                    eprintln!("Timeout {} secs: get {}", TIME_OUT, url);
+                    eprintln!("{:#}", Error::new(e).context(format!("Échec: get {}", url)));
+                    thread::sleep(Duration::from_millis(RETRY_DELAY));
                     continue;
                 }
             }
-            Err(e) => return Err(Error::new(e).context(format!("Échec: get {}", url))),
         }
     }
 }
