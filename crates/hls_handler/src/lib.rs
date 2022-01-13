@@ -8,7 +8,7 @@ use reqwest::blocking::Client;
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
-use std::{thread, time::Duration};
+use std::{thread, time::{Duration, Instant}};
 use url::{ParseError, Url};
 
 enum InitState {
@@ -221,6 +221,9 @@ fn hls_on_demand(media_url: Url, client: Client, tx: SyncSender<Message>) {
 fn hls_live(media_url: Url, client: Client, tx: SyncSender<Message>) {
     let mut sequence = String::new();
     loop {
+        let start = Instant::now();
+        let mut changed = false;
+
         let response = match get(media_url.as_str(), &client) {
             Ok(response) => String::from_utf8(response).unwrap_or_default(),
             Err(e) => {
@@ -257,10 +260,16 @@ fn hls_live(media_url: Url, client: Client, tx: SyncSender<Message>) {
                 if tx.send(Ok(segment_response)).is_err() {
                     return; // rx was dropped
                 }
+                changed = true;
                 sequence = uri.to_owned();
             }
         }
-        thread::sleep(media.target_duration);
+        let delay = if changed {
+            media.target_duration.saturating_sub(start.elapsed())
+        } else {
+            media.target_duration / 2
+        };
+        thread::sleep(delay);
     }
 }
 
