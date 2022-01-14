@@ -30,9 +30,9 @@ fn get(url: &str, client: &Client) -> Result<Vec<u8>> {
             Err(e) => {
                 retries += 1;
                 if retries > MAX_RETRIES {
-                    bail!("get {} a échoué après {} tentatives", url, MAX_RETRIES);
+                    bail!("get {url} a échoué après {MAX_RETRIES} tentatives");
                 } else {
-                    eprintln!("{:#}", Error::new(e).context(format!("Échec: get {}", url)));
+                    eprintln!("{:#}", Error::new(e).context(format!("Échec: get {url}")));
                     thread::sleep(Duration::from_millis(RETRY_DELAY));
                     continue;
                 }
