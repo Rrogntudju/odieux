@@ -325,7 +325,7 @@ fn handle_hls(master_url: Url, client: Client, tx: SyncSender<Message>) {
             Err(e) => tx.send(Err(e)).unwrap_or_default(),
         },
         Err(e) => tx
-            .send(Err(anyhow!("{:?}\nÉchec: validation de l'url MediaPlaylist", e)))
+            .send(Err(Error::new(e).context("Échec: validation de l'url MediaPlaylist")))
             .unwrap_or_default(),
     }
 }
