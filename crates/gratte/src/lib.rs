@@ -12,7 +12,6 @@ pub struct Episode {
 }
 
 pub async fn gratte(url: &str, page: usize, client: &Client) -> Result<Vec<Episode>> {
-    let mut épisodes = Vec::new();
     let url = format!("{url}{page}");
     let page = client.get(&url).send().await?.text().await?;
     let soup = Soup::new(&page);
@@ -25,6 +24,7 @@ pub async fn gratte(url: &str, page: usize, client: &Client) -> Result<Vec<Episo
         None => bail!("script introuvable"),
     };
     let items = &valeur["pagesV2"]["pages"][url.trim_start_matches("https://ici.radio-canada.ca")]["data"]["content"]["contentDetail"]["items"];
+    let mut épisodes = Vec::new();
     match items {
         items if items.is_array() => {
             for j in 0.. {
