@@ -168,7 +168,7 @@ mod handlers {
                             Vec::new()
                         });
                         if épisodes.is_empty() {
-                            STATE.with(|state| state.borrow_mut().message = format!("Erreur de la page {page} dans Random"));
+                            STATE.with(|state| state.borrow_mut().message = format!("La page {page} est vide"));
                         } else {
                             let i = rand::thread_rng().gen_range(0..épisodes.len());
                             command_start(épisodes.swap_remove(i)).await;
@@ -181,7 +181,7 @@ mod handlers {
                             Vec::new()
                         });
                         if épisodes.is_empty() {
-                            STATE.with(|state| state.borrow_mut().message = format!("Erreur de la page {page}"));
+                            STATE.with(|state| state.borrow_mut().message = format!("La page {page} est vide"));
                         } else {
                             STATE.with(|state| {
                                 let mut s = state.borrow_mut();
