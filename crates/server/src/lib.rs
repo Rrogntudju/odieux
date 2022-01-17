@@ -7,7 +7,7 @@ use std::cell::RefCell;
 use std::thread_local;
 use std::time::Duration;
 
-const TIME_OUT: u64 = 15;
+const TIME_OUT: u64 = 30;
 
 #[derive(Deserialize, PartialEq)]
 enum Command {
