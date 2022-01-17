@@ -36,11 +36,14 @@ pub async fn gratte(url: &str, page: usize, client: &Client) -> Result<Vec<Episo
                             media_id: item_id["mediaId"].as_str().unwrap_or_default().replace("&nbsp;", " "),
                         });
                     }
-                    _ => break,
+                    _ => break, // fin des épisodes
                 }
             }
         }
-        _ => bail!("items inexistant"),
+        _ => bail!("items n'est pas un «array»"),
+    }
+    if épisodes.is_empty() {
+        bail!("La page {page} est vide");
     }
     Ok(épisodes)
 }
@@ -60,7 +63,7 @@ mod tests {
         )
         .await
         {
-            Ok(épisodes) => assert!(épisodes.len() > 0),
+            Ok(_) => assert!(true),
             Err(e) => {
                 println!("{:?}", e);
                 assert!(false);

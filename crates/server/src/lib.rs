@@ -163,33 +163,23 @@ mod handlers {
                     }),
                     Command::Random(pages) => {
                         let page: usize = rand::thread_rng().gen_range(1..=pages);
-                        let mut épisodes = gratte(CSB, page, &CLIENT).await.context("Échec du grattage").unwrap_or_else(|e| {
-                            eprintln!("{:#}", e);
-                            Vec::new()
-                        });
-                        if épisodes.is_empty() {
-                            STATE.with(|state| state.borrow_mut().message = format!("La page {page} est vide"));
-                        } else {
-                            let i = rand::thread_rng().gen_range(0..épisodes.len());
-                            command_start(épisodes.swap_remove(i)).await;
+                        match gratte(CSB, page, &CLIENT).await.context("Échec du grattage") {
+                            Ok(mut épisodes) => {
+                                let i = rand::thread_rng().gen_range(0..épisodes.len());
+                                command_start(épisodes.swap_remove(i)).await;
+                            },
+                            Err(e) => STATE.with(|state| state.borrow_mut().message = format!("{e:#}")),
                         }
                     }
                     Command::Stop => command_stop(),
-                    Command::Page(page) => {
-                        let épisodes = gratte(CSB, page, &CLIENT).await.context("Échec du grattage").unwrap_or_else(|e| {
-                            eprintln!("{:#}", e);
-                            Vec::new()
-                        });
-                        if épisodes.is_empty() {
-                            STATE.with(|state| state.borrow_mut().message = format!("La page {page} est vide"));
-                        } else {
-                            STATE.with(|state| {
-                                let mut s = state.borrow_mut();
-                                s.episodes = épisodes;
-                                s.page = page;
-                            });
-                        }
-                    }
+                    Command::Page(page) => match gratte(CSB, page, &CLIENT).await.context("Échec du grattage") {
+                        Ok(épisodes) => STATE.with(|state| {
+                            let mut s = state.borrow_mut();
+                            s.episodes = épisodes;
+                            s.page = page;
+                        }),
+                        Err(e) => STATE.with(|state| state.borrow_mut().message = format!("{e:#}")),
+                    },
                     Command::State => {
                         // Vérifier si la lecture s'est terminée
                         if STATE.with(|state| state.borrow().en_lecture != Episode::default()) {
