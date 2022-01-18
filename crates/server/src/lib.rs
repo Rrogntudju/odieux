@@ -207,8 +207,8 @@ mod handlers {
     }
 
     fn reply_state() -> Result<Response<String>, Error> {
-        let state = STATE.with(|state| state.borrow().clone());
-        Response::builder().status(StatusCode::OK).body(serde_json::to_string(&state).unwrap())
+        let state = STATE.with(|state| serde_json::to_string(state).unwrap());
+        Response::builder().status(StatusCode::OK).body(state)
     }
 }
 
