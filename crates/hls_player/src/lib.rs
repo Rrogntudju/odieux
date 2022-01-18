@@ -27,7 +27,7 @@ mod tests {
         let (player, _output_stream) = match start("Fournir un url master.m3u8 validé") {
             Ok((s, o)) => (s, o),
             Err(e) => {
-                println!("{:?}", e);
+                println!("{e:?}");
                 return assert!(false);
             }
         };

@@ -129,7 +129,7 @@ mod handlers {
             }
             Err(e) => {
                 let message = format!("{e:#}");
-                eprintln!("{}", &message);
+                eprintln!("{message}");
                 STATE.with(|state| state.borrow_mut().message = message);
             }
         }

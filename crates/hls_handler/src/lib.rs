@@ -350,12 +350,12 @@ mod tests {
             Ok(s) => match s {
                 Ok(message) => assert!(message.len() > 0),
                 Err(e) => {
-                    println!("{:?}", e);
+                    println!("{e:?}");
                     assert!(false);
                 }
             },
             Err(e) => {
-                println!("{:?}", e);
+                println!("{e:?}");
                 assert!(false);
             }
         }

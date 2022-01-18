@@ -65,7 +65,7 @@ mod tests {
         {
             Ok(_) => assert!(true),
             Err(e) => {
-                println!("{:?}", e);
+                println!("{e:?}");
                 assert!(false);
             }
         }

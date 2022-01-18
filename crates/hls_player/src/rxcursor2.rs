@@ -36,7 +36,7 @@ impl RxCursor {
                         Ok(message) => {
                             match message {
                                 Ok(mut stream) => inner2.lock().expect("Poisoned lock").append(&mut stream),
-                                Err(e) => return eprintln!("{:?}", e),
+                                Err(e) => return eprintln!("{e:?}"),
                             };
                         }
                         Err(_) => return, // tx was dropped
