@@ -33,7 +33,7 @@ pub async fn gratte(url: &str, page: usize, client: &Client) -> Result<Vec<Episo
                         let item_id = &item["playlistItemId"];
                         épisodes.push(Episode {
                             titre: item_id["title"].as_str().unwrap_or_default().replace("&nbsp;", " "),
-                            media_id: item_id["mediaId"].as_str().unwrap_or_default().replace("&nbsp;", " "),
+                            media_id: item_id["mediaId"].as_str().unwrap_or_default().to_owned(),
                         });
                     }
                     _ => break, // fin des épisodes
