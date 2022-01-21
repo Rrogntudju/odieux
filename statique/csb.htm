@@ -186,7 +186,6 @@
             .then(data => {
               self.player(data.player);
               self.volume(data.volume);
-              console.log(data.page);
               self.page(data.page);
               self.épisodes.removeAll();
               ko.utils.arrayPushAll(self.épisodes, data.episodes);
