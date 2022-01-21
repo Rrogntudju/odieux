@@ -103,33 +103,39 @@
           self.longCommand = ko.observable(false);
           self.spinPage = ko.observable(1);
           self.pages = 68;
+          self.direct = false;
 
           self.refresh = function () {
             self.command("State", null);
             setTimeout(() => {
               if (self.page() == 0) {
-                self.longCommand(true);
-                self.command("Page", 1);
+                self.setPage();
+              } else if (self.direct && self.player() == "Stopped") {
+                self.live();
             }}, 200);
           }
 
           self.play = function(épisode) {
             self.longCommand(true);
             self.command("Start", épisode);
+            self.direct = false;
           }
 
           self.stop = function () {
             self.command("Stop", null);
+            self.direct = false;
           }
 
           self.random = function () {
             self.longCommand(true);
             self.command("Random", self.pages);
+            self.direct = false;
           }
 
           self.live = function () {
             self.longCommand(true);
             self.command("Start", {titre: "En direct", media_id: ""});
+            self.direct = true;
           }
 
           self.setPage = function () {
