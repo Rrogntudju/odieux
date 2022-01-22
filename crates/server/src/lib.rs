@@ -107,13 +107,12 @@ mod handlers {
     }
 
     async fn command_start(épisode: Episode) {
+        command_stop();
         let result = if épisode.titre == "En direct" {
-            command_stop();
             start_player(None).await
         } else if épisode.media_id.is_empty() {
             Err(anyhow!("Aucune musique diffusée disponible"))
         } else {
-            command_stop();
             start_player(Some(&épisode.media_id)).await
         };
         match result {
@@ -167,7 +166,7 @@ mod handlers {
                             Ok(mut épisodes) => {
                                 let i = rand::thread_rng().gen_range(0..épisodes.len());
                                 command_start(épisodes.swap_remove(i)).await;
-                            },
+                            }
                             Err(e) => STATE.with(|state| state.borrow_mut().message = format!("{e:#}")),
                         }
                     }
@@ -181,18 +180,31 @@ mod handlers {
                         Err(e) => STATE.with(|state| state.borrow_mut().message = format!("{e:#}")),
                     },
                     Command::State => {
+                        let mut live_restart = false;
                         // Vérifier si la lecture s'est terminée
                         if STATE.with(|state| state.borrow().en_lecture != Episode::default()) {
                             SINK.with(|sink| {
                                 if sink.borrow().as_ref().unwrap().empty() {
                                     STATE.with(|state| {
-                                        let mut s = state.borrow_mut();
-                                        s.player = PlayerState::Stopped;
-                                        s.en_lecture = Episode::default();
+                                        if state.borrow().en_lecture.titre == "En direct" {
+                                            live_restart = true;
+                                        } else {
+                                            let mut s = state.borrow_mut();
+                                            s.player = PlayerState::Stopped;
+                                            s.en_lecture = Episode::default();
+                                        }
                                     });
                                 }
                             });
                         }
+                        // Redémarrer la lecture en direct suite à une interruption intempestive
+                        if live_restart {
+                            command_start(Episode {
+                                titre: "En direct".to_owned(),
+                                media_id: "".to_owned(),
+                            })
+                            .await;
+                        };
                     }
                 };
                 reply_state()
