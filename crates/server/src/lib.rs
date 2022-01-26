@@ -180,14 +180,18 @@ mod handlers {
                         Err(e) => STATE.with(|state| state.borrow_mut().message = format!("{e:#}")),
                     },
                     Command::State => {
-                        let mut live_restart = false;
                         // Vérifier si la lecture s'est terminée
                         if STATE.with(|state| state.borrow().en_lecture != Episode::default()) {
                             SINK.with(|sink| {
                                 if sink.borrow().as_ref().unwrap().empty() {
                                     STATE.with(|state| {
                                         if state.borrow().en_lecture.titre == "En direct" {
-                                            live_restart = true;
+                                            tokio::spawn(async {
+                                                command_start(Episode {
+                                                    titre: "En direct".to_owned(),
+                                                    media_id: "".to_owned(),
+                                                })
+                                            });
                                         } else {
                                             let mut s = state.borrow_mut();
                                             s.player = PlayerState::Stopped;
@@ -197,14 +201,6 @@ mod handlers {
                                 }
                             });
                         }
-                        // Redémarrer la lecture en direct suite à une interruption intempestive
-                        if live_restart {
-                            command_start(Episode {
-                                titre: "En direct".to_owned(),
-                                media_id: "".to_owned(),
-                            })
-                            .await;
-                        };
                     }
                 };
                 reply_state()
