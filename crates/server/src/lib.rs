@@ -190,7 +190,7 @@ mod handlers {
                                                 command_start(Episode {
                                                     titre: "En direct".to_owned(),
                                                     media_id: "".to_owned(),
-                                                })
+                                                }).await
                                             });
                                         } else {
                                             let mut s = state.borrow_mut();
