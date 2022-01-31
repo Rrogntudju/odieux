@@ -5,5 +5,5 @@ authors = ["Rrogntudju"]
 edition = "2021"
 
 [dependencies]
-rodio = { git = "https://github.com/RustAudio/rodio.git", default-features = false, features = ["symphonia-aac"] }
+rodio = { version = "0.15", default-features = false, features = ["symphonia-aac"] }
 
