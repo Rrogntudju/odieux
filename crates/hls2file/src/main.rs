@@ -45,7 +45,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     } else {
         (URL_VALIDEUR_LIVE.to_owned(), "direct".to_owned())
     };
-    let task = tokio::spawn(async move { client.get(&url).send().await?.text().await });
+    let task = tokio::spawn(client.get(&url).send().await?.text());
     let mut aac = env::temp_dir();
     aac.push(&titre);
     aac.set_extension("aac");
