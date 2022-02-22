@@ -9,17 +9,6 @@ use std::time::Duration;
 
 const TIME_OUT: u64 = 30;
 
-#[derive(Deserialize, PartialEq)]
-enum Command {
-    Start(Episode),
-    Volume(usize),
-    Pause,
-    Stop,
-    Play,
-    Random(usize),
-    Page(usize),
-    State,
-}
 #[derive(Serialize, Clone, PartialEq)]
 enum PlayerState {
     Playing,
@@ -34,6 +23,18 @@ struct State {
     episodes: Vec<Episode>,
     message: String,
     en_lecture: Episode,
+}
+
+#[derive(Deserialize, PartialEq)]
+pub enum Command {
+    Start(Episode),
+    Volume(usize),
+    Pause,
+    Stop,
+    Play,
+    Random(usize),
+    Page(usize),
+    State,
 }
 
 thread_local! {
@@ -53,8 +54,15 @@ static CLIENT: Lazy<Client> = Lazy::new(|| Client::builder().timeout(Duration::f
 
 pub mod filters {
     use super::*;
+    use bytes::Bytes;
     use std::path::PathBuf;
     use warp::Filter;
+
+    fn command_body() -> impl Filter<Extract = (Command,), Error = warp::Rejection> + Clone {
+        warp::body::content_length_limit(1024)
+            .and(warp::body::bytes())
+            .and_then(|body: Bytes| async move { serde_json::from_slice::<Command>(body.as_ref()).map_err(|_| warp::reject()) })
+    }
 
     pub fn static_file(path: PathBuf) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
         warp::path("statique").and(warp::fs::dir(path))
@@ -64,20 +72,18 @@ pub mod filters {
         warp::path("command")
             .and(warp::path::end())
             .and(warp::post())
-            .and(warp::body::content_length_limit(1024))
-            .and(warp::body::bytes())
-            .and_then(handlers::command)
+            .and(command_body())
+            .and_then(handlers::execute)
     }
 }
 
 mod handlers {
     use super::*;
     use anyhow::{anyhow, Context, Result};
-    use bytes::Bytes;
     use rand::Rng;
     use serde_json::Value;
     use std::convert::Infallible;
-    use warp::http::{Error, Response, StatusCode};
+    use warp::http::{Response, StatusCode};
 
     const CSB: &str = "https://ici.radio-canada.ca/ohdio/musique/emissions/1161/cestsibon?pageNumber=";
     const URL_VALIDEUR_OD: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianet&connectionType=hd&deviceType=ipad&idMedia={}&multibitrate=true&output=json&tech=hls";
@@ -104,7 +110,7 @@ mod handlers {
         }
     }
 
-    async fn command_start(épisode: Episode) {
+    pub async fn command_start(épisode: Episode) {
         command_stop();
         let result = if épisode.titre == "En direct" {
             start_player(None).await
@@ -132,86 +138,72 @@ mod handlers {
         }
     }
 
-    pub async fn command(body: Bytes) -> Result<impl warp::Reply, Infallible> {
-        let response = match serde_json::from_slice::<Command>(body.as_ref()) {
-            Ok(command) => {
-                if command != Command::State {
-                    STATE.with(|state| state.borrow_mut().message = String::default());
+    pub async fn execute(command: Command) -> Result<impl warp::Reply, Infallible> {
+        if command != Command::State {
+            STATE.with(|state| state.borrow_mut().message = String::default());
+        }
+        match command {
+            Command::Start(épisode) => command_start(épisode).await,
+            Command::Volume(vol) => {
+                if STATE.with(|state| state.borrow().player != PlayerState::Stopped) {
+                    SINK.with(|sink| sink.borrow().as_ref().unwrap().set_volume((vol as f32) / 2.0));
+                    STATE.with(|state| state.borrow_mut().volume = vol);
                 }
-                match command {
-                    Command::Start(épisode) => command_start(épisode).await,
-                    Command::Volume(vol) => {
-                        if STATE.with(|state| state.borrow().player != PlayerState::Stopped) {
-                            SINK.with(|sink| sink.borrow().as_ref().unwrap().set_volume((vol as f32) / 2.0));
-                            STATE.with(|state| state.borrow_mut().volume = vol);
-                        }
-                    }
-                    Command::Pause => {
-                        if STATE.with(|state| state.borrow().player == PlayerState::Playing) {
-                            SINK.with(|sink| sink.borrow().as_ref().unwrap().pause());
-                            STATE.with(|state| state.borrow_mut().player = PlayerState::Paused);
-                        }
-                    }
-                    Command::Play => {
-                        if STATE.with(|state| state.borrow().player == PlayerState::Paused) {
-                            SINK.with(|sink| sink.borrow().as_ref().unwrap().play());
-                            STATE.with(|state| state.borrow_mut().player = PlayerState::Playing);
-                        }
-                    }
-                    Command::Random(pages) => {
-                        let page: usize = rand::thread_rng().gen_range(1..=pages);
-                        match gratte(CSB, page, &CLIENT).await.context("Échec du grattage") {
-                            Ok(mut épisodes) => {
-                                let i = rand::thread_rng().gen_range(0..épisodes.len());
-                                command_start(épisodes.swap_remove(i)).await;
-                            }
-                            Err(e) => STATE.with(|state| state.borrow_mut().message = format!("{e:#}")),
-                        }
-                    }
-                    Command::Stop => command_stop(),
-                    Command::Page(page) => match gratte(CSB, page, &CLIENT).await.context("Échec du grattage") {
-                        Ok(épisodes) => STATE.with(|state| {
-                            let mut state = state.borrow_mut();
-                            state.episodes = épisodes;
-                            state.page = page;
-                        }),
-                        Err(e) => STATE.with(|state| state.borrow_mut().message = format!("{e:#}")),
-                    },
-                    Command::State => {
-                        // Vérifier si la lecture s'est terminée
-                        if STATE.with(|state| state.borrow().en_lecture != Episode::default()) {
-                            if SINK.with(|sink| sink.borrow().as_ref().unwrap().empty()) {
-                                if STATE.with(|state| state.borrow().en_lecture.titre == "En direct") {
-                                    command_start(Episode {
-                                        titre: "En direct".to_owned(),
-                                        media_id: "".to_owned(),
-                                    })
-                                    .await
-                                } else {
-                                    STATE.with(|state| {
-                                        let mut state = state.borrow_mut();
-                                        state.player = PlayerState::Stopped;
-                                        state.en_lecture = Episode::default();
-                                    })
-                                }
-                            }
-                        }
-                    }
-                };
-                reply_state()
             }
-            _ => reply_error(StatusCode::BAD_REQUEST),
-        };
-        Ok(response)
-    }
-
-    fn reply_error(sc: StatusCode) -> Result<Response<String>, Error> {
-        Response::builder().status(sc).body(String::default())
-    }
-
-    fn reply_state() -> Result<Response<String>, Error> {
+            Command::Pause => {
+                if STATE.with(|state| state.borrow().player == PlayerState::Playing) {
+                    SINK.with(|sink| sink.borrow().as_ref().unwrap().pause());
+                    STATE.with(|state| state.borrow_mut().player = PlayerState::Paused);
+                }
+            }
+            Command::Play => {
+                if STATE.with(|state| state.borrow().player == PlayerState::Paused) {
+                    SINK.with(|sink| sink.borrow().as_ref().unwrap().play());
+                    STATE.with(|state| state.borrow_mut().player = PlayerState::Playing);
+                }
+            }
+            Command::Random(pages) => {
+                let page: usize = rand::thread_rng().gen_range(1..=pages);
+                match gratte(CSB, page, &CLIENT).await.context("Échec du grattage") {
+                    Ok(mut épisodes) => {
+                        let i = rand::thread_rng().gen_range(0..épisodes.len());
+                        command_start(épisodes.swap_remove(i)).await;
+                    }
+                    Err(e) => STATE.with(|state| state.borrow_mut().message = format!("{e:#}")),
+                }
+            }
+            Command::Stop => command_stop(),
+            Command::Page(page) => match gratte(CSB, page, &CLIENT).await.context("Échec du grattage") {
+                Ok(épisodes) => STATE.with(|state| {
+                    let mut state = state.borrow_mut();
+                    state.episodes = épisodes;
+                    state.page = page;
+                }),
+                Err(e) => STATE.with(|state| state.borrow_mut().message = format!("{e:#}")),
+            },
+            Command::State => {
+                // Vérifier si la lecture s'est terminée
+                if STATE.with(|state| state.borrow().en_lecture != Episode::default()) {
+                    if SINK.with(|sink| sink.borrow().as_ref().unwrap().empty()) {
+                        if STATE.with(|state| state.borrow().en_lecture.titre == "En direct") {
+                            command_start(Episode {
+                                titre: "En direct".to_owned(),
+                                media_id: "".to_owned(),
+                            })
+                            .await
+                        } else {
+                            STATE.with(|state| {
+                                let mut state = state.borrow_mut();
+                                state.player = PlayerState::Stopped;
+                                state.en_lecture = Episode::default();
+                            })
+                        }
+                    }
+                }
+            }
+        }
         let state = STATE.with(|state| serde_json::to_string(state).unwrap());
-        Response::builder().status(StatusCode::OK).body(state)
+        Ok(Response::builder().status(StatusCode::OK).body(state))
     }
 }
 
