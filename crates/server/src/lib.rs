@@ -26,7 +26,7 @@ struct State {
 }
 
 #[derive(Deserialize, PartialEq)]
-pub enum Command {
+pub(crate) enum Command {
     Start(Episode),
     Volume(usize),
     Pause,
@@ -69,11 +69,7 @@ pub mod filters {
     }
 
     pub fn command() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-        warp::path("command")
-            .and(warp::path::end())
-            .and(warp::post())
-            .and(command_body())
-            .and_then(handlers::execute)
+        warp::path("command").and(warp::post()).and(command_body()).and_then(handlers::execute)
     }
 }
 
@@ -138,7 +134,7 @@ mod handlers {
         }
     }
 
-    pub async fn execute(command: Command) -> Result<impl warp::Reply, Infallible> {
+    pub(crate) async fn execute(command: Command) -> Result<impl warp::Reply, Infallible> {
         if command != Command::State {
             STATE.with(|state| state.borrow_mut().message = String::default());
         }
