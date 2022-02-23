@@ -110,7 +110,7 @@ mod handlers {
         }
     }
 
-    pub async fn command_start(épisode: Episode) {
+    async fn command_start(épisode: Episode) {
         command_stop();
         let result = if épisode.titre == "En direct" {
             start_player(None).await
