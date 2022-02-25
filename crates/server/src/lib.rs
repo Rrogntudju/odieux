@@ -58,14 +58,15 @@ pub mod filters {
     use std::path::PathBuf;
     use warp::Filter;
 
+    
+    pub fn static_file(path: PathBuf) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+        warp::path("statique").and(warp::fs::dir(path))
+    }
+
     fn command_body() -> impl Filter<Extract = (Command,), Error = warp::Rejection> + Clone {
         warp::body::content_length_limit(1024)
             .and(warp::body::bytes())
             .and_then(|body: Bytes| async move { serde_json::from_slice::<Command>(body.as_ref()).map_err(|_| warp::reject()) })
-    }
-
-    pub fn static_file(path: PathBuf) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-        warp::path("statique").and(warp::fs::dir(path))
     }
 
     pub fn command() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
