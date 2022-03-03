@@ -1,19 +1,9 @@
-use aes::Aes128;
 use anyhow::{Context, Result};
-use block_modes::block_padding::Pkcs7;
-use block_modes::{BlockMode, Cbc};
-
-type Aes128Cbc = Cbc<Aes128, Pkcs7>;
+use libaes::Cipher;
 
 pub fn decrypt_aes128(key: &[u8], iv: &[u8], data: &[u8]) -> Result<Vec<u8>> {
-    let mut encrypted_data = data.to_owned();
-    let len = encrypted_data.len();
-    if len % 16 != 0 {
-        let size = (len / 16 + 1) * 16;
-        encrypted_data.resize_with(size, Default::default);
-    }
-    let cipher = Aes128Cbc::new_from_slices(key, iv).context("Création du chiffre AES-128 CBC")?;
-    Ok(cipher.decrypt(&mut encrypted_data).context("Décryption")?.to_vec())
+    let cipher = Cipher::new_128(key.try_into().with_context(|| "La clé n'a pas une longueur de 16 bytes")?);
+    Ok(cipher.cbc_decrypt(iv, data))
 }
 
 #[test]

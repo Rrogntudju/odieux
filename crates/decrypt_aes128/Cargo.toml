@@ -1,11 +1,10 @@
 [package]
 name = "decrypt_aes128"
 authors = ["Rrogntudju"]
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 
 [dependencies]
-aes = "0.7"
-block-modes = "0.8"
+libaes = "0.6"
 anyhow = "1"
 
