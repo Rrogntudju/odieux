@@ -57,7 +57,7 @@ pub mod filters {
     use bytes::Bytes;
     use std::path::PathBuf;
     use warp::Filter;
-    
+
     pub fn static_file(path: PathBuf) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
         warp::path("statique").and(warp::fs::dir(path))
     }
