@@ -276,10 +276,9 @@ fn hls_live(media_url: Url, client: Client, tx: SyncSender<Message>) {
                 sequence = uri.to_owned();
             }
         }
-        let delay = if changed {
-            media.target_duration.saturating_sub(start.elapsed())
-        } else {
-            media.target_duration / 2
+        let delay = match changed {
+            true => media.target_duration.saturating_sub(start.elapsed()),
+            false => media.target_duration / 2,
         };
         thread::sleep(delay);
     }
