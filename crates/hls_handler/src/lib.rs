@@ -26,10 +26,9 @@ const BOUND: usize = 3;
 fn decrypt_aes128(key: &[u8], iv: &[u8], data: &[u8]) -> Result<Vec<u8>> {
     let cipher = libaes::Cipher::new_128(key.try_into().context("La clé n'a pas une longueur de 16 bytes")?);
     let decrypted = cipher.cbc_decrypt(iv, data);
-    if decrypted.is_empty() {
-        Err(anyhow!("La décryption a échouée"))
-    } else {
-        Ok(decrypted)
+    match decrypted.is_empty() {
+        false => Ok(decrypted),
+        true => Err(anyhow!("La décryption a échouée")),
     }
 }
 
