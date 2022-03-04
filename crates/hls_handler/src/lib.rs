@@ -24,9 +24,7 @@ const RETRY_DELAY: u64 = 250;
 const BOUND: usize = 3;
 
 fn decrypt_aes128(key: &[u8], iv: &[u8], data: &[u8]) -> Result<Vec<u8>> {
-    use libaes::Cipher;
-
-    let cipher = Cipher::new_128(key.try_into().with_context(|| "La clé n'a pas une longueur de 16 bytes")?);
+    let cipher = libaes::Cipher::new_128(key.try_into().context("La clé n'a pas une longueur de 16 bytes")?);
     Ok(cipher.cbc_decrypt(iv, data))
 }
 
