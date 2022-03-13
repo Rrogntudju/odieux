@@ -90,8 +90,8 @@ mod handlers {
             Some(id) => URL_VALIDEUR_OD.replace("{}", id),
             None => URL_VALIDEUR_LIVE.to_owned(),
         };
-        let response = &CLIENT.get(&url).send().await?.text().await?;
-        let value: Value = serde_json::from_str(response)?;
+        let response = CLIENT.get(&url).send().await?.text().await?;
+        let value: Value = serde_json::from_str(&response)?;
         hls_player::start(value["url"].as_str().unwrap_or_default())
     }
 
