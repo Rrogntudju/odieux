@@ -96,18 +96,13 @@ mod handlers {
     }
 
     fn command_stop() {
-        if STATE.with(|state| state.borrow().player != PlayerState::Stopped) {
-            SINK.with(|sink| {
-                sink.borrow().as_ref().unwrap().stop();
-                *sink.borrow_mut() = None;
-            });
-            OUTPUT_STREAM.with(|output_stream| *output_stream.borrow_mut() = None);
-            STATE.with(|state| {
-                let mut state = state.borrow_mut();
-                state.player = PlayerState::Stopped;
-                state.en_lecture = Episode::default();
-            });
-        }
+        OUTPUT_STREAM.with(|output_stream| *output_stream.borrow_mut() = None);
+        SINK.with(|sink| *sink.borrow_mut() = None);
+        STATE.with(|state| {
+            let mut state = state.borrow_mut();
+            state.player = PlayerState::Stopped;
+            state.en_lecture = Episode::default();
+        });
     }
 
     async fn command_start(épisode: Episode) {
@@ -172,7 +167,11 @@ mod handlers {
                     Err(e) => STATE.with(|state| state.borrow_mut().message = format!("{e:#}")),
                 }
             }
-            Command::Stop => command_stop(),
+            Command::Stop => {
+                if STATE.with(|state| state.borrow().player != PlayerState::Stopped) {
+                    command_stop()
+                }
+            }
             Command::Page(page) => match gratte(CSB, page, &CLIENT).await.context("Échec du grattage") {
                 Ok(épisodes) => STATE.with(|state| {
                     let mut state = state.borrow_mut();
@@ -180,7 +179,7 @@ mod handlers {
                     state.page = page;
                 }),
                 Err(e) => STATE.with(|state| state.borrow_mut().message = format!("{e:#}")),
-            },
+            }
             Command::State => {
                 // Vérifier si la lecture s'est terminée
                 if STATE.with(|state| state.borrow().en_lecture != Episode::default()) && SINK.with(|sink| sink.borrow().as_ref().unwrap().empty()) {
