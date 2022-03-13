@@ -91,13 +91,13 @@ mod handlers {
             None => URL_VALIDEUR_LIVE.to_owned(),
         };
         let response = &CLIENT.get(&url).send().await?.text().await?;
-        let value: Value = serde_json::from_str(&response)?;
+        let value: Value = serde_json::from_str(response)?;
         hls_player::start(value["url"].as_str().unwrap_or_default())
     }
 
     fn command_stop() {
         if STATE.with(|state| state.borrow().player != PlayerState::Stopped) {
-            SINK.with(|sink| { 
+            SINK.with(|sink| {
                 sink.borrow().as_ref().unwrap().stop();
                 *sink.borrow_mut() = None;
             });
@@ -183,21 +183,19 @@ mod handlers {
             },
             Command::State => {
                 // Vérifier si la lecture s'est terminée
-                if STATE.with(|state| state.borrow().en_lecture != Episode::default()) {
-                    if SINK.with(|sink| sink.borrow().as_ref().unwrap().empty()) {
-                        if STATE.with(|state| state.borrow().en_lecture.titre == "En direct") {
-                            command_start(Episode {
-                                titre: "En direct".to_owned(),
-                                media_id: "".to_owned(),
-                            })
-                            .await
-                        } else {
-                            STATE.with(|state| {
-                                let mut state = state.borrow_mut();
-                                state.player = PlayerState::Stopped;
-                                state.en_lecture = Episode::default();
-                            })
-                        }
+                if STATE.with(|state| state.borrow().en_lecture != Episode::default()) && SINK.with(|sink| sink.borrow().as_ref().unwrap().empty()) {
+                    if STATE.with(|state| state.borrow().en_lecture.titre == "En direct") {
+                        command_start(Episode {
+                            titre: "En direct".to_owned(),
+                            media_id: "".to_owned(),
+                        })
+                        .await
+                    } else {
+                        STATE.with(|state| {
+                            let mut state = state.borrow_mut();
+                            state.player = PlayerState::Stopped;
+                            state.en_lecture = Episode::default();
+                        })
                     }
                 }
             }
