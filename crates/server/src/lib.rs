@@ -191,11 +191,7 @@ mod handlers {
                         })
                         .await
                     } else {
-                        STATE.with(|state| {
-                            let mut state = state.borrow_mut();
-                            state.player = PlayerState::Stopped;
-                            state.en_lecture = Episode::default();
-                        })
+                        command_stop()
                     }
                 }
             }
