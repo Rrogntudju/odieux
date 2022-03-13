@@ -97,7 +97,11 @@ mod handlers {
 
     fn command_stop() {
         if STATE.with(|state| state.borrow().player != PlayerState::Stopped) {
-            SINK.with(|sink| sink.borrow().as_ref().unwrap().stop());
+            SINK.with(|sink| { 
+                sink.borrow().as_ref().unwrap().stop();
+                *sink.borrow_mut() = None;
+            });
+            OUTPUT_STREAM.with(|output_stream| *output_stream.borrow_mut() = None);
             STATE.with(|state| {
                 let mut state = state.borrow_mut();
                 state.player = PlayerState::Stopped;
