@@ -179,7 +179,7 @@ mod handlers {
                     state.page = page;
                 }),
                 Err(e) => STATE.with(|state| state.borrow_mut().message = format!("{e:#}")),
-            }
+            },
             Command::State => {
                 // Vérifier si la lecture s'est terminée
                 if STATE.with(|state| state.borrow().en_lecture != Episode::default()) && SINK.with(|sink| sink.borrow().as_ref().unwrap().empty()) {
