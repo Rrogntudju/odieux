@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::{bail, Result, Context};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -23,27 +23,20 @@ pub async fn gratte(url: &str, page: usize, client: &Client) -> Result<Vec<Episo
         Some(s) => serde_json::from_str(s.trim_start_matches("window._rcState_ = /*bns*/ ").trim_end_matches(" /*bne*/;"))?,
         None => bail!("script introuvable"),
     };
-    let items = &valeur["pagesV2"]["pages"][url.trim_start_matches("https://ici.radio-canada.ca")]["data"]["content"]["contentDetail"]["items"];
+    let page_id = valeur["router"]["location"]["pageId"].as_str().context("pageId n'est pas une chaîne")?;
+    let items = valeur["pagesV2"]["pages"][page_id]["data"]["content"]["contentDetail"]["items"].as_array().context("items n'est pas un array")?;
     let mut épisodes = Vec::new();
-    match items {
-        items if items.is_array() => {
-            for j in 0.. {
-                match &items[j] {
-                    item if item.is_object() => {
-                        let item_id = &item["playlistItemId"];
-                        épisodes.push(Episode {
-                            titre: item_id["title"].as_str().unwrap_or_default().replace("&nbsp;", " ").replace("&amp;", "&"),
-                            media_id: item_id["mediaId"].as_str().unwrap_or_default().to_owned(),
-                        });
-                    }
-                    _ => break, // fin des épisodes
-                }
+    for item in items {
+        match item {
+            item if item.is_object() => {
+                let item_id = &item["playlistItemId"];
+                épisodes.push(Episode {
+                    titre: item_id["title"].as_str().unwrap_or_default().replace("&nbsp;", " ").replace("&amp;", "&"),
+                    media_id: item_id["mediaId"].as_str().unwrap_or_default().to_owned(),
+                });
             }
+            _ => bail!("item n'est pas un objet")
         }
-        _ => bail!("items n'est pas un «array»"),
-    }
-    if épisodes.is_empty() {
-        bail!("La page {page} est vide");
     }
     Ok(épisodes)
 }
