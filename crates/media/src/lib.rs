@@ -1,4 +1,4 @@
-use anyhow::{bail, Result, Context};
+use anyhow::{bail, Context, Result};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -10,10 +10,12 @@ pub struct Episode {
     pub media_id: String,
 }
 
-pub async fn get_media(url: &str, client: &Client) -> Result<Vec<Episode>> {
+pub async fn get_episodes(url: &str, client: &Client) -> Result<Vec<Episode>> {
     let page = client.get(url).send().await?.text().await?;
     let valeur: Value = serde_json::from_str(&page)?;
-    let items = valeur["content"]["contentDetail"]["items"].as_array().context("items n'est pas un array")?;
+    let items = valeur["content"]["contentDetail"]["items"]
+        .as_array()
+        .context("items n'est pas un array")?;
     let mut épisodes = Vec::new();
     for item in items {
         match item {
@@ -24,7 +26,7 @@ pub async fn get_media(url: &str, client: &Client) -> Result<Vec<Episode>> {
                     media_id: media["id"].as_str().unwrap_or_default().to_owned(),
                 });
             }
-            _ => bail!("item n'est pas un objet")
+            _ => bail!("item n'est pas un objet"),
         }
     }
     Ok(épisodes)

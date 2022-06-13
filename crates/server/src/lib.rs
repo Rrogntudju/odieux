@@ -1,5 +1,5 @@
-use media::{get_media, Episode};
 use hls_player::{OutputStream, Sink};
+use media::{get_episodes, Episode};
 use once_cell::sync::Lazy;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
@@ -75,7 +75,7 @@ pub mod filters {
 
 mod handlers {
     use super::*;
-    use anyhow::{anyhow, Context, Result};
+    use anyhow::{anyhow, Result};
     use rand::Rng;
     use serde_json::Value;
     use std::convert::Infallible;
@@ -159,7 +159,8 @@ mod handlers {
             }
             Command::Random(pages) => {
                 let page: usize = rand::thread_rng().gen_range(1..=pages);
-                match get_media(CSB, page, &CLIENT).await.context("Échec du grattage") {
+                let url = CSB.replace("{}", &format!("{page}"));
+                match get_episodes(&url, &CLIENT).await {
                     Ok(mut épisodes) => {
                         let i = rand::thread_rng().gen_range(0..épisodes.len());
                         command_start(épisodes.swap_remove(i)).await;
@@ -172,14 +173,17 @@ mod handlers {
                     command_stop()
                 }
             }
-            Command::Page(page) => match get_media(CSB, page, &CLIENT).await.context("Échec du grattage") {
-                Ok(épisodes) => STATE.with(|state| {
-                    let mut state = state.borrow_mut();
-                    state.episodes = épisodes;
-                    state.page = page;
-                }),
-                Err(e) => STATE.with(|state| state.borrow_mut().message = format!("{e:#}")),
-            },
+            Command::Page(page) => {
+                let url = CSB.replace("{}", &format!("{page}"));
+                match get_episodes(&url, &CLIENT).await {
+                    Ok(épisodes) => STATE.with(|state| {
+                        let mut state = state.borrow_mut();
+                        state.episodes = épisodes;
+                        state.page = page;
+                    }),
+                    Err(e) => STATE.with(|state| state.borrow_mut().message = format!("{e:#}")),
+                }
+            }
             Command::State => {
                 // Vérifier si la lecture s'est terminée
                 if STATE.with(|state| state.borrow().en_lecture != Episode::default()) && SINK.with(|sink| sink.borrow().as_ref().unwrap().empty()) {

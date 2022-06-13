@@ -1,4 +1,4 @@
-use media::get_media;
+use media::get_episodes;
 use reqwest::Client;
 use serde_json::Value;
 use std::env;
@@ -34,7 +34,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
         };
 
         let page = page.parse::<usize>()?.clamp(1, PAGES);
-        let épisodes = get_media(CSB, page, &client).await?;
+        let url = CSB.replace("{}", &format!("{page}"));
+        let épisodes = get_episodes(&url, &client).await?;
 
         let num = num.parse::<usize>()?.clamp(1, épisodes.len());
         let media_id = &épisodes[num - 1].media_id;
