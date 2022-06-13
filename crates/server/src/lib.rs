@@ -1,4 +1,4 @@
-use gratte::{gratte, Episode};
+use media::{get_media, Episode};
 use hls_player::{OutputStream, Sink};
 use once_cell::sync::Lazy;
 use reqwest::Client;
@@ -81,7 +81,7 @@ mod handlers {
     use std::convert::Infallible;
     use warp::http::{Response, StatusCode};
 
-    const CSB: &str = "https://ici.radio-canada.ca/ohdio/musique/emissions/1161/cestsibon?pageNumber=";
+    const CSB: &str = "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/cestsibon/{}?context=web&pageNumber={}";
     const URL_VALIDEUR_OD: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianet&connectionType=hd&deviceType=ipad&idMedia={}&multibitrate=true&output=json&tech=hls";
     const URL_VALIDEUR_LIVE: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianetlive&connectionType=hd&deviceType=ipad&idMedia=cbvx&multibitrate=true&output=json&tech=hls";
 
@@ -159,7 +159,7 @@ mod handlers {
             }
             Command::Random(pages) => {
                 let page: usize = rand::thread_rng().gen_range(1..=pages);
-                match gratte(CSB, page, &CLIENT).await.context("Échec du grattage") {
+                match get_media(CSB, page, &CLIENT).await.context("Échec du grattage") {
                     Ok(mut épisodes) => {
                         let i = rand::thread_rng().gen_range(0..épisodes.len());
                         command_start(épisodes.swap_remove(i)).await;
@@ -172,7 +172,7 @@ mod handlers {
                     command_stop()
                 }
             }
-            Command::Page(page) => match gratte(CSB, page, &CLIENT).await.context("Échec du grattage") {
+            Command::Page(page) => match get_media(CSB, page, &CLIENT).await.context("Échec du grattage") {
                 Ok(épisodes) => STATE.with(|state| {
                     let mut state = state.borrow_mut();
                     state.episodes = épisodes;

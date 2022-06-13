@@ -1,6 +1,6 @@
 [package]
-name = "gratte"
-version = "0.1.0"
+name = "media"
+version = "0.2.0"
 authors = ["Rrogntudju"]
 edition = "2021"
 
@@ -8,8 +8,5 @@ edition = "2021"
 serde = { version ="1", features = ["derive"] }
 serde_json = "1"
 reqwest = "0.11"
-soup = { version = "0.5", default-features = false }
 anyhow = "1"
 
-[dev-dependencies]
-tokio = {version = "1", features = ["macros"]}

@@ -1,4 +1,4 @@
-use gratte::gratte;
+use media::get_media;
 use reqwest::Client;
 use serde_json::Value;
 use std::env::args;
@@ -6,7 +6,7 @@ use std::error::Error;
 use std::time::Duration;
 
 const TIME_OUT: u64 = 10;
-const CSB: &str = "https://ici.radio-canada.ca/ohdio/musique/emissions/1161/cestsibon?pageNumber=";
+const CSB: &str = "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/cestsibon/{}?context=web&pageNumber={}";
 const URL_VALIDEUR: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianet&connectionType=hd&deviceType=ipad&idMedia={}&multibitrate=true&output=json&tech=hls";
 const PAGES: usize = 68;
 
@@ -24,7 +24,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let page = page.parse::<usize>()?.clamp(1, PAGES);
     let client = Client::builder().timeout(Duration::from_secs(TIME_OUT)).build()?;
-    let épisodes = gratte(CSB, page, &client).await?;
+    let épisodes = get_media(CSB, page, &client).await?;
 
     let num = num.parse::<usize>()?.clamp(1, épisodes.len());
     let media_id = &épisodes[num - 1].media_id;
