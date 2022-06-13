@@ -10,9 +10,8 @@ pub struct Episode {
     pub media_id: String,
 }
 
-pub async fn get_media(url: &str, page: usize, client: &Client) -> Result<Vec<Episode>> {
-    let url = url.replace("{}", &format!("{page}"));
-    let page = client.get(&url).send().await?.text().await?;
+pub async fn get_media(url: &str, client: &Client) -> Result<Vec<Episode>> {
+    let page = client.get(url).send().await?.text().await?;
     let valeur: Value = serde_json::from_str(&page)?;
     let items = valeur["content"]["contentDetail"]["items"].as_array().context("items n'est pas un array")?;
     let mut épisodes = Vec::new();
@@ -40,8 +39,7 @@ mod tests {
     async fn csb() {
         let client = Client::builder().timeout(Duration::from_secs(10)).build().unwrap();
         match get_media(
-            "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/cestsibon/{}?context=web&pageNumber={}",
-            1,
+            "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/cestsibon/1?context=web&pageNumber=1",
             &client,
         )
         .await
