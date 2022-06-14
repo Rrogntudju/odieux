@@ -40,7 +40,7 @@ mod tests {
     #[tokio::test]
     async fn csb() {
         let client = Client::builder().timeout(Duration::from_secs(10)).build().unwrap();
-        match get_media(
+        match get_episodes(
             "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/cestsibon/1?context=web&pageNumber=1",
             &client,
         )
