@@ -51,7 +51,7 @@ fn get(url: &str, client: &Client) -> Result<Vec<u8>> {
     }
 }
 
-fn hls_on_demand(media_url: Url, independant_segment: bool, client: Client, tx: SyncSender<Message>) {
+fn hls_on_demand(media_url: Url, independant_segments: bool, client: Client, tx: SyncSender<Message>) {
     let response = match get(media_url.as_str(), &client) {
         Ok(response) => String::from_utf8(response).unwrap_or_default(),
         Err(e) => {
@@ -126,7 +126,7 @@ fn hls_on_demand(media_url: Url, independant_segment: bool, client: Client, tx: 
         };
 
         let mut stream: Vec<u8> = Vec::new();
-        if independant_segment {
+        if independant_segments {
             stream.extend_from_slice(decrypted.as_slice()); // le segment contient du AAC
         } else {
             let mut ts = TsPacketReader::new(decrypted.as_slice());
