@@ -1,6 +1,6 @@
 [package]
 name = "hls_handler"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Rrogntudju"]
 edition = "2021"
 
@@ -11,4 +11,3 @@ url = "2"
 anyhow = "1"
 libaes = "0.6"
 reqwest = { version = "0.11", features = ["blocking"] }
- 
