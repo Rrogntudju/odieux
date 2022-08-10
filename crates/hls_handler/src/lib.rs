@@ -126,6 +126,7 @@ fn hls_on_demand(media_url: Url, independant_segments: bool, client: Client, tx:
         };
 
         let mut stream: Vec<u8> = Vec::new();
+        
         if independant_segments {
             stream.extend_from_slice(decrypted.as_slice()); // le segment contient du AAC
         } else {
