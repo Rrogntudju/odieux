@@ -232,7 +232,7 @@ fn hls_on_demand1(media_url: Url, client: Client, tx: SyncSender<Message>) {
     }
 }
 
-// Le flux AAC est dans le segment
+// Le flux AAC est la totalité du segment
 fn hls_on_demand2(media_url: Url, client: Client, tx: SyncSender<Message>) {
     let response = match get(media_url.as_str(), &client) {
         Ok(response) => String::from_utf8(response).unwrap_or_default(),
@@ -253,7 +253,14 @@ fn hls_on_demand2(media_url: Url, client: Client, tx: SyncSender<Message>) {
     let mut cache: HashMap<String, Vec<u8>> = HashMap::new();
 
     for (_, media_segment) in media.segments {
-        let segment_response = match get(media_segment.uri().as_ref(), &client) {
+        let segment_url = match media_url.join(media_segment.uri().as_ref()).context("Échec: join de l'url media segment") {
+            Ok(url) => url,
+            Err(e) => {
+                tx.send(Err(e)).unwrap_or_default();
+                return;
+            }
+        };
+        let segment_response = match get(segment_url.as_str(), &client) {
             Ok(response) => response,
             Err(e) => {
                 tx.send(Err(e)).unwrap_or_default();
@@ -307,9 +314,7 @@ fn hls_on_demand2(media_url: Url, client: Client, tx: SyncSender<Message>) {
             }
         };
 
-        stream.extend_from_slice(decrypted.as_slice());
-
-        if tx.send(Ok(stream)).is_err() {
+        if tx.send(Ok(decrypted)).is_err() {
             return; // rx was dropped
         }
     }
@@ -413,7 +418,7 @@ fn handle_hls(master_url: Url, client: Client, tx: SyncSender<Message>) {
     };
 
     match Url::try_from(media_url.as_ref()) {
-        Ok(url) => hls_on_demand1(url, false, client, tx),
+        Ok(url) => hls_on_demand1(url, client, tx),
         Err(ParseError::RelativeUrlWithoutBase) => match master_url.join(media_url).context("Échec: join de l'url MediaPlaylist") {
             Ok(url) => {
                 if master.has_independent_segments {
