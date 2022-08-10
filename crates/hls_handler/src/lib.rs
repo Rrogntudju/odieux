@@ -51,7 +51,8 @@ fn get(url: &str, client: &Client) -> Result<Vec<u8>> {
     }
 }
 
-fn hls_on_demand(media_url: Url, independant_segments: bool, client: Client, tx: SyncSender<Message>) {
+// Le flux AAC se trouve dans des paquets MPEG-TS
+fn hls_on_demand1(media_url: Url, client: Client, tx: SyncSender<Message>) {
     let response = match get(media_url.as_str(), &client) {
         Ok(response) => String::from_utf8(response).unwrap_or_default(),
         Err(e) => {
@@ -125,109 +126,188 @@ fn hls_on_demand(media_url: Url, independant_segments: bool, client: Client, tx:
             }
         };
 
-        let mut stream: Vec<u8> = Vec::new();
+        let mut ts = TsPacketReader::new(decrypted.as_slice());
 
-        if independant_segments {
-            stream.extend_from_slice(decrypted.as_slice()); // le segment contient du AAC
-        } else {
-            let mut ts = TsPacketReader::new(decrypted.as_slice());
-
-            // Obtenir le pid du premier programme
-            let mut state = InitState::Pid0;
-            let program_pid = loop {
-                let packet = match ts.read_ts_packet().context("Échec: lecture d'un paquet TS") {
-                    Ok(packet) => match packet {
-                        Some(packet) => packet,
-                        None => {
-                            tx.send(Err(anyhow!("Fin prématurée des paquets"))).unwrap_or_default();
-                            return;
-                        }
-                    },
-                    Err(e) => {
-                        tx.send(Err(e)).unwrap_or_default();
+        // Obtenir le pid du premier programme
+        let mut state = InitState::Pid0;
+        let program_pid = loop {
+            let packet = match ts.read_ts_packet().context("Échec: lecture d'un paquet TS") {
+                Ok(packet) => match packet {
+                    Some(packet) => packet,
+                    None => {
+                        tx.send(Err(anyhow!("Fin prématurée des paquets"))).unwrap_or_default();
                         return;
                     }
-                };
-
-                match state {
-                    InitState::Pid0 => {
-                        match packet.header.pid.as_u16() {
-                            0 => match packet.payload {
-                                Some(payload) => match payload {
-                                    TsPayload::Pat(pat) => {
-                                        state = InitState::Pmt(pat.table[0].program_map_pid);
-                                        continue;
-                                    }
-                                    _ => {
-                                        tx.send(Err(anyhow!("Pas de PAT dans le PID 0"))).unwrap_or_default();
-                                        return;
-                                    }
-                                },
-                                None => {
-                                    tx.send(Err(anyhow!("Pas de payload dans le PID 0"))).unwrap_or_default();
-                                    return;
-                                }
-                            },
-                            1..=31 | 8191 => continue,
-                            _ => {
-                                tx.send(Err(anyhow!("Pas de PID 0"))).unwrap_or_default();
-                                return;
-                            }
-                        };
-                    }
-                    InitState::Pmt(pid) => {
-                        if packet.header.pid == pid {
-                            match packet.payload {
-                                Some(payload) => match payload {
-                                    TsPayload::Pmt(pmt) => break pmt.table[0].elementary_pid,
-                                    _ => {
-                                        tx.send(Err(anyhow!("Pas de PMT dans le PID {}", pid.as_u16()))).unwrap_or_default();
-                                        return;
-                                    }
-                                },
-                                None => {
-                                    tx.send(Err(anyhow!("Pas de payload dans le PID {}", pid.as_u16()))).unwrap_or_default();
-                                    return;
-                                }
-                            }
-                        } else {
-                            tx.send(Err(anyhow!("Pas de PID {}", pid.as_u16()))).unwrap_or_default();
-                            return;
-                        };
-                    }
+                },
+                Err(e) => {
+                    tx.send(Err(e)).unwrap_or_default();
+                    return;
                 }
             };
 
-            loop {
-                let packet = match ts.read_ts_packet().context("Échec: lecture d'un paquet TS") {
-                    Ok(packet) => {
-                        match packet {
-                            Some(packet) => packet,
-                            None => break, // End of packets
+            match state {
+                InitState::Pid0 => {
+                    match packet.header.pid.as_u16() {
+                        0 => match packet.payload {
+                            Some(payload) => match payload {
+                                TsPayload::Pat(pat) => {
+                                    state = InitState::Pmt(pat.table[0].program_map_pid);
+                                    continue;
+                                }
+                                _ => {
+                                    tx.send(Err(anyhow!("Pas de PAT dans le PID 0"))).unwrap_or_default();
+                                    return;
+                                }
+                            },
+                            None => {
+                                tx.send(Err(anyhow!("Pas de payload dans le PID 0"))).unwrap_or_default();
+                                return;
+                            }
+                        },
+                        1..=31 | 8191 => continue,
+                        _ => {
+                            tx.send(Err(anyhow!("Pas de PID 0"))).unwrap_or_default();
+                            return;
                         }
+                    };
+                }
+                InitState::Pmt(pid) => {
+                    if packet.header.pid == pid {
+                        match packet.payload {
+                            Some(payload) => match payload {
+                                TsPayload::Pmt(pmt) => break pmt.table[0].elementary_pid,
+                                _ => {
+                                    tx.send(Err(anyhow!("Pas de PMT dans le PID {}", pid.as_u16()))).unwrap_or_default();
+                                    return;
+                                }
+                            },
+                            None => {
+                                tx.send(Err(anyhow!("Pas de payload dans le PID {}", pid.as_u16()))).unwrap_or_default();
+                                return;
+                            }
+                        }
+                    } else {
+                        tx.send(Err(anyhow!("Pas de PID {}", pid.as_u16()))).unwrap_or_default();
+                        return;
+                    };
+                }
+            }
+        };
+
+        let mut stream: Vec<u8> = Vec::new();
+
+        loop {
+            let packet = match ts.read_ts_packet().context("Échec: lecture d'un paquet TS") {
+                Ok(packet) => {
+                    match packet {
+                        Some(packet) => packet,
+                        None => break, // End of packets
+                    }
+                }
+                Err(e) => {
+                    tx.send(Err(e)).unwrap_or_default();
+                    return;
+                }
+            };
+
+            if packet.header.pid == program_pid {
+                let data = match packet.payload {
+                    Some(payload) => match payload {
+                        TsPayload::Pes(pes) => pes.data,
+                        TsPayload::Raw(data) => data,
+                        _ => continue,
+                    },
+                    None => {
+                        tx.send(Err(anyhow!("Pas de payload"))).unwrap_or_default();
+                        return;
+                    }
+                };
+                stream.extend_from_slice(&data[..]);
+            }
+        }
+
+        if tx.send(Ok(stream)).is_err() {
+            return; // rx was dropped
+        }
+    }
+}
+
+// Le flux AAC est dans le segment
+fn hls_on_demand2(media_url: Url, client: Client, tx: SyncSender<Message>) {
+    let response = match get(media_url.as_str(), &client) {
+        Ok(response) => String::from_utf8(response).unwrap_or_default(),
+        Err(e) => {
+            tx.send(Err(e)).unwrap_or_default();
+            return;
+        }
+    };
+
+    let media = match MediaPlaylist::try_from(response.as_str()).context("Échec: validation de MediaPlayList") {
+        Ok(media) => media,
+        Err(e) => {
+            tx.send(Err(e)).unwrap_or_default();
+            return;
+        }
+    };
+
+    let mut cache: HashMap<String, Vec<u8>> = HashMap::new();
+
+    for (_, media_segment) in media.segments {
+        let segment_response = match get(media_segment.uri().as_ref(), &client) {
+            Ok(response) => response,
+            Err(e) => {
+                tx.send(Err(e)).unwrap_or_default();
+                return;
+            }
+        };
+
+        let keys = media_segment.keys();
+
+        let decrypted = if keys.is_empty() {
+            segment_response
+        } else {
+            let key = keys.iter().find(|k| k.method == EncryptionMethod::Aes128);
+
+            let (uri, iv) = match key {
+                Some(key) => (key.uri().as_ref(), key.iv.to_slice()),
+                None => {
+                    tx.send(Err(anyhow!("Le segment n'est pas chiffré avec AES-128"))).unwrap_or_default();
+                    return;
+                }
+            };
+
+            let key = match cache.get(uri) {
+                Some(key) => key,
+                None => match get(uri, &client) {
+                    Ok(response) => {
+                        cache.insert(uri.to_owned(), response);
+                        cache.get(uri).unwrap()
                     }
                     Err(e) => {
                         tx.send(Err(e)).unwrap_or_default();
                         return;
                     }
-                };
+                },
+            };
 
-                if packet.header.pid == program_pid {
-                    let data = match packet.payload {
-                        Some(payload) => match payload {
-                            TsPayload::Pes(pes) => pes.data,
-                            TsPayload::Raw(data) => data,
-                            _ => continue,
-                        },
-                        None => {
-                            tx.send(Err(anyhow!("Pas de payload"))).unwrap_or_default();
-                            return;
-                        }
-                    };
-                    stream.extend_from_slice(&data[..]);
+            let iv = match iv {
+                Some(iv) => iv,
+                None => {
+                    tx.send(Err(anyhow!("Initialization Vector manquant"))).unwrap_or_default();
+                    return;
+                }
+            };
+
+            match decrypt_aes128(key, &iv, &segment_response) {
+                Ok(decrypted) => decrypted,
+                Err(e) => {
+                    tx.send(Err(e)).unwrap_or_default();
+                    return;
                 }
             }
-        }
+        };
+
+        stream.extend_from_slice(decrypted.as_slice());
 
         if tx.send(Ok(stream)).is_err() {
             return; // rx was dropped
@@ -333,11 +413,11 @@ fn handle_hls(master_url: Url, client: Client, tx: SyncSender<Message>) {
     };
 
     match Url::try_from(media_url.as_ref()) {
-        Ok(url) => hls_on_demand(url, false, client, tx),
+        Ok(url) => hls_on_demand1(url, false, client, tx),
         Err(ParseError::RelativeUrlWithoutBase) => match master_url.join(media_url).context("Échec: join de l'url MediaPlaylist") {
             Ok(url) => {
                 if master.has_independent_segments {
-                    hls_on_demand(url, true, client, tx) // les segments contiennent du AAC plutôt que du MPEG-TS
+                    hls_on_demand2(url, client, tx)
                 } else {
                     hls_live(url, client, tx)
                 }
