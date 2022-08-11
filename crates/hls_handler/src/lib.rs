@@ -51,7 +51,7 @@ fn get(url: &str, client: &Client) -> Result<Vec<u8>> {
     }
 }
 
-// Le flux AAC se trouve dans des paquets MPEG-TS
+// Le segment est un fichier MPEG-TS encrypté
 fn hls_on_demand1(media_url: Url, client: Client, tx: SyncSender<Message>) {
     let response = match get(media_url.as_str(), &client) {
         Ok(response) => String::from_utf8(response).unwrap_or_default(),
@@ -232,7 +232,7 @@ fn hls_on_demand1(media_url: Url, client: Client, tx: SyncSender<Message>) {
     }
 }
 
-// Le flux AAC est la totalité du segment
+// Le segment est un fichier AAC encrypté
 fn hls_on_demand2(media_url: Url, client: Client, tx: SyncSender<Message>) {
     let response = match get(media_url.as_str(), &client) {
         Ok(response) => String::from_utf8(response).unwrap_or_default(),
@@ -391,7 +391,7 @@ fn handle_hls(master_url: Url, client: Client, tx: SyncSender<Message>) {
         }
     };
 
-    // Select the mp4a.40.2 (AAC-LC) audio stream with the highest bitrate
+    // Selectionner le flux mp4a.40.2 (AAC-LC) ayant le «bitrate» le plus élevé
     let vs = match master
         .variant_streams
         .iter()
