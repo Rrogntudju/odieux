@@ -1,4 +1,4 @@
-use anyhow::{bail, Context, Result};
+use anyhow::{ensure, Context, Result};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -18,16 +18,12 @@ pub async fn get_episodes(url: &str, client: &Client) -> Result<Vec<Episode>> {
         .context("items n'est pas un array")?;
     let mut épisodes = Vec::new();
     for item in items {
-        match item {
-            item if item.is_object() => {
-                let media = &item["media2"];
-                épisodes.push(Episode {
-                    titre: media["title"].as_str().unwrap_or_default().replace("&nbsp;", " ").replace("&amp;", "&"),
-                    media_id: media["id"].as_str().unwrap_or_default().to_owned(),
-                });
-            }
-            _ => bail!("item n'est pas un objet"),
-        }
+        ensure!(item.is_object(), "item n'est pas un objet");
+        let media = &item["media2"];
+        épisodes.push(Episode {
+            titre: media["title"].as_str().unwrap_or_default().replace("&nbsp;", " ").replace("&amp;", "&"),
+            media_id: media["id"].as_str().unwrap_or_default().to_owned(),
+        });
     }
     Ok(épisodes)
 }
