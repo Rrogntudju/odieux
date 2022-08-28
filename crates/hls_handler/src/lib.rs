@@ -28,7 +28,7 @@ fn decrypt_aes128(key: &[u8], iv: &[u8], data: &[u8]) -> Result<Vec<u8>> {
     let decrypted = cipher.cbc_decrypt(iv, data);
     match decrypted.is_empty() {
         false => Ok(decrypted),
-        true => Err(anyhow!("La décryption a échouée")),
+        true => Err(anyhow!("La décryption a échoué")),
     }
 }
 
