@@ -5,7 +5,7 @@
       <script src="dist/knockout-3.5.1.js"></script>
       <link rel="stylesheet" href="dist/css/w3.css">
       <link rel="icon" type="image/x-icon" href="dist/favicon.ico"/>
-      <link rel="apple-touch-icon" type="image/x-icon" href="dist/favicon.ico"/> 
+      <link rel="apple-touch-icon" type="image/x-icon" href="dist/favicon.ico"/>
       <link rel="stylesheet" href="dist/css/all.min.css">
      </head>
 
@@ -20,34 +20,34 @@
 
         <div class="w3-container w3-teal">
           <div class="w3-cell">
-            <span class="w3-button w3-green w3-round-large" 
+            <span class="w3-button w3-green w3-round-large"
                   data-bind="hidden: player() == 'Playing', css: { 'w3-disabled': playerOff }, click: toggle">
               <i class="fa fa-play"></i>
             </span>
-            <span class="w3-button w3-green w3-round-large" 
+            <span class="w3-button w3-green w3-round-large"
                   data-bind="hidden: player() != 'Playing', css: { 'w3-disabled': playerOff }, click: toggle">
               <i class="fa fa-pause"></i>
             </span>
-            <span class="w3-button w3-green w3-round-large" 
+            <span class="w3-button w3-green w3-round-large"
                   data-bind="css: { 'w3-disabled': playerOff }, click: stop">
               <i class="fa fa-stop"></i>
             </span>
-            <span class="w3-button w3-green w3-round-large" 
+            <span class="w3-button w3-green w3-round-large"
                   data-bind="click: random">
               <i class="fa fa-random"></i>
             </span>
-            <span class="w3-button w3-green w3-round-large" 
+            <span class="w3-button w3-green w3-round-large"
             data-bind="click: live">
               <i class="fa fa-microphone"></i>
             </span>
           </div>
           <div class="w3-cell" style="padding-left: 16px">
-            <span class="w3-button w3-green w3-round-large" 
+            <span class="w3-button w3-green w3-round-large"
                   data-bind="css: { 'w3-disabled': playerOff }, click: setVolume.bind($data, -1)">
               <i class="fa fa-volume-down"></i>
             </span>
             <span class="w3-badge w3-white" data-bind="text: volume, css: { 'w3-disabled': playerOff }"></span>
-            <span class="w3-button w3-green w3-round-large" 
+            <span class="w3-button w3-green w3-round-large"
                   data-bind="css: { 'w3-disabled': playerOff }, click: setVolume.bind($data, 1)">
               <i class="fa fa-volume-up"></i>
             </span>
@@ -56,14 +56,14 @@
 
         <div class="w3-container w3-teal">
           <div data-bind="using: enLecture">
-            <p data-bind="text: titre"></p>
+            <p data-bind="html: titre"></p>
           </div>
         </div>
       </header>
 
       <div class= "w3-container" data-bind="foreach: épisodes">
         <div class="w3-card w3-round w3-margin-top w3-margin-bottom w3-text-teal w3-btn w3-block" style="white-space: normal"
-             data-bind="text: titre, click: $parent.play">
+             data-bind="html: titre, click: $parent.play">
         </div>
       </div>
 
@@ -88,7 +88,7 @@
           </div>
         </div>
       </footer>
-      
+
       <script>
         function csbViewModel() {
           var self = this;
@@ -142,7 +142,7 @@
               self.command("Pause", null);
             } else if (self.player() == "Paused") {
               self.command("Play", null);
-             } 
+             }
           }
 
           self.setVolume = function (offset) {

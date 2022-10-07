@@ -21,7 +21,7 @@ pub async fn get_episodes(url: &str, client: &Client) -> Result<Vec<Episode>> {
         ensure!(item.is_object(), "item n'est pas un objet");
         let media = &item["media2"];
         épisodes.push(Episode {
-            titre: media["title"].as_str().unwrap_or_default().replace("&nbsp;", " ").replace("&amp;", "&"),
+            titre: media["title"].as_str().unwrap_or_default().to_owned(),
             media_id: media["id"].as_str().unwrap_or_default().to_owned(),
         });
     }
