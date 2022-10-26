@@ -439,7 +439,10 @@ pub fn start(url: &str) -> Result<Receiver<Message>> {
     let master_url = Url::try_from(url).context("Échec: validation de l'url MasterPlaylist")?;
     let client = Client::builder().timeout(Duration::from_secs(TIME_OUT)).build()?;
     let (tx, rx) = sync_channel::<Message>(BOUND);
-    thread::spawn(move || async { handle_hls(master_url, client, tx).await });
+    thread::spawn(move || {
+        let rt = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
+        rt.block_on(handle_hls(master_url, client, tx));
+    });
 
     Ok(rx)
 }
