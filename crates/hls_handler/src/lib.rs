@@ -72,7 +72,14 @@ async fn hls_on_demand1(media_url: Url, client: Client, tx: SyncSender<Message>)
     let mut cache: HashMap<String, Vec<u8>> = HashMap::new();
 
     for (_, media_segment) in media.segments {
-        let segment_response = match get(media_segment.uri().as_ref(), &client).await {
+        let segment_url = match media_url.join(media_segment.uri().as_ref()).context("Échec: join de l'url media segment") {
+            Ok(url) => url,
+            Err(e) => {
+                tx.send(Err(e)).unwrap_or_default();
+                return;
+            }
+        };
+        let segment_response = match get(segment_url.as_str(), &client).await {
             Ok(response) => response,
             Err(e) => {
                 tx.send(Err(e)).unwrap_or_default();
@@ -436,7 +443,7 @@ async fn handle_hls(master_url: Url, client: Client, tx: SyncSender<Message>) {
         };
         hls_live(url, client, tx).await
     } else {
-        let url = match Url::parse(media_url).context("Échec: validation de l'url MediaPlaylist (OD 1)") {
+        let url = match master_url.join(media_url).context("Échec: join de l'url MediaPlaylist (OD 1)") {
             Ok(url) => url,
             Err(e) => {
                 tx.send(Err(e)).unwrap_or_default();
