@@ -9,7 +9,7 @@ use std::convert::TryFrom;
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::thread;
 use std::time::{Duration, Instant};
-use url::{ParseError, Url};
+use url::Url;
 
 enum InitState {
     Pid0,
@@ -417,21 +417,33 @@ async fn handle_hls(master_url: Url, client: Client, tx: SyncSender<Message>) {
         }
     };
 
-    match Url::try_from(media_url.as_ref()) {
-        Ok(url) => hls_on_demand1(url, client, tx).await,
-        Err(ParseError::RelativeUrlWithoutBase) => match master_url.join(media_url).context("Échec: join de l'url MediaPlaylist") {
-            Ok(url) => {
-                if master.has_independent_segments {
-                    hls_on_demand2(url, client, tx).await
-                } else {
-                    hls_live(url, client, tx).await
-                }
+    if master.has_independent_segments {
+        let url = match master_url.join(media_url).context("Échec: join de l'url MediaPlaylist (OD 2)") {
+            Ok(url) => url,
+            Err(e) => {
+                tx.send(Err(e)).unwrap_or_default();
+                return;
             }
-            Err(e) => tx.send(Err(e)).unwrap_or_default(),
-        },
-        Err(e) => tx
-            .send(Err(Error::new(e).context("Échec: validation de l'url MediaPlaylist")))
-            .unwrap_or_default(),
+        };
+        hls_on_demand2(url, client, tx).await;
+    } else if media_url.starts_with("https://rcavliveaudio.akamaized.net") {
+        let url = match Url::parse(media_url).context("Échec: validation de l'url MediaPlaylist (Live)") {
+            Ok(url) => url,
+            Err(e) => {
+                tx.send(Err(e)).unwrap_or_default();
+                return;
+            }
+        };
+        hls_live(url, client, tx).await
+    } else {
+        let url = match Url::parse(media_url).context("Échec: validation de l'url MediaPlaylist (OD 1)") {
+            Ok(url) => url,
+            Err(e) => {
+                tx.send(Err(e)).unwrap_or_default();
+                return;
+            }
+        };
+        hls_on_demand1(url, client, tx).await;
     }
 }
 
