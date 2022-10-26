@@ -9,7 +9,7 @@ use std::convert::TryFrom;
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::thread;
 use std::time::{Duration, Instant};
-use url::Url;
+use url::{ParseError, Url};
 
 enum InitState {
     Pid0,
@@ -32,8 +32,12 @@ fn decrypt_aes128(key: &[u8], iv: &[u8], data: &[u8]) -> Result<Vec<u8>> {
     }
 }
 
-fn base_or_join(base: Url, join: &str) -> Result<Url> {
-
+fn base_or_join(base: &Url, url: &str) -> Result<Url> {
+    match Url::parse(url) {
+        Ok(url) => Ok(url),
+        Err(ParseError::RelativeUrlWithoutBase) => base.join(url).context(format!("Échec: join de l'url {}", url)),
+        Err(e) => Err(e.into())
+    }
 }
 
 async fn get(url: &str, client: &Client) -> Result<Vec<u8>> {
@@ -76,7 +80,7 @@ async fn hls_on_demand1(media_url: Url, client: Client, tx: SyncSender<Message>)
     let mut cache: HashMap<String, Vec<u8>> = HashMap::new();
 
     for (_, media_segment) in media.segments {
-        let segment_url = match media_url.join(media_segment.uri().as_ref()).context("Échec: join de l'url media segment") {
+        let segment_url = match base_or_join(&media_url, media_segment.uri()).context("Échec: join de l'url media segment") {
             Ok(url) => url,
             Err(e) => {
                 tx.send(Err(e)).unwrap_or_default();
@@ -264,7 +268,7 @@ async fn hls_on_demand2(media_url: Url, client: Client, tx: SyncSender<Message>)
     let mut cache: HashMap<String, Vec<u8>> = HashMap::new();
 
     for (_, media_segment) in media.segments {
-        let segment_url = match media_url.join(media_segment.uri().as_ref()).context("Échec: join de l'url media segment") {
+        let segment_url = match base_or_join(&media_url, media_segment.uri()).context("Échec: join de l'url media segment") {
             Ok(url) => url,
             Err(e) => {
                 tx.send(Err(e)).unwrap_or_default();
@@ -356,7 +360,7 @@ async fn hls_live(media_url: Url, client: Client, tx: SyncSender<Message>) {
         for (_, media_segment) in media.segments {
             let uri = media_segment.uri().as_ref();
             if sequence.as_str() < uri {
-                let segment_url = match media_url.join(uri).context("Échec: join de l'url media segment") {
+                let segment_url = match base_or_join(&media_url, uri).context("Échec: join de l'url media segment") {
                     Ok(url) => url,
                     Err(e) => {
                         tx.send(Err(e)).unwrap_or_default();
@@ -428,32 +432,19 @@ async fn handle_hls(master_url: Url, client: Client, tx: SyncSender<Message>) {
         }
     };
 
+    let url = match base_or_join(&master_url, media_url).context("Échec: join de l'url MediaPlaylist") {
+        Ok(url) => url,
+        Err(e) => {
+            tx.send(Err(e)).unwrap_or_default();
+            return;
+        }
+    };
+
     if master.has_independent_segments {
-        let url = match master_url.join(media_url).context("Échec: join de l'url MediaPlaylist (OD 2)") {
-            Ok(url) => url,
-            Err(e) => {
-                tx.send(Err(e)).unwrap_or_default();
-                return;
-            }
-        };
         hls_on_demand2(url, client, tx).await;
     } else if media_url.starts_with("https://rcavliveaudio.akamaized.net") {
-        let url = match Url::parse(media_url).context("Échec: validation de l'url MediaPlaylist (Live)") {
-            Ok(url) => url,
-            Err(e) => {
-                tx.send(Err(e)).unwrap_or_default();
-                return;
-            }
-        };
         hls_live(url, client, tx).await
     } else {
-        let url = match master_url.join(media_url).context("Échec: join de l'url MediaPlaylist (OD 1)") {
-            Ok(url) => url,
-            Err(e) => {
-                tx.send(Err(e)).unwrap_or_default();
-                return;
-            }
-        };
         hls_on_demand1(url, client, tx).await;
     }
 }
