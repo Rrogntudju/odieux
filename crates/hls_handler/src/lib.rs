@@ -80,7 +80,7 @@ async fn hls_on_demand1(media_url: Url, client: Client, tx: SyncSender<Message>)
     let mut cache: HashMap<String, Vec<u8>> = HashMap::new();
 
     for (_, media_segment) in media.segments {
-        let segment_url = match base_or_join(&media_url, media_segment.uri()).context("Échec: join de l'url media segment") {
+        let segment_url = match base_or_join(&media_url, media_segment.uri()).context("Échec: base_or_join de l'url media segment") {
             Ok(url) => url,
             Err(e) => {
                 tx.send(Err(e)).unwrap_or_default();
@@ -268,7 +268,7 @@ async fn hls_on_demand2(media_url: Url, client: Client, tx: SyncSender<Message>)
     let mut cache: HashMap<String, Vec<u8>> = HashMap::new();
 
     for (_, media_segment) in media.segments {
-        let segment_url = match base_or_join(&media_url, media_segment.uri()).context("Échec: join de l'url media segment") {
+        let segment_url = match base_or_join(&media_url, media_segment.uri()).context("Échec: base_or_join de l'url media segment") {
             Ok(url) => url,
             Err(e) => {
                 tx.send(Err(e)).unwrap_or_default();
@@ -360,7 +360,7 @@ async fn hls_live(media_url: Url, client: Client, tx: SyncSender<Message>) {
         for (_, media_segment) in media.segments {
             let uri = media_segment.uri().as_ref();
             if sequence.as_str() < uri {
-                let segment_url = match base_or_join(&media_url, uri).context("Échec: join de l'url media segment") {
+                let segment_url = match base_or_join(&media_url, uri).context("Échec: base_or_join de l'url media segment") {
                     Ok(url) => url,
                     Err(e) => {
                         tx.send(Err(e)).unwrap_or_default();
@@ -432,7 +432,7 @@ async fn handle_hls(master_url: Url, client: Client, tx: SyncSender<Message>) {
         }
     };
 
-    let url = match base_or_join(&master_url, media_url).context("Échec: join de l'url MediaPlaylist") {
+    let url = match base_or_join(&master_url, media_url).context("Échec: base_or_join de l'url MediaPlaylist") {
         Ok(url) => url,
         Err(e) => {
             tx.send(Err(e)).unwrap_or_default();
