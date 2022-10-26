@@ -3,7 +3,7 @@ use hls_m3u8::tags::VariantStream;
 use hls_m3u8::types::EncryptionMethod;
 use hls_m3u8::{Decryptable, MasterPlaylist, MediaPlaylist};
 use mpeg2ts::ts::{Pid, ReadTsPacket, TsPacketReader, TsPayload};
-use reqwest::blocking::Client;
+use reqwest::Client;
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
@@ -32,11 +32,11 @@ fn decrypt_aes128(key: &[u8], iv: &[u8], data: &[u8]) -> Result<Vec<u8>> {
     }
 }
 
-fn get(url: &str, client: &Client) -> Result<Vec<u8>> {
+async fn get(url: &str, client: &Client) -> Result<Vec<u8>> {
     let mut retries = 0;
     loop {
-        match client.get(url).send() {
-            Ok(response) => break Ok(response.bytes()?.to_vec()),
+        match client.get(url).send().await {
+            Ok(response) => break Ok(response.bytes().await?.to_vec()),
             Err(e) => {
                 retries += 1;
                 if retries > MAX_RETRIES {
@@ -52,8 +52,8 @@ fn get(url: &str, client: &Client) -> Result<Vec<u8>> {
 }
 
 // Le segment est un fichier MPEG-TS encrypté
-fn hls_on_demand1(media_url: Url, client: Client, tx: SyncSender<Message>) {
-    let response = match get(media_url.as_str(), &client) {
+async fn hls_on_demand1(media_url: Url, client: Client, tx: SyncSender<Message>) {
+    let response = match get(media_url.as_str(), &client).await {
         Ok(response) => String::from_utf8(response).unwrap_or_default(),
         Err(e) => {
             tx.send(Err(e)).unwrap_or_default();
@@ -72,7 +72,7 @@ fn hls_on_demand1(media_url: Url, client: Client, tx: SyncSender<Message>) {
     let mut cache: HashMap<String, Vec<u8>> = HashMap::new();
 
     for (_, media_segment) in media.segments {
-        let segment_response = match get(media_segment.uri().as_ref(), &client) {
+        let segment_response = match get(media_segment.uri().as_ref(), &client).await {
             Ok(response) => response,
             Err(e) => {
                 tx.send(Err(e)).unwrap_or_default();
@@ -97,7 +97,7 @@ fn hls_on_demand1(media_url: Url, client: Client, tx: SyncSender<Message>) {
 
             let key = match cache.get(uri) {
                 Some(key) => key,
-                None => match get(uri, &client) {
+                None => match get(uri, &client).await {
                     Ok(response) => {
                         cache.insert(uri.to_owned(), response);
                         cache.get(uri).unwrap()
@@ -233,8 +233,8 @@ fn hls_on_demand1(media_url: Url, client: Client, tx: SyncSender<Message>) {
 }
 
 // Le segment est un fichier AAC encrypté
-fn hls_on_demand2(media_url: Url, client: Client, tx: SyncSender<Message>) {
-    let response = match get(media_url.as_str(), &client) {
+async fn hls_on_demand2(media_url: Url, client: Client, tx: SyncSender<Message>) {
+    let response = match get(media_url.as_str(), &client).await {
         Ok(response) => String::from_utf8(response).unwrap_or_default(),
         Err(e) => {
             tx.send(Err(e)).unwrap_or_default();
@@ -260,7 +260,7 @@ fn hls_on_demand2(media_url: Url, client: Client, tx: SyncSender<Message>) {
                 return;
             }
         };
-        let segment_response = match get(segment_url.as_str(), &client) {
+        let segment_response = match get(segment_url.as_str(), &client).await {
             Ok(response) => response,
             Err(e) => {
                 tx.send(Err(e)).unwrap_or_default();
@@ -285,7 +285,7 @@ fn hls_on_demand2(media_url: Url, client: Client, tx: SyncSender<Message>) {
 
             let key = match cache.get(uri) {
                 Some(key) => key,
-                None => match get(uri, &client) {
+                None => match get(uri, &client).await {
                     Ok(response) => {
                         cache.insert(uri.to_owned(), response);
                         cache.get(uri).unwrap()
@@ -320,13 +320,13 @@ fn hls_on_demand2(media_url: Url, client: Client, tx: SyncSender<Message>) {
     }
 }
 
-fn hls_live(media_url: Url, client: Client, tx: SyncSender<Message>) {
+async fn hls_live(media_url: Url, client: Client, tx: SyncSender<Message>) {
     let mut sequence = String::new();
     loop {
         let start = Instant::now();
         let mut changed = false;
 
-        let response = match get(media_url.as_str(), &client) {
+        let response = match get(media_url.as_str(), &client).await {
             Ok(response) => String::from_utf8(response).unwrap_or_default(),
             Err(e) => {
                 tx.send(Err(e)).unwrap_or_default();
@@ -352,7 +352,7 @@ fn hls_live(media_url: Url, client: Client, tx: SyncSender<Message>) {
                         return;
                     }
                 };
-                let segment_response = match get(segment_url.as_str(), &client) {
+                let segment_response = match get(segment_url.as_str(), &client).await {
                     Ok(response) => response,
                     Err(e) => {
                         tx.send(Err(e)).unwrap_or_default();
@@ -374,8 +374,8 @@ fn hls_live(media_url: Url, client: Client, tx: SyncSender<Message>) {
     }
 }
 
-fn handle_hls(master_url: Url, client: Client, tx: SyncSender<Message>) {
-    let response = match get(master_url.as_str(), &client) {
+async fn handle_hls(master_url: Url, client: Client, tx: SyncSender<Message>) {
+    let response = match get(master_url.as_str(), &client).await {
         Ok(response) => String::from_utf8(response).unwrap_or_default(),
         Err(e) => {
             tx.send(Err(e)).unwrap_or_default();
@@ -418,13 +418,13 @@ fn handle_hls(master_url: Url, client: Client, tx: SyncSender<Message>) {
     };
 
     match Url::try_from(media_url.as_ref()) {
-        Ok(url) => hls_on_demand1(url, client, tx),
+        Ok(url) => hls_on_demand1(url, client, tx).await,
         Err(ParseError::RelativeUrlWithoutBase) => match master_url.join(media_url).context("Échec: join de l'url MediaPlaylist") {
             Ok(url) => {
                 if master.has_independent_segments {
-                    hls_on_demand2(url, client, tx)
+                    hls_on_demand2(url, client, tx).await
                 } else {
-                    hls_live(url, client, tx)
+                    hls_live(url, client, tx).await
                 }
             }
             Err(e) => tx.send(Err(e)).unwrap_or_default(),
@@ -439,7 +439,7 @@ pub fn start(url: &str) -> Result<Receiver<Message>> {
     let master_url = Url::try_from(url).context("Échec: validation de l'url MasterPlaylist")?;
     let client = Client::builder().timeout(Duration::from_secs(TIME_OUT)).build()?;
     let (tx, rx) = sync_channel::<Message>(BOUND);
-    thread::spawn(move || handle_hls(master_url, client, tx));
+    thread::spawn(move || async { handle_hls(master_url, client, tx).await });
 
     Ok(rx)
 }
