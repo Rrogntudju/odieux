@@ -36,7 +36,7 @@ fn base_or_join(base: &Url, url: &str) -> Result<Url> {
     match Url::parse(url) {
         Ok(url) => Ok(url),
         Err(ParseError::RelativeUrlWithoutBase) => base.join(url).context(format!("Échec: join de l'url {}", url)),
-        Err(e) => Err(e.into())
+        Err(e) => Err(e.into()),
     }
 }
 
