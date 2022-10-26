@@ -32,6 +32,10 @@ fn decrypt_aes128(key: &[u8], iv: &[u8], data: &[u8]) -> Result<Vec<u8>> {
     }
 }
 
+fn base_or_join(base: Url, join: &str) -> Result<Url> {
+
+}
+
 async fn get(url: &str, client: &Client) -> Result<Vec<u8>> {
     let mut retries = 0;
     loop {
