@@ -2,14 +2,16 @@
 mod rxcursor;
 #[cfg(feature = "throttling")]
 mod rxcursor2;
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use rodio::Decoder;
 pub use rodio::{OutputStream, Sink};
 use rxcursor::RxCursor;
 
 pub fn start(url: &str) -> Result<(Sink, OutputStream)> {
     let rx = hls_handler::start(url)?;
-    let (_output_stream, stream_handle) = OutputStream::try_default().context("Échec: création de OutputStream")?;
+    let Ok((_output_stream, stream_handle)) = OutputStream::try_default() else {
+        bail!("La sortie audio est déjà utilisée");
+    };
     let sink = Sink::try_new(&stream_handle).context("Échec: création de Sink")?;
     let source = Decoder::new(RxCursor::new(rx)?).context("Échec: création de Decoder")?;
     sink.append(source);
