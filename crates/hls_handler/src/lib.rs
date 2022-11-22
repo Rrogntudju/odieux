@@ -19,7 +19,7 @@ enum InitState {
 type Message = Result<Vec<u8>>;
 
 const TIME_OUT: u64 = 30;
-const MAX_RETRIES: usize = 10;
+const MAX_RETRIES: usize = 20;
 const RETRY_DELAY: u64 = 250;
 const BOUND: usize = 3;
 
