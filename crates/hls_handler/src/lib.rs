@@ -51,7 +51,7 @@ async fn get(url: &str, client: &Client) -> Result<Vec<u8>> {
                     bail!("get {url} a échoué après {MAX_RETRIES} tentatives");
                 } else {
                     eprintln!("{:#}", Error::new(e).context(format!("Échec: get {url}")));
-                    thread::sleep(Duration::from_millis(RETRY_DELAY));
+                    tokio::time::sleep(Duration::from_millis(RETRY_DELAY)).await;
                     continue;
                 }
             }
