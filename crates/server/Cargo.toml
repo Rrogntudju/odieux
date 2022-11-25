@@ -1,11 +1,12 @@
 [package]
 name = "server"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Rrogntudju"]
 edition = "2021"
 
 [dependencies]
-warp = "0.3"
+axum = "0.6"
+tower-http = {version = "0.3", features = ["fs", "timeout"]}
 bytes = "1"
 tokio = {version = "1", features = ["macros"]}
 anyhow = "1"

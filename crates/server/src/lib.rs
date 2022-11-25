@@ -52,11 +52,18 @@ thread_local! {
 
 static CLIENT: Lazy<Client> = Lazy::new(|| Client::builder().timeout(Duration::from_secs(TIME_OUT)).build().unwrap());
 
-pub mod filters {
+pub mod routers {
     use super::*;
     use bytes::Bytes;
     use std::path::PathBuf;
-    use warp::Filter;
+    use axum::{ routing::{get_service, post}, Router};
+    use tower_http::{services::{ServeDir}, timeout };
+
+    pub fn app(path: PathBuf) -> Router {
+        Router::new()
+            .route("/statique", get_service(ServeDir::new(path)))
+            .route("/command", post(handlers::execute))
+    }
 
     pub fn static_file(path: PathBuf) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
         warp::path("statique").and(warp::fs::dir(path))
@@ -79,7 +86,7 @@ mod handlers {
     use rand::Rng;
     use serde_json::Value;
     use std::convert::Infallible;
-    use warp::http::{Response, StatusCode};
+    use axum::{extract, http::{Response, StatusCode}};
 
     const CSB: &str = "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/cestsibon/{}?context=web&pageNumber={}";
     const URL_VALIDEUR_OD: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianet&connectionType=hd&deviceType=ipad&idMedia={}&multibitrate=true&output=json&tech=hls";
@@ -133,7 +140,7 @@ mod handlers {
         }
     }
 
-    pub(crate) async fn execute(command: Command) -> Result<impl warp::Reply, Infallible> {
+    pub(crate) async fn execute(extract::Json(command): extract::Json<Command>) -> Result<Response<String>, Infallible> {
         if command != Command::State {
             STATE.with(|state| state.borrow_mut().message = String::default());
         }
