@@ -221,12 +221,12 @@ mod tests {
 
     #[tokio::test]
     async fn command() {
-        let resp = request()
+        let req = Request::builder()
+            .uri("/command")
             .method("POST")
-            .path("/command")
-            .body(r#"{"State": null}"#)
-            .reply(&filters::command())
-            .await;
+            .body(Body::from(r#"{"State": null}"#))
+            .unwrap();
+        let resp = app("../../statique".into()).oneshot(req).await.unwrap();
         assert_eq!(resp.status(), StatusCode::OK);
     }
 }
