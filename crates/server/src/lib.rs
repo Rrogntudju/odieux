@@ -78,7 +78,7 @@ pub mod routers {
 mod handlers {
     use super::*;
     use anyhow::{anyhow, Result};
-    use axum::{extract, http::StatusCode, response::IntoResponse};
+    use axum::{extract::Json, http::StatusCode, response::IntoResponse};
     use rand::Rng;
     use serde_json::Value;
 
@@ -134,7 +134,7 @@ mod handlers {
         }
     }
 
-    pub(crate) async fn execute(extract::Json(command): extract::Json<Command>) -> impl IntoResponse {
+    pub(crate) async fn execute(Json(command): Json<Command>) -> impl IntoResponse {
         if command != Command::State {
             STATE.with(|state| state.borrow_mut().message = String::default());
         }
@@ -223,6 +223,7 @@ mod tests {
     async fn command() {
         let req = Request::builder()
             .uri("/command")
+            .header("Content-Type", "application/json")
             .method("POST")
             .body(Body::from(r#"{"State": null}"#))
             .unwrap();
