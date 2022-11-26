@@ -54,9 +54,14 @@ static CLIENT: Lazy<Client> = Lazy::new(|| Client::builder().timeout(Duration::f
 
 pub mod routers {
     use super::*;
+    use axum::{
+        http::StatusCode,
+        response::IntoResponse,
+        routing::{get_service, post},
+        Router,
+    };
     use std::path::PathBuf;
-    use axum::{ routing::{post, get_service}, Router, http::StatusCode, response::IntoResponse};
-    use tower_http::{services::ServeDir, limit::RequestBodyLimitLayer};
+    use tower_http::{limit::RequestBodyLimitLayer, services::ServeDir};
 
     async fn handle_error(_err: std::io::Error) -> impl IntoResponse {
         (StatusCode::INTERNAL_SERVER_ERROR, "DOH!")
@@ -65,16 +70,17 @@ pub mod routers {
     pub fn app(path: PathBuf) -> Router {
         Router::new()
             .route("/statique", get_service(ServeDir::new(path)).handle_error(handle_error))
-            .route("/command", post(handlers::execute)).layer(RequestBodyLimitLayer::new(1024))
+            .route("/command", post(handlers::execute))
+            .layer(RequestBodyLimitLayer::new(1024))
     }
 }
 
 mod handlers {
     use super::*;
     use anyhow::{anyhow, Result};
+    use axum::{extract, http::StatusCode, response::IntoResponse};
     use rand::Rng;
     use serde_json::Value;
-    use axum::{extract, http::StatusCode};
 
     const CSB: &str = "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/cestsibon/{}?context=web&pageNumber={}";
     const URL_VALIDEUR_OD: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianet&connectionType=hd&deviceType=ipad&idMedia={}&multibitrate=true&output=json&tech=hls";
@@ -128,7 +134,7 @@ mod handlers {
         }
     }
 
-    pub(crate) async fn execute(extract::Json(command): extract::Json<Command>) -> Result<String, StatusCode> {
+    pub(crate) async fn execute(extract::Json(command): extract::Json<Command>) -> impl IntoResponse {
         if command != Command::State {
             STATE.with(|state| state.borrow_mut().message = String::default());
         }
@@ -195,7 +201,7 @@ mod handlers {
             }
         }
         let state = STATE.with(|state| serde_json::to_string(state).unwrap());
-        Ok(state)
+        (StatusCode::OK, state)
     }
 }
 
