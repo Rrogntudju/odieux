@@ -74,8 +74,7 @@ mod handlers {
     use anyhow::{anyhow, Result};
     use rand::Rng;
     use serde_json::Value;
-    use std::convert::Infallible;
-    use axum::{extract, http::{Response, StatusCode}, response::IntoResponse};
+    use axum::{extract, http::StatusCode};
 
     const CSB: &str = "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/cestsibon/{}?context=web&pageNumber={}";
     const URL_VALIDEUR_OD: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianet&connectionType=hd&deviceType=ipad&idMedia={}&multibitrate=true&output=json&tech=hls";
@@ -129,7 +128,7 @@ mod handlers {
         }
     }
 
-    pub(crate) async fn execute(extract::Json(command): extract::Json<Command>) -> Result<String, Infallible> {
+    pub(crate) async fn execute(extract::Json(command): extract::Json<Command>) -> Result<String, StatusCode> {
         if command != Command::State {
             STATE.with(|state| state.borrow_mut().message = String::default());
         }
@@ -196,7 +195,7 @@ mod handlers {
             }
         }
         let state = STATE.with(|state| serde_json::to_string(state).unwrap());
-        Ok(Response::builder().status(StatusCode::OK).body(state))
+        Ok(state)
     }
 }
 
