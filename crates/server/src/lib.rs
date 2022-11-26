@@ -214,7 +214,7 @@ mod tests {
 
     #[tokio::test]
     async fn static_file() {
-        let req = Request::builder().uri("/statique/csb.htm").body(Body::from("")).unwrap();
+        let req = Request::builder().uri("/statique/csb.htm").body(Body::empty()).unwrap();
         let resp = app("../../statique".into()).oneshot(req).await.unwrap();
         assert_eq!(resp.status(), StatusCode::OK);
     }
