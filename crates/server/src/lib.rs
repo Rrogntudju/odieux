@@ -207,18 +207,15 @@ mod handlers {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use std::path::PathBuf;
-    use warp::http::StatusCode;
-    use warp::test::request;
+    use crate::routers::app;
+    use axum::body::Body;
+    use axum::http::{Request, StatusCode};
+    use tower::util::ServiceExt;
 
     #[tokio::test]
     async fn static_file() {
-        let resp = request()
-            .method("GET")
-            .path("/statique/csb.htm")
-            .reply(&filters::static_file(PathBuf::from("../../statique")))
-            .await;
+        let req = Request::builder().uri("/statique/csb.htm").body(Body::from("")).unwrap();
+        let resp = app("../../statique".into()).oneshot(req).await.unwrap();
         assert_eq!(resp.status(), StatusCode::OK);
     }
 
