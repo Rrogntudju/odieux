@@ -207,6 +207,8 @@ mod handlers {
 
 #[cfg(test)]
 mod tests {
+    use std::path::PathBuf;
+
     use crate::routers::app;
     use axum::body::Body;
     use axum::http::{Request, StatusCode};
@@ -215,6 +217,10 @@ mod tests {
     #[tokio::test]
     async fn static_file() {
         let req = Request::builder().uri("/statique/csb.htm").body(Body::empty()).unwrap();
+        let mut p = PathBuf::from(".");
+        p.push("../../statique");
+        dbg!(p.canonicalize().unwrap());
+        dbg!(req.uri().path());
         let resp = app("../../statique".into()).oneshot(req).await.unwrap();
         assert_eq!(resp.status(), StatusCode::OK);
     }

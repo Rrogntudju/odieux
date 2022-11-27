@@ -3,7 +3,6 @@ use std::env::{args, Args};
 use std::net::SocketAddr;
 use std::path::PathBuf;
 
-
 fn parse_args(args: &mut Args) -> Result<(SocketAddr, PathBuf)> {
     let addr = match args.nth(1) {
         Some(arg) => arg.parse::<SocketAddr>()?,
@@ -27,10 +26,6 @@ async fn main() -> Result<()> {
     use server::routers::app;
 
     let (addr, path_static) = parse_args(&mut args())?;
-    axum::Server::bind(&addr)
-        .serve(app(path_static).into_make_service())
-        .await
-        .unwrap();
-
+    axum::Server::bind(&addr).serve(app(path_static).into_make_service()).await.unwrap();
     Ok(())
 }
