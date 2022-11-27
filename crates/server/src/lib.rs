@@ -214,7 +214,7 @@ mod tests {
     use tower::util::ServiceExt;
 
     #[tokio::test]
-    async fn static_file() {
+    async fn statique() {
         let req = Request::builder().uri("/statique/csb.htm").body(Body::empty()).unwrap();
         let resp = app("../../statique".into()).oneshot(req).await.unwrap();
         assert_eq!(resp.status(), StatusCode::OK);
