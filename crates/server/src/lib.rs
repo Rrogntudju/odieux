@@ -67,6 +67,7 @@ pub mod routers {
         (StatusCode::INTERNAL_SERVER_ERROR, "DOH!")
     }
 
+    // nest_service permet d'enlever le préfixe «statique» avant de passer l'uri à serveDir
     pub fn app(path: PathBuf) -> Router {
         Router::new()
             .nest_service("/statique", get_service(ServeDir::new(path)).handle_error(handle_error))
