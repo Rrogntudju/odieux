@@ -201,7 +201,7 @@ mod handlers {
                 }
             }
         }
-        Json(STATE.with(|state| state.clone()))
+        Json(STATE.with(|state| state.to_owned()))
     }
 }
 
