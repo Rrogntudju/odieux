@@ -79,7 +79,7 @@ pub mod routers {
 mod handlers {
     use super::*;
     use anyhow::{anyhow, Result};
-    use axum::{extract::Json, http::StatusCode, response::IntoResponse};
+    use axum::{extract::Json, response::IntoResponse};
     use rand::Rng;
     use serde_json::Value;
 
@@ -201,8 +201,7 @@ mod handlers {
                 }
             }
         }
-        let state = STATE.with(|state| serde_json::to_string(state).unwrap());
-        (StatusCode::OK, state)
+        Json(STATE.with(|state| state.clone()))
     }
 }
 
