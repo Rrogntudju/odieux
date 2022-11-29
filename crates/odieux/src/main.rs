@@ -25,6 +25,6 @@ fn parse_args(args: &mut Args) -> Result<(SocketAddr, PathBuf)> {
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
     let (addr, path_static) = parse_args(&mut args())?;
-    axum::Server::bind(&addr).serve(app(path_static).into_make_service()).await.unwrap();
+    axum::Server::bind(&addr).serve(app(path_static).into_make_service()).await?;
     Ok(())
 }
