@@ -55,22 +55,16 @@ static CLIENT: Lazy<Client> = Lazy::new(|| Client::builder().timeout(Duration::f
 pub mod routers {
     use super::*;
     use axum::{
-        http::StatusCode,
-        response::IntoResponse,
         routing::{get_service, post},
         Router,
     };
     use std::path::PathBuf;
     use tower_http::{limit::RequestBodyLimitLayer, services::ServeDir};
 
-    async fn handle_error(_err: std::io::Error) -> impl IntoResponse {
-        (StatusCode::INTERNAL_SERVER_ERROR, "DOH!")
-    }
-
     // nest_service enlève le préfixe «statique» avant de passer la requête à serveDir
     pub fn app(path: PathBuf) -> Router {
         Router::new()
-            .nest_service("/statique", get_service(ServeDir::new(path)).handle_error(handle_error))
+            .nest_service("/statique", get_service(ServeDir::new(path)))
             .route("/command", post(handlers::execute))
             .layer(RequestBodyLimitLayer::new(1024))
     }
