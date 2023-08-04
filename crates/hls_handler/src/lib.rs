@@ -59,7 +59,7 @@ async fn get(url: &str, client: &Client) -> Result<Vec<u8>> {
     }
 }
 
-// Le segment est un fichier MPEG-TS encrypté avec un contenu AAC
+// Le segment est un fichier MPEG-TS avec un contenu AAC encrypté
 async fn hls_on_demand1(media_url: Url, client: Client, tx: SyncSender<Message>) {
     let response = match get(media_url.as_str(), &client).await {
         Ok(response) => String::from_utf8(response).unwrap_or_default(),
