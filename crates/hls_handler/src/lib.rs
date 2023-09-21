@@ -190,7 +190,7 @@ async fn hls_on_demand1(media_url: Url, client: Client, tx: SyncSender<Message>)
                     if packet.header.pid == pid {
                         match packet.payload {
                             Some(payload) => match payload {
-                                TsPayload::Pmt(pmt) => break pmt.table[0].elementary_pid,
+                                TsPayload::Pmt(pmt) => break pmt.es_info[0].elementary_pid,
                                 _ => {
                                     tx.send(Err(anyhow!("Pas de PMT dans le PID {}", pid.as_u16()))).unwrap_or_default();
                                     return;
