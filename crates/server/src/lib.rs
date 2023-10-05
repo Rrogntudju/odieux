@@ -92,10 +92,9 @@ mod handlers {
     }
 
     fn command_stop() {
-        OUTPUT_STREAM.with(|output_stream| *output_stream.borrow_mut() = None);
-        SINK.with(|sink| *sink.borrow_mut() = None);
-        STATE.with(|state| {
-            let mut state = state.borrow_mut();
+        OUTPUT_STREAM.with_borrow_mut(|output_stream| *output_stream = None);
+        SINK.with_borrow_mut(|sink| *sink = None);
+        STATE.with_borrow_mut(|state| {
             state.player = PlayerState::Stopped;
             state.en_lecture = Episode::default();
         });
@@ -112,45 +111,44 @@ mod handlers {
         };
         match result {
             Ok((new_sink, new_os)) => {
-                SINK.with(|sink| *sink.borrow_mut() = Some(new_sink));
-                OUTPUT_STREAM.with(|output_stream| *output_stream.borrow_mut() = Some(new_os));
-                STATE.with(|state| {
-                    let mut state = state.borrow_mut();
+                SINK.with_borrow_mut(|sink| *sink = Some(new_sink));
+                OUTPUT_STREAM.with_borrow_mut(|output_stream| *output_stream = Some(new_os));
+                STATE.with_borrow_mut(|state| {
                     state.player = PlayerState::Playing;
                     state.en_lecture = épisode;
-                    SINK.with(|sink| sink.borrow().as_ref().unwrap().set_volume((state.volume as f32) / 2.0));
+                    SINK.with_borrow(|sink| sink.as_ref().unwrap().set_volume((state.volume as f32) / 2.0));
                 });
             }
             Err(e) => {
                 let message = format!("{e:#}");
                 eprintln!("{message}");
-                STATE.with(|state| state.borrow_mut().message = message);
+                STATE.with_borrow_mut(|state| state.message = message);
             }
         }
     }
 
     pub(crate) async fn execute(Json(command): Json<Command>) -> impl IntoResponse {
         if command != Command::State {
-            STATE.with(|state| state.borrow_mut().message = String::default());
+            STATE.with_borrow_mut(|state| state.message = String::default());
         }
         match command {
             Command::Start(épisode) => command_start(épisode).await,
             Command::Volume(vol) => {
-                if STATE.with(|state| state.borrow().player != PlayerState::Stopped) {
-                    SINK.with(|sink| sink.borrow().as_ref().unwrap().set_volume((vol as f32) / 2.0));
-                    STATE.with(|state| state.borrow_mut().volume = vol);
+                if STATE.with_borrow(|state| state.player != PlayerState::Stopped) {
+                    SINK.with_borrow(|sink| sink.as_ref().unwrap().set_volume((vol as f32) / 2.0));
+                    STATE.with_borrow_mut(|state| state.volume = vol);
                 }
             }
             Command::Pause => {
-                if STATE.with(|state| state.borrow().player == PlayerState::Playing) {
-                    SINK.with(|sink| sink.borrow().as_ref().unwrap().pause());
-                    STATE.with(|state| state.borrow_mut().player = PlayerState::Paused);
+                if STATE.with_borrow(|state| state.player == PlayerState::Playing) {
+                    SINK.with_borrow(|sink| sink.as_ref().unwrap().pause());
+                    STATE.with_borrow_mut(|state| state.player = PlayerState::Paused);
                 }
             }
             Command::Play => {
-                if STATE.with(|state| state.borrow().player == PlayerState::Paused) {
-                    SINK.with(|sink| sink.borrow().as_ref().unwrap().play());
-                    STATE.with(|state| state.borrow_mut().player = PlayerState::Playing);
+                if STATE.with_borrow(|state| state.player == PlayerState::Paused) {
+                    SINK.with_borrow(|sink| sink.as_ref().unwrap().play());
+                    STATE.with_borrow_mut(|state| state.player = PlayerState::Playing);
                 }
             }
             Command::Random(pages) => {
@@ -161,29 +159,28 @@ mod handlers {
                         let i = rand::thread_rng().gen_range(0..épisodes.len());
                         command_start(épisodes.swap_remove(i)).await;
                     }
-                    Err(e) => STATE.with(|state| state.borrow_mut().message = format!("{e:#}")),
+                    Err(e) => STATE.with_borrow_mut(|state| state.message = format!("{e:#}")),
                 }
             }
             Command::Stop => {
-                if STATE.with(|state| state.borrow().player != PlayerState::Stopped) {
+                if STATE.with_borrow(|state| state.player != PlayerState::Stopped) {
                     command_stop()
                 }
             }
             Command::Page(page) => {
                 let url = CSB.replace("{}", &format!("{page}"));
                 match get_episodes(&url, &CLIENT).await {
-                    Ok(épisodes) => STATE.with(|state| {
-                        let mut state = state.borrow_mut();
+                    Ok(épisodes) => STATE.with_borrow_mut(|state| {
                         state.episodes = épisodes;
                         state.page = page;
                     }),
-                    Err(e) => STATE.with(|state| state.borrow_mut().message = format!("{e:#}")),
+                    Err(e) => STATE.with_borrow_mut(|state| state.message = format!("{e:#}")),
                 }
             }
             Command::State => {
                 // Vérifier si la lecture s'est terminée
-                if STATE.with(|state| state.borrow().en_lecture != Episode::default()) && SINK.with(|sink| sink.borrow().as_ref().unwrap().empty()) {
-                    if STATE.with(|state| state.borrow().en_lecture.titre == "En direct") {
+                if STATE.with_borrow(|state| state.en_lecture != Episode::default()) && SINK.with_borrow(|sink| sink.as_ref().unwrap().empty()) {
+                    if STATE.with_borrow(|state| state.en_lecture.titre == "En direct") {
                         command_start(Episode {
                             titre: "En direct".to_owned(),
                             media_id: "".to_owned(),
