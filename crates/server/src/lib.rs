@@ -92,8 +92,8 @@ mod handlers {
     }
 
     fn command_stop() {
-        OUTPUT_STREAM.with_borrow_mut(|output_stream| *output_stream = None);
-        SINK.with_borrow_mut(|sink| *sink = None);
+        OUTPUT_STREAM.set(None);
+        SINK.set(None);
         STATE.with_borrow_mut(|state| {
             state.player = PlayerState::Stopped;
             state.en_lecture = Episode::default();
@@ -111,8 +111,8 @@ mod handlers {
         };
         match result {
             Ok((new_sink, new_os)) => {
-                SINK.with_borrow_mut(|sink| *sink = Some(new_sink));
-                OUTPUT_STREAM.with_borrow_mut(|output_stream| *output_stream = Some(new_os));
+                SINK.set(Some(new_sink));
+                OUTPUT_STREAM.set(Some(new_os));
                 STATE.with_borrow_mut(|state| {
                     state.player = PlayerState::Playing;
                     state.en_lecture = épisode;
