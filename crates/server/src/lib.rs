@@ -1,6 +1,5 @@
 use hls_player::{OutputStream, Sink};
 use media::{get_episodes, Episode};
-use once_cell::sync::Lazy;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -50,8 +49,6 @@ thread_local! {
     });
 }
 
-static CLIENT: Lazy<Client> = Lazy::new(|| Client::builder().timeout(Duration::from_secs(TIME_OUT)).build().unwrap());
-
 pub mod routers {
     use super::*;
     use axum::{
@@ -86,7 +83,8 @@ mod handlers {
             Some(id) => URL_VALIDEUR_OD.replace("{}", id),
             None => URL_VALIDEUR_LIVE.to_owned(),
         };
-        let response = CLIENT.get(&url).send().await?.text().await?;
+        let client = Client::builder().timeout(Duration::from_secs(TIME_OUT)).build()?;
+        let response = client.get(&url).send().await?.text().await?;
         let value: Value = serde_json::from_str(&response)?;
         hls_player::start(value["url"].as_str().unwrap_or_default())
     }
@@ -154,7 +152,7 @@ mod handlers {
             Command::Random(pages) => {
                 let page: usize = rand::thread_rng().gen_range(1..=pages);
                 let url = CSB.replace("{}", &format!("{page}"));
-                match get_episodes(&url, &CLIENT).await {
+                match get_episodes(&url).await {
                     Ok(mut épisodes) => {
                         let i = rand::thread_rng().gen_range(0..épisodes.len());
                         command_start(épisodes.swap_remove(i)).await;
@@ -169,7 +167,7 @@ mod handlers {
             }
             Command::Page(page) => {
                 let url = CSB.replace("{}", &format!("{page}"));
-                match get_episodes(&url, &CLIENT).await {
+                match get_episodes(&url).await {
                     Ok(épisodes) => STATE.with_borrow_mut(|state| {
                         state.episodes = épisodes;
                         state.page = page;

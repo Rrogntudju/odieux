@@ -21,7 +21,6 @@ const PAGES: usize = 68;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let client = Client::builder().timeout(Duration::from_secs(TIME_OUT)).build()?;
     let (url, titre) = if args().len() > 1 {
         let page = match args().nth(1) {
             Some(arg) => arg,
@@ -35,7 +34,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
         let page = page.parse::<usize>()?.clamp(1, PAGES);
         let url = CSB.replace("{}", &format!("{page}"));
-        let épisodes = get_episodes(&url, &client).await?;
+        let épisodes = get_episodes(&url).await?;
 
         let num = num.parse::<usize>()?.clamp(1, épisodes.len());
         let media_id = &épisodes[num - 1].media_id;
@@ -46,6 +45,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     } else {
         (URL_VALIDEUR_LIVE.to_owned(), "direct".to_owned())
     };
+    let client = Client::builder().timeout(Duration::from_secs(TIME_OUT)).build()?;
     let task = tokio::spawn(client.get(&url).send().await?.text());
     let mut aac = env::temp_dir();
     aac.set_file_name(&titre);
