@@ -8,7 +8,7 @@ use std::time::Duration;
 const TIME_OUT: u64 = 10;
 const CSB: &str = "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/cestsibon/{}?context=web&pageNumber={}";
 const URL_VALIDEUR: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianet&connectionType=hd&deviceType=ipad&idMedia={}&multibitrate=true&output=json&tech=hls";
-const PAGES: usize = 68;
+const PAGES: usize = 13;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {

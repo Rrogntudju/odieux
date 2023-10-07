@@ -7,7 +7,7 @@ use std::time::Duration;
 
 const TIME_OUT: u64 = 30;
 
-#[derive(Deserialize, Serialize, Default, Clone, PartialEq)]
+#[derive(Deserialize, Serialize, Default, Clone, PartialEq, Debug)]
 pub struct Episode {
     pub titre: String,
     pub media_id: String,
@@ -29,6 +29,7 @@ pub async fn get_episodes(url: &str) -> Result<Vec<Episode>> {
             media_id: media["id"].as_str().unwrap_or_default().to_owned(),
         });
     }
+    ensure!(!épisodes.is_empty(), "La page n'existe pas \n{url}");
     Ok(épisodes)
 }
 
@@ -38,7 +39,7 @@ mod tests {
 
     #[tokio::test]
     async fn csb() {
-        match get_episodes("https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/cestsibon/1?context=web&pageNumber=1")
+        match get_episodes("https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/cestsibon/13?context=web&pageNumber=13")
             .await
         {
             Ok(_) => assert!(true),
