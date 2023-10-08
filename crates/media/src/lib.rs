@@ -7,7 +7,7 @@ use std::time::Duration;
 
 const TIME_OUT: u64 = 30;
 
-#[derive(Deserialize, Serialize, Default, Clone, PartialEq, Debug)]
+#[derive(Deserialize, Serialize, Default, Clone, PartialEq)]
 pub struct Episode {
     pub titre: String,
     pub media_id: String,
