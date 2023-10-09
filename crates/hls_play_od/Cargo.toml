@@ -1,6 +1,6 @@
 [package]
 name = "hls_play_od"
-version = "0.2.1"
+version = "0.3.0"
 authors = ["Rrogntudju"]
 edition = "2021"
 

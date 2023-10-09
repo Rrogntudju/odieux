@@ -7,23 +7,30 @@ use std::time::Duration;
 
 const TIME_OUT: u64 = 10;
 const CSB: &str = "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/cestsibon/{}?context=web&pageNumber={}";
+const TUM: &str = "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/touteunemusique/{}?context=web&pageNumber={}";
 const URL_VALIDEUR: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianet&connectionType=hd&deviceType=ipad&idMedia={}&multibitrate=true&output=json&tech=hls";
 const PAGES: usize = 13;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let page = match args().nth(1) {
-        Some(arg) => arg,
-        None => return Err("Fournir le numéro de la page".into()),
+    let erreur = "Args: <programme> <page> <épisode>";
+    let prog = match args().nth(1) {
+        Some(arg) => arg.to_lowercase(),
+        None => return Err(erreur.into()),
     };
 
-    let num = match args().nth(2) {
+    let page = match args().nth(2) {
         Some(arg) => arg,
-        None => return Err("Fournir le numéro de l'épisode".into()),
+        None => return Err(erreur.into()),
+    };
+
+    let num = match args().nth(3) {
+        Some(arg) => arg,
+        None => return Err(erreur.into()),
     };
 
     let page = page.parse::<usize>()?.clamp(1, PAGES);
-    let épisodes = get_episodes(page, CSB).await?;
+    let épisodes = get_episodes(page, if prog == "csb" { CSB } else { TUM }).await?;
 
     let num = num.parse::<usize>()?.clamp(1, épisodes.len());
     let media_id = &épisodes[num - 1].media_id;
