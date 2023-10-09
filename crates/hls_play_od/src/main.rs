@@ -23,8 +23,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     };
 
     let page = page.parse::<usize>()?.clamp(1, PAGES);
-    let url = CSB.replace("{}", &format!("{page}"));
-    let épisodes = get_episodes(&url).await?;
+    let épisodes = get_episodes(page, CSB).await?;
 
     let num = num.parse::<usize>()?.clamp(1, épisodes.len());
     let media_id = &épisodes[num - 1].media_id;

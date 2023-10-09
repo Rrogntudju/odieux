@@ -151,8 +151,7 @@ mod handlers {
             }
             Command::Random(pages) => {
                 let page: usize = rand::thread_rng().gen_range(1..=pages);
-                let url = CSB.replace("{}", &format!("{page}"));
-                match get_episodes(&url).await {
+                match get_episodes(page, CSB).await {
                     Ok(mut épisodes) => {
                         let i = rand::thread_rng().gen_range(0..épisodes.len());
                         command_start(épisodes.swap_remove(i)).await;
@@ -165,16 +164,13 @@ mod handlers {
                     command_stop()
                 }
             }
-            Command::Page(page) => {
-                let url = CSB.replace("{}", &format!("{page}"));
-                match get_episodes(&url).await {
-                    Ok(épisodes) => STATE.with_borrow_mut(|state| {
-                        state.episodes = épisodes;
-                        state.page = page;
-                    }),
-                    Err(e) => STATE.with_borrow_mut(|state| state.message = format!("{e:#}")),
-                }
-            }
+            Command::Page(page) => match get_episodes(page, CSB).await {
+                Ok(épisodes) => STATE.with_borrow_mut(|state| {
+                    state.episodes = épisodes;
+                    state.page = page;
+                }),
+                Err(e) => STATE.with_borrow_mut(|state| state.message = format!("{e:#}")),
+            },
             Command::State => {
                 // Vérifier si la lecture s'est terminée
                 if STATE.with_borrow(|state| state.en_lecture != Episode::default()) && SINK.with_borrow(|sink| sink.as_ref().unwrap().empty()) {

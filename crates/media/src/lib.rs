@@ -13,9 +13,10 @@ pub struct Episode {
     pub media_id: String,
 }
 
-pub async fn get_episodes(url: &str) -> Result<Vec<Episode>> {
+pub async fn get_episodes(no: usize, url: &str) -> Result<Vec<Episode>> {
     let client = Client::builder().timeout(Duration::from_secs(TIME_OUT)).build()?;
-    let page = client.get(url).send().await?.text().await?;
+    let url = url.replace("{}", &format!("{no}"));
+    let page = client.get(&url).send().await?.text().await?;
     let valeur: Value = serde_json::from_str(&page)?;
     let items = valeur["content"]["contentDetail"]["items"]
         .as_array()
@@ -29,7 +30,7 @@ pub async fn get_episodes(url: &str) -> Result<Vec<Episode>> {
             media_id: media["id"].as_str().unwrap_or_default().to_owned(),
         });
     }
-    ensure!(!épisodes.is_empty(), "La page n'existe pas \n{url}");
+    ensure!(!épisodes.is_empty(), "La page {no} n'existe pas");
     Ok(épisodes)
 }
 
@@ -37,11 +38,11 @@ pub async fn get_episodes(url: &str) -> Result<Vec<Episode>> {
 mod tests {
     use super::*;
 
+    const CSB: &str = "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/cestsibon/{}?context=web&pageNumber={}";
+
     #[tokio::test]
     async fn csb() {
-        match get_episodes("https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/cestsibon/13?context=web&pageNumber=13")
-            .await
-        {
+        match get_episodes(14, CSB).await {
             Ok(_) => assert!(true),
             Err(e) => {
                 println!("{e:?}");
