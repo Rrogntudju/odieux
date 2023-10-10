@@ -98,7 +98,7 @@
       </footer>
 
       <script>
-        function csbViewModel() {
+        function ohdioViewModel() {
           var self = this;
           self.player = ko.observable("Stopped");
           self.volume = ko.observable(2);
@@ -209,11 +209,11 @@
           };
         }
 
-        var csb = new csbViewModel();
-        ko.applyBindings(csb);
-        csb.refresh();
+        var ohdio = new ohdioViewModel();
+        ko.applyBindings(ohdio);
+        ohdio.refresh();
         setInterval(() => {
-          csb.refresh();
+          ohdio.refresh();
         }, 5000);
       </script>
     </body>
