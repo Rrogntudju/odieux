@@ -25,14 +25,20 @@ struct State {
 }
 
 #[derive(Deserialize, PartialEq)]
+struct Pagination {
+    prog: String,
+    page: usize,
+}
+
+#[derive(Deserialize, PartialEq)]
 pub(crate) enum Command {
     Start(Episode),
     Volume(usize),
     Pause,
     Stop,
     Play,
-    Random(usize),
-    Page(usize),
+    Random(Pagination),
+    Page(Pagination),
     State,
 }
 
@@ -75,6 +81,7 @@ mod handlers {
     use serde_json::Value;
 
     const CSB: &str = "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/cestsibon/{}?context=web&pageNumber={}";
+    const TUM: &str = "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/touteunemusique/{}?context=web&pageNumber={}";
     const URL_VALIDEUR_OD: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianet&connectionType=hd&deviceType=ipad&idMedia={}&multibitrate=true&output=json&tech=hls";
     const URL_VALIDEUR_LIVE: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianetlive&connectionType=hd&deviceType=ipad&idMedia=cbvx&multibitrate=true&output=json&tech=hls";
 
@@ -125,6 +132,14 @@ mod handlers {
         }
     }
 
+    fn get_url(prog: &str) -> &str {
+        match prog.to_lowercase().as_ref() {
+            "csb" => CSB,
+            "tum" => TUM,
+            _ => CSB
+        }
+    }
+
     pub(crate) async fn execute(Json(command): Json<Command>) -> impl IntoResponse {
         if command != Command::State {
             STATE.with_borrow_mut(|state| state.message = String::default());
@@ -149,9 +164,9 @@ mod handlers {
                     STATE.with_borrow_mut(|state| state.player = PlayerState::Playing);
                 }
             }
-            Command::Random(pages) => {
-                let page: usize = rand::thread_rng().gen_range(1..=pages);
-                match get_episodes(page, CSB).await {
+            Command::Random(pagi) => {
+                let page: usize = rand::thread_rng().gen_range(1..=pagi.page);
+                match get_episodes(page, get_url(&pagi.prog)).await {
                     Ok(mut épisodes) => {
                         let i = rand::thread_rng().gen_range(0..épisodes.len());
                         command_start(épisodes.swap_remove(i)).await;
@@ -164,10 +179,10 @@ mod handlers {
                     command_stop()
                 }
             }
-            Command::Page(page) => match get_episodes(page, CSB).await {
+            Command::Page(pagi) => match get_episodes(pagi.page, get_url(&pagi.prog)).await {
                 Ok(épisodes) => STATE.with_borrow_mut(|state| {
                     state.episodes = épisodes;
-                    state.page = page;
+                    state.page = pagi.page;
                 }),
                 Err(e) => STATE.with_borrow_mut(|state| state.message = format!("{e:#}")),
             },
