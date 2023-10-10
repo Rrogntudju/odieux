@@ -14,17 +14,18 @@ const PAGES: usize = 13;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     let erreur = "Args: <programme> <page> <épisode>";
-    let prog = match args().nth(1) {
+    let mut args = args();
+    let prog = match args.nth(1) {
         Some(arg) => arg.to_lowercase(),
         None => return Err(erreur.into()),
     };
 
-    let page = match args().nth(2) {
+    let page = match args.next() {
         Some(arg) => arg,
         None => return Err(erreur.into()),
     };
 
-    let num = match args().nth(3) {
+    let num = match args.next() {
         Some(arg) => arg,
         None => return Err(erreur.into()),
     };

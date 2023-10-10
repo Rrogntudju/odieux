@@ -5,14 +5,15 @@ use std::net::SocketAddr;
 use std::path::PathBuf;
 
 fn parse_args(args: &mut Args) -> Result<(SocketAddr, PathBuf)> {
+    let erreur = "Args: <IP:Port> <chemin du répertoire statique>";
     let addr = match args.nth(1) {
         Some(arg) => arg.parse::<SocketAddr>()?,
-        None => bail!("IP:Port est manquant"),
+        None => bail!(erreur),
     };
 
     let path_static = match args.next() {
         Some(arg) => arg.parse::<PathBuf>()?,
-        None => bail!("Le chemin du répertoire statique est manquant"),
+        None => bail!(erreur),
     };
 
     if !path_static.is_dir() {
