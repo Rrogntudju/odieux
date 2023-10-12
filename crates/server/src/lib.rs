@@ -31,7 +31,7 @@ struct Pagination {
 }
 
 #[derive(Deserialize, PartialEq)]
-pub(crate) enum Command {
+enum Command {
     Start(Episode),
     Volume(usize),
     Pause,
