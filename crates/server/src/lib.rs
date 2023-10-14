@@ -6,8 +6,6 @@ use std::cell::RefCell;
 use std::thread_local;
 use std::time::Duration;
 
-const TIME_OUT: u64 = 30;
-
 #[derive(Serialize, Clone, PartialEq)]
 enum PlayerState {
     Playing,
@@ -80,6 +78,7 @@ mod handlers {
     use rand::Rng;
     use serde_json::Value;
 
+    const TIME_OUT: u64 = 30;
     const URL_VALIDEUR_OD: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianet&connectionType=hd&deviceType=ipad&idMedia={}&multibitrate=true&output=json&tech=hls";
     const URL_VALIDEUR_LIVE: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianetlive&connectionType=hd&deviceType=ipad&idMedia=cbvx&multibitrate=true&output=json&tech=hls";
 
