@@ -1,5 +1,5 @@
-use anyhow::{ensure, Context, Result};
-use reqwest::Client;
+use anyhow::{anyhow, ensure, Context, Result};
+use reqwest::{Client, StatusCode};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::default::Default;
@@ -16,7 +16,16 @@ pub struct Episode {
 pub async fn get_episodes(no: usize, url: &str) -> Result<Vec<Episode>> {
     let client = Client::builder().timeout(Duration::from_secs(TIME_OUT)).build()?;
     let url = url.replace("{}", &format!("{no}"));
-    let page = client.get(&url).send().await?.text().await?;
+    let page = match client.get(&url).send().await {
+        Ok(response) => response.text().await?,
+        Err(e) => {
+            if e.status() == Some(StatusCode::NOT_FOUND) {
+                return Err(anyhow!("La page {no} n'existe pas"));
+            } else {
+                return Err(e.into());
+            }
+        }
+    };
     let valeur: Value = serde_json::from_str(&page)?;
     let items = valeur["content"]["contentDetail"]["items"]
         .as_array()
@@ -42,7 +51,7 @@ mod tests {
 
     #[tokio::test]
     async fn csb() {
-        match get_episodes(14, CSB).await {
+        match get_episodes(100, CSB).await {
             Ok(_) => assert!(true),
             Err(e) => {
                 println!("{e:?}");

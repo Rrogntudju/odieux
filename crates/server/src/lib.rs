@@ -153,6 +153,13 @@ mod handlers {
                     STATE.with_borrow_mut(|state| state.player = PlayerState::Playing);
                 }
             }
+            Command::Page(pagination) => match get_episodes(pagination.page, &pagination.url).await {
+                Ok(épisodes) => STATE.with_borrow_mut(|state| {
+                    state.episodes = épisodes;
+                    state.page = pagination.page;
+                }),
+                Err(e) => STATE.with_borrow_mut(|state| state.message = format!("{e:#}")),
+            },
             Command::Random(pagination) => {
                 let page: usize = rand::thread_rng().gen_range(1..=pagination.page);
                 match get_episodes(page, &pagination.url).await {
@@ -168,13 +175,6 @@ mod handlers {
                     command_stop()
                 }
             }
-            Command::Page(pagination) => match get_episodes(pagination.page, &pagination.url).await {
-                Ok(épisodes) => STATE.with_borrow_mut(|state| {
-                    state.episodes = épisodes;
-                    state.page = pagination.page;
-                }),
-                Err(e) => STATE.with_borrow_mut(|state| state.message = format!("{e:#}")),
-            },
             Command::State => {
                 // Vérifier si la lecture s'est terminée
                 if STATE.with_borrow(|state| state.en_lecture != Episode::default()) && SINK.with_borrow(|sink| sink.as_ref().unwrap().empty()) {
