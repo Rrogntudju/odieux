@@ -1,4 +1,4 @@
-use anyhow::{anyhow, ensure, Context, Result};
+use anyhow::{bail, ensure, Context, Result};
 use reqwest::{Client, StatusCode};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -20,9 +20,9 @@ pub async fn get_episodes(no: usize, url: &str) -> Result<Vec<Episode>> {
         Ok(response) => response.text().await?,
         Err(e) => {
             if e.status() == Some(StatusCode::NOT_FOUND) {
-                return Err(anyhow!("La page {no} n'existe pas"));
+                bail!("La page {no} n'existe pas");
             } else {
-                return Err(e.into());
+                bail!(e);
             }
         }
     };
