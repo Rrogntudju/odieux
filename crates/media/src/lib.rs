@@ -51,7 +51,7 @@ mod tests {
 
     #[tokio::test]
     async fn csb() {
-        match get_episodes(100, CSB).await {
+        match get_episodes(13, CSB).await {
             Ok(_) => assert!(true),
             Err(e) => {
                 println!("{e:?}");
