@@ -48,10 +48,22 @@ mod tests {
     use super::*;
 
     const CSB: &str = "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/cestsibon/{}?context=web&pageNumber={}";
+    const TUM: &str = "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/touteunemusique/{}?context=web&pageNumber={}";
 
     #[tokio::test]
     async fn csb() {
         match get_episodes(13, CSB).await {
+            Ok(_) => assert!(true),
+            Err(e) => {
+                println!("{e:?}");
+                assert!(false);
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn tum() {
+        match get_episodes(38, TUM).await {
             Ok(_) => assert!(true),
             Err(e) => {
                 println!("{e:?}");
