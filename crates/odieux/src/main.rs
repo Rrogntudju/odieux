@@ -3,6 +3,7 @@ use server::routers::app;
 use std::env::{args, Args};
 use std::net::SocketAddr;
 use std::path::PathBuf;
+use tokio::net::TcpListener;
 
 fn parse_args(args: &mut Args) -> Result<(SocketAddr, PathBuf)> {
     let erreur = "Args: <IP:Port> <chemin du répertoire statique>";
@@ -26,6 +27,7 @@ fn parse_args(args: &mut Args) -> Result<(SocketAddr, PathBuf)> {
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
     let (addr, path_static) = parse_args(&mut args())?;
-    axum::Server::bind(&addr).serve(app(path_static).into_make_service()).await?;
+    let listener = TcpListener::bind(&addr).await?;
+    axum::serve(listener, app(path_static).into_make_service()).await?;
     Ok(())
 }
