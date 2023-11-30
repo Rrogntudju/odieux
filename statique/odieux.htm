@@ -21,14 +21,21 @@
           border: 1px solid #ccc;
           padding: 10px;
         }
+        .selected {
+          font-weight: bold;
+        }
       </style>
     </head>
 
     <body class="mode">
       <header>
         <div class="w3-container w3-teal scroll-menu">
-          <div class="w3-cell" data-bind="click: setProg($data, 0)"><h4>C'est si bon</h4></div>
-          <div class="w3-cell" data-bind="click: setProg($data, 1)"><h4>Toute une musique</h4></div>
+          <div class="w3-cell" data-bind="css: { 'selected': prog() == 0 }, setProg($data, 0)">
+            <h4>C'est si bon</h4>
+          </div>
+          <div class="w3-cell" data-bind="css: { 'selected': prog() == 1 },click: setProg($data, 1)">
+            <h4>Toute une musique</h4>
+          </div>
         </div>
 
         <div class="w3-container w3-teal">
