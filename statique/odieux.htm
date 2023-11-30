@@ -112,6 +112,7 @@
           self.player = ko.observable("Stopped");
           self.volume = ko.observable(2);
           self.page = ko.observable(0);
+          self.prog = ko.observable(0);
           self.épisodes = ko.observableArray([]);
           self.message = ko.observable("");
           self.enLecture = ko.observable({titre: "", media_id: ""});
@@ -125,7 +126,6 @@
           ];
           self.progPages = [13, 38];
           self.spinPage = ko.observable(1);
-          self.prog = 0;
 
           self.refresh = function () {
             self.command("State", null);
@@ -155,6 +155,14 @@
           }
 
           self.setPage = function () {
+            self.longCommand(true);
+            self.command("Page", {page: self.spinPage(), url: self.progUrl[self.prog]});
+          }
+
+          self.setProg = function (prog) {
+            self.prog(prog);
+            self.page(1);
+            self.spinPage(1);
             self.longCommand(true);
             self.command("Page", {page: self.spinPage(), url: self.progUrl[self.prog]});
           }
