@@ -17,6 +17,7 @@ struct State {
     player: PlayerState,
     volume: usize,
     page: usize,
+    prog: usize,
     episodes: Vec<Episode>,
     message: String,
     en_lecture: Episode,
@@ -25,6 +26,7 @@ struct State {
 #[derive(Deserialize, PartialEq)]
 struct Pagination {
     page: usize,
+    prog: usize,
     url: String,
 }
 
@@ -47,6 +49,7 @@ thread_local! {
         player: PlayerState::Stopped,
         volume: 2,
         page: 0,
+        prog: 0,
         episodes: Vec::new(),
         message: String::default(),
         en_lecture: Episode::default(),
@@ -157,6 +160,7 @@ mod handlers {
                 Ok(épisodes) => STATE.with_borrow_mut(|state| {
                     state.episodes = épisodes;
                     state.page = pagination.page;
+                    state.prog = pagination.prog;
                 }),
                 Err(e) => STATE.with_borrow_mut(|state| state.message = format!("{e:#}")),
             },

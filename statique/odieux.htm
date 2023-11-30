@@ -10,20 +10,25 @@
       <link rel="stylesheet" href="dist/css/all.min.css">
       <style>
         @media (prefers-color-scheme: dark) {
-            body.mode {
-                background-color: #202020;
-            }
+          body.mode {
+              background-color: #202020;
+          }
+        }
+        .scroll-menu {
+          white-space: nowrap;
+          overflow-x: auto;
+          display: flex;
+          border: 1px solid #ccc;
+          padding: 10px;
         }
       </style>
     </head>
 
     <body class="mode">
       <header>
-        <div class="w3-container w3-teal">
+        <div class="w3-container w3-teal scroll-menu">
           <div class="w3-cell"><h4>C'est si bon</h4></div>
-          <div class="w3-cell" style="padding-left: 16px" data-bind="visible: longCommand">
-            <h4><i class="fa fa-spinner fa-spin" style="color: white"></i></h4>
-          </div>
+          <div class="w3-cell"><h4>Toute une musique</h4></div>
         </div>
 
         <div class="w3-container w3-teal">
@@ -45,7 +50,7 @@
               <i class="fa fa-random"></i>
             </span>
             <span class="w3-button w3-green w3-round-large"
-            data-bind="click: live">
+                  data-bind="click: live">
               <i class="fa fa-microphone"></i>
             </span>
           </div>
@@ -88,6 +93,10 @@
             <span class="w3-button w3-green w3-round-large" data-bind="click: setSpinPage.bind($data, 1)">+1</span>
             <span class="w3-button w3-green w3-round-large" data-bind="click: setSpinPage.bind($data, 10)">+10</span>
           </div>
+        </div>
+
+        <div class="w3-cell" data-bind="visible: longCommand">
+          <h4><i class="fa fa-spinner fa-spin" style="color: white"></i></h4>
         </div>
 
         <div class="w3-container w3-teal">
