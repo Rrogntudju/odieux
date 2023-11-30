@@ -119,9 +119,13 @@
             return self.enLecture().titre == "";
           });
           self.longCommand = ko.observable(false);
+          self.progUrl = [
+            "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/cestsibon/{}?context=web&pageNumber={}",
+            "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/touteunemusique/{}?context=web&pageNumber={}"
+          ];
+          self.progPages = [13, 38];
           self.spinPage = ko.observable(1);
-          self.url = "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/cestsibon/{}?context=web&pageNumber={}";
-          self.pages = 13;
+          self.prog = 0;
 
           self.refresh = function () {
             self.command("State", null);
@@ -152,7 +156,7 @@
 
           self.setPage = function () {
             self.longCommand(true);
-            self.command("Page", {page: self.spinPage(), url: self.url});
+            self.command("Page", {page: self.spinPage(), url: self.progUrl[self.prog]});
           }
 
           self.toggle = function () {
@@ -205,6 +209,7 @@
               self.player(data.player);
               self.volume(data.volume);
               self.page(data.page);
+              self.prog(data.prog);
               self.épisodes.removeAll();
               ko.utils.arrayPushAll(self.épisodes, data.episodes);
               self.message(data.message);
