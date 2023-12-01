@@ -18,11 +18,10 @@
           white-space: nowrap;
           overflow-x: auto;
           display: flex;
-          border: 1px solid #ccc;
-          padding: 10px;
         }
         .selected {
           font-weight: bold;
+          text-decoration: overline;
         }
       </style>
     </head>
@@ -30,11 +29,20 @@
     <body class="mode">
       <header>
         <div class="w3-container w3-teal scroll-menu">
-          <div class="w3-cell" data-bind="css: { 'selected': prog() == 0 }, click: setProg($data, 0)">
-            <h4>C'est si bon</h4>
+          <div class="w3-cell" data-bind="click: setProg.bind($data, 0)">
+            <h4 data-bind="css: { 'selected': prog() == 0 }">C'est si bon</h4>
           </div>
-          <div class="w3-cell" data-bind="css: { 'selected': prog() == 1 }, click: setProg($data, 1)">
-            <h4>Toute une musique</h4>
+          <div class="w3-cell" style="padding-left: 16px" data-bind="click: setProg.bind($data, 1)">
+            <h4 data-bind="css: { 'selected': prog() == 1 }">Toute une musique</h4>
+          </div>
+          <div class="w3-cell" style="padding-left: 16px" data-bind="click: setProg.bind($data, 1)">
+            <h4 data-bind="css: { 'selected': prog() == 1 }">Toute une musique 2</h4>
+          </div>
+          <div class="w3-cell" style="padding-left: 16px" data-bind="click: setProg.bind($data, 1)">
+            <h4 data-bind="css: { 'selected': prog() == 1 }">Toute une musique 3</h4>
+          </div>
+          <div class="w3-cell" style="padding-left: 16px" data-bind="click: setProg.bind($data, 1)">
+            <h4 data-bind="css: { 'selected': prog() == 1 }">Toute une musique 4</h4>
           </div>
         </div>
 
@@ -89,7 +97,9 @@
 
       <footer>
         <div class="w3-container w3-teal">
-          <p>Page <span class="w3-badge w3-white" data-bind="text: page"></span></p>
+          <p>Page <span class="w3-badge w3-white" data-bind="text: page"></span>
+            <span data-bind="visible: longCommand"><i class="fa fa-spinner fa-spin" style="color: white; font-size: large;"></i></span>
+          </p>
         </div>
 
         <div class="w3-container w3-teal">
@@ -100,10 +110,6 @@
             <span class="w3-button w3-green w3-round-large" data-bind="click: setSpinPage.bind($data, 1)">+1</span>
             <span class="w3-button w3-green w3-round-large" data-bind="click: setSpinPage.bind($data, 10)">+10</span>
           </div>
-        </div>
-
-        <div class="w3-cell" data-bind="visible: longCommand">
-          <h4><i class="fa fa-spinner fa-spin" style="color: white"></i></h4>
         </div>
 
         <div class="w3-container w3-teal">
@@ -172,7 +178,7 @@
               self.page(1);
               self.spinPage(1);
               self.longCommand(true);
-              self.command("Page", {page: self.spinPage(), url: self.progUrl[self.prog]});
+              self.command("Page", {page: self.spinPage(), prog: self.prog(), url: self.progUrl[self.prog()]});
             }
           }
 
