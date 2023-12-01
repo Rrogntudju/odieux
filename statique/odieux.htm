@@ -167,11 +167,13 @@
           }
 
           self.setProg = function (prog) {
-            self.prog(prog);
-            self.page(1);
-            self.spinPage(1);
-            self.longCommand(true);
-            self.command("Page", {page: self.spinPage(), url: self.progUrl[self.prog]});
+            if (prog != self.prog()) {
+              self.prog(prog);
+              self.page(1);
+              self.spinPage(1);
+              self.longCommand(true);
+              self.command("Page", {page: self.spinPage(), url: self.progUrl[self.prog]});
+            }
           }
 
           self.toggle = function () {
