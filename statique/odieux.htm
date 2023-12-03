@@ -133,10 +133,9 @@
 
           self.refresh = function () {
             self.command("State", null);
-            setTimeout(() => {
-              if (self.page() == 0) {
-                self.setPage();
-            }}, 200);
+            if (self.page() == 0) {
+              self.setPage();
+            }
           }
 
           self.play = function(épisode) {
