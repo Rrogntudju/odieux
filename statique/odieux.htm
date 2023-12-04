@@ -10,7 +10,7 @@
       <link rel="stylesheet" href="dist/css/all.min.css">
       <style>
         @media (prefers-color-scheme: dark) {
-          body.mode {
+          .mode {
               background-color: #202020;
           }
         }
@@ -32,7 +32,7 @@
           <div class="w3-cell" data-bind="click: setProg.bind($data, 0)">
             <h4 data-bind="css: { 'selected': prog() == 0 }">C'est si bon</h4>
           </div>
-          <div class="w3-cell" style="padding-left: 16px" data-bind="click: setProg.bind($data, 1)">
+          <div class="w3-cell" style="padding-left: 2em" data-bind="click: setProg.bind($data, 1)">
             <h4 data-bind="css: { 'selected': prog() == 1 }">Toute une musique</h4>
           </div>
         </div>
@@ -60,7 +60,7 @@
               <i class="fa fa-microphone"></i>
             </span>
           </div>
-          <div class="w3-cell" style="padding-left: 16px">
+          <div class="w3-cell" style="padding-left: 2em">
             <span class="w3-button w3-green w3-round-large"
                   data-bind="css: { 'w3-disabled': playerOff }, click: setVolume.bind($data, -1)">
               <i class="fa fa-volume-down"></i>
