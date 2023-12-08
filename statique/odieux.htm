@@ -33,12 +33,9 @@
 
     <body class="mode">
       <header>
-        <div class="w3-container w3-teal scroll-menu">
+        <div class="w3-container w3-teal scroll-menu" data-bind="foreach: progs">
           <div class="w3-cell menu-item">
-            <h4 data-bind="click: setProg.bind($data, 0), css: { selected: prog() == 0 }">C'est si bon</h4>
-          </div>
-          <div class="w3-cell menu-item">
-            <h4 data-bind="click: setProg.bind($data, 1), css: { selected: prog() == 1 }">Toute une musique</h4>
+            <h4 data-bind="text: prog, attr: { id: 'prog_' + $index() }, click: $root.setProg($index()), css: { selected: $root.prog() == $index() }"></h4>
           </div>
         </div>
 
@@ -67,12 +64,12 @@
           </div>
           <div class="w3-cell" style="padding-left: 2em">
             <span class="w3-button w3-green w3-round-large"
-                  data-bind="css: { 'w3-disabled': playerOff }, click: setVolume.bind($data, -1)">
+                  data-bind="css: { 'w3-disabled': playerOff }, click: $root.setVolume(-1)">
               <i class="fa fa-volume-down"></i>
             </span>
             <span class="w3-badge w3-white" data-bind="text: volume, css: { 'w3-disabled': playerOff }"></span>
             <span class="w3-button w3-green w3-round-large"
-                  data-bind="css: { 'w3-disabled': playerOff }, click: setVolume.bind($data, 1)">
+                  data-bind="css: { 'w3-disabled': playerOff }, click: $root.setVolume(1)">
               <i class="fa fa-volume-up"></i>
             </span>
           </div>
@@ -87,24 +84,24 @@
 
       <div class= "w3-container" data-bind="foreach: épisodes">
         <div class="w3-card w3-round w3-margin-top w3-margin-bottom w3-text-teal w3-btn w3-block" style="white-space: normal"
-             data-bind="html: titre, click: $parent.play">
+             data-bind="html: titre, click: $root.play">
         </div>
       </div>
 
       <footer>
         <div class="w3-container w3-teal">
           <p>Page <span class="w3-badge w3-white" data-bind="text: page"></span>
-            <span class="fa fa-spinner fa-spin" data-bind="visible: longCommand" style="color: white; font-size: large"></span>
+            <span class="fa fa-spinner fa-spin" data-bind="visible: longCommand"></span>
           </p>
         </div>
 
         <div class="w3-container w3-teal">
           <div class="w3-cell">
-            <span class="w3-button w3-green w3-round-large" data-bind="click: setSpinPage.bind($data, -10)">-10</span>
-            <span class="w3-button w3-green w3-round-large" data-bind="click: setSpinPage.bind($data, -1)">-1</span>
+            <span class="w3-button w3-green w3-round-large" data-bind="click: $root.setSpinPage(-10)">-10</span>
+            <span class="w3-button w3-green w3-round-large" data-bind="click: $root.setSpinPage(-1)">-1</span>
             <span class="w3-button w3-green w3-round-large" data-bind="click: setPage">Page <span data-bind="text: spinPage"></span></span>
-            <span class="w3-button w3-green w3-round-large" data-bind="click: setSpinPage.bind($data, 1)">+1</span>
-            <span class="w3-button w3-green w3-round-large" data-bind="click: setSpinPage.bind($data, 10)">+10</span>
+            <span class="w3-button w3-green w3-round-large" data-bind="click: $root.setSpinPage(1)">+1</span>
+            <span class="w3-button w3-green w3-round-large" data-bind="click: $root.setSpinPage(10)">+10</span>
           </div>
         </div>
 
@@ -129,6 +126,7 @@
             return self.enLecture().titre == "";
           });
           self.longCommand = ko.observable(false);
+          self.progs = [{prog: "C'est si bon"}, {prog: "C'est toute une musique"}];
           self.progUrl = [
             "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/cestsibon/{}?context=web&pageNumber={}",
             "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/touteunemusique/{}?context=web&pageNumber={}"
