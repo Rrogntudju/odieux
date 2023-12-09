@@ -40,6 +40,7 @@
         </div>
 
         <div class="w3-container w3-teal">
+          <p></p>
           <div class="w3-cell">
             <span class="w3-button w3-green w3-round-large"
                   data-bind="hidden: player() == 'Playing', css: { 'w3-disabled': playerOff }, click: toggle">
@@ -145,12 +146,11 @@
           self.progPages = [13, 38, 13, 38, 13, 38];
           self.spinPage = ko.observable(1);
 
-          self.refresh = function () {
-            self.command("State", null);
-            setTimeout(() => {
-              if (self.page() == 0) {
-                self.setPage();
-            }}, 200); // Afin que le rafraîchissement se termine avant de tester self.page
+          self.refresh = async function () {
+            await self.command("State", null);
+            if (self.page() == 0) {
+              self.setPage();
+            }
           }
 
           self.play = function(épisode) {
@@ -219,7 +219,7 @@
             self.spinPage(p);
           }
 
-          self.command = function(verb, param) {
+          self.command = async function(verb, param) {
             const headers = new Headers({
                 'Content-Type': 'application/json',
             });
@@ -235,7 +235,7 @@
               body: JSON.stringify(command),
             });
 
-            fetch(request)
+            await fetch(request)
             .then(response => response.json())
             .then(data => {
               self.player(data.player);
