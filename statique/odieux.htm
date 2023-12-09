@@ -147,10 +147,10 @@
 
           self.refresh = function () {
             self.command("State", null);
-            if (self.page() == 0) {
-              console.log("shit");
-              self.setPage();
-            }
+            setTimeout(() => {
+              if (self.page() == 0) {
+                self.setPage();
+            }}, 200); // Afin que le rafraîchissement se termine avant de tester self.page
           }
 
           self.play = function(épisode) {
