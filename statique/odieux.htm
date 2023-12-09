@@ -64,12 +64,12 @@
           </div>
           <div class="w3-cell" style="padding-left: 2em">
             <span class="w3-button w3-green w3-round-large"
-                  data-bind="css: { 'w3-disabled': playerOff }, click: $root.setVolume(-1)">
+                  data-bind="css: { 'w3-disabled': playerOff }, click: setVolume.bind($data, -1)">
               <i class="fa fa-volume-down"></i>
             </span>
             <span class="w3-badge w3-white" data-bind="text: volume, css: { 'w3-disabled': playerOff }"></span>
             <span class="w3-button w3-green w3-round-large"
-                  data-bind="css: { 'w3-disabled': playerOff }, click: $root.setVolume(1)">
+                  data-bind="css: { 'w3-disabled': playerOff }, click: setVolume.bind($data, 1)">
               <i class="fa fa-volume-up"></i>
             </span>
           </div>
@@ -84,7 +84,7 @@
 
       <div class= "w3-container" data-bind="foreach: épisodes">
         <div class="w3-card w3-round w3-margin-top w3-margin-bottom w3-text-teal w3-btn w3-block" style="white-space: normal"
-             data-bind="html: titre, click: $root.play">
+             data-bind="html: titre, click: play.bind($data)">
         </div>
       </div>
 
@@ -97,11 +97,11 @@
 
         <div class="w3-container w3-teal">
           <div class="w3-cell">
-            <span class="w3-button w3-green w3-round-large" data-bind="click: $root.setSpinPage(-10)">-10</span>
-            <span class="w3-button w3-green w3-round-large" data-bind="click: $root.setSpinPage(-1)">-1</span>
+            <span class="w3-button w3-green w3-round-large" data-bind="click: setSpinPage.bind($data, -10)">-10</span>
+            <span class="w3-button w3-green w3-round-large" data-bind="click: setSpinPage.bind($data, -1)">-1</span>
             <span class="w3-button w3-green w3-round-large" data-bind="click: setPage">Page <span data-bind="text: spinPage"></span></span>
-            <span class="w3-button w3-green w3-round-large" data-bind="click: $root.setSpinPage(1)">+1</span>
-            <span class="w3-button w3-green w3-round-large" data-bind="click: $root.setSpinPage(10)">+10</span>
+            <span class="w3-button w3-green w3-round-large" data-bind="click: setSpinPage.bind($data, 1)">+1</span>
+            <span class="w3-button w3-green w3-round-large" data-bind="click: setSpinPage.bind($data, 10)">+10</span>
           </div>
         </div>
 
