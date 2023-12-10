@@ -77,8 +77,11 @@
         </div>
 
         <div class="w3-container w3-teal">
+          <div data-bind="using: programme">
+            <span data-bind="text: titre"></span>
+          </div>
           <div data-bind="using: enLecture">
-            <p data-bind="html: titre"></p>
+              <br data-bind="html: titre"></br>
           </div>
         </div>
       </header>
@@ -123,6 +126,7 @@
           self.épisodes = ko.observableArray([]);
           self.message = ko.observable("");
           self.enLecture = ko.observable({titre: "", media_id: ""});
+          self.programme = ko.observable({titre: ""});
           self.playerOff = ko.computed(function () {
             return self.enLecture().titre == "";
           });
@@ -249,7 +253,15 @@
               self.épisodes.removeAll();
               ko.utils.arrayPushAll(self.épisodes, data.episodes);
               self.message(data.message);
-              self.enLecture(data.en_lecture);
+              if (JSON.stringify(self.enLecture) != JSON.stringify(data.en_lecture)) {
+                if (data.en_lecture.titre == "") {
+                  self.programme({titre: ""});
+                } else {
+                  self.programme({titre: self.programmes[data.prog].titre});
+                }
+                self.enLecture(data.en_lecture);
+              }
+              console.log(JSON.stringify(data.en_lecture));
               self.longCommand(false);
             })
             .catch((error) => {
