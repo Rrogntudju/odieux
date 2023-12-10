@@ -21,6 +21,7 @@ struct State {
     episodes: Vec<Episode>,
     message: String,
     en_lecture: Episode,
+    en_lecture_prog: usize,
 }
 
 #[derive(Deserialize, PartialEq)]
@@ -53,6 +54,7 @@ thread_local! {
         episodes: Vec::new(),
         message: String::default(),
         en_lecture: Episode::default(),
+        en_lecture_prog: 0,
     });
 }
 
@@ -121,6 +123,7 @@ mod handlers {
                 STATE.with_borrow_mut(|state| {
                     state.player = PlayerState::Playing;
                     state.en_lecture = épisode;
+                    state.en_lecture_prog = state.prog;
                     SINK.with_borrow(|sink| sink.as_ref().unwrap().set_volume((state.volume as f32) / 2.0));
                 });
             }

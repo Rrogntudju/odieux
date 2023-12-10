@@ -76,12 +76,12 @@
           </div>
         </div>
 
-        <div class="w3-container w3-teal">
-          <div data-bind="using: programme">
+        <div class="w3-container w3-teal" style="padding-top: 1em;">
+          <div data-bind="using: programme" style="font-weight: bold;">
             <span data-bind="text: titre"></span>
           </div>
           <div data-bind="using: enLecture">
-              <br data-bind="html: titre"></br>
+            <span data-bind="html: titre"></span>
           </div>
         </div>
       </header>
@@ -252,16 +252,13 @@
               }
               self.épisodes.removeAll();
               ko.utils.arrayPushAll(self.épisodes, data.episodes);
-              self.message(data.message);
-              if (JSON.stringify(self.enLecture) != JSON.stringify(data.en_lecture)) {
-                if (data.en_lecture.titre == "") {
-                  self.programme({titre: ""});
-                } else {
-                  self.programme({titre: self.programmes[data.prog].titre});
-                }
-                self.enLecture(data.en_lecture);
+              self.enLecture(data.en_lecture);
+              if (data.en_lecture.titre == "") {
+                self.programme({titre: ""});
+              } else {
+                self.programme({titre: self.programmes[data.en_lecture_prog].titre});
               }
-              console.log(JSON.stringify(data.en_lecture));
+              self.message(data.message);
               self.longCommand(false);
             })
             .catch((error) => {
