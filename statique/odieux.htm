@@ -134,20 +134,16 @@
           self.programmes = [
             {titre: "C'est si bon", idx: 0},
             {titre: "C'est toute une musique", idx: 1},
-            {titre: "C'est si bon 22222222222222", idx: 2},
-            {titre: "C'est toute une musique 33333333", idx: 3},
-            {titre: "C'est si bon 4", idx: 4},
-            {titre: "C'est toute une musique 5", idx: 5}
+            {titre: "Moment classique", idx: 2},
+            {titre: "Quand le jazz est là", idx: 3},
           ];
           self.progUrl = [
             "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/cestsibon/{}?context=web&pageNumber={}",
             "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/touteunemusique/{}?context=web&pageNumber={}",
-            "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/cestsibon/{}?context=web&pageNumber={}",
-            "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/touteunemusique/{}?context=web&pageNumber={}",
-            "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/cestsibon/{}?context=web&pageNumber={}",
-            "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/touteunemusique/{}?context=web&pageNumber={}"
+            "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/momentclassique/{}?context=web&pageNumber={}",
+            "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/quandlejazzestla/{}?context=web&pageNumber={}",
           ];
-          self.progPages = [13, 38, 13, 38, 13, 38];
+          self.progPages = [94, 233, 14, 250];
           self.spinPage = ko.observable(1);
 
           self.refresh = async function () {
@@ -253,7 +249,7 @@
               self.épisodes.removeAll();
               ko.utils.arrayPushAll(self.épisodes, data.episodes);
               self.enLecture(data.en_lecture);
-              if (data.en_lecture.titre == "") {
+              if (data.en_lecture.titre == "" || data.en_lecture.titre == "En direct") {
                 self.programme({titre: ""});
               } else {
                 self.programme({titre: self.programmes[data.en_lecture_prog].titre});
