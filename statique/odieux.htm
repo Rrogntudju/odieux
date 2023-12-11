@@ -102,15 +102,13 @@
         <div class="w3-container w3-teal">
           <div class="w3-cell">
             <span class="w3-button w3-green w3-round-large"
-              onmousedown="ohdio.startMouseSpin(-1)" onmouseup="ohdio.stopSpin()"
-              ontouchstart="ohdio.startTouchSpin(-1)" ontouchend="ohdio.stopSpin()">
-              -
+              onmousedown="ohdio.startMouseSpin(-1)" onmouseup="ohdio.stopSpin()" ontouchstart="ohdio.startTouchSpin(-1)" ontouchend="ohdio.stopSpin()">
+              <i class="fa fa-solid fa-minus"></i>
             </span>
             <span class="w3-button w3-green w3-round-large" data-bind="click: setPage" id="spin">Page <span data-bind="text: spinPage"></span></span>
             <span class="w3-button w3-green w3-round-large"
-              onmousedown="ohdio.startMouseSpin(1)" onmouseup="ohdio.stopSpin()"
-              ontouchstart="ohdio.startTouchSpin(1)" ontouchend="ohdio.stopSpin()">
-              +
+              onmousedown="ohdio.startMouseSpin(1)" onmouseup="ohdio.stopSpin()" ontouchstart="ohdio.startTouchSpin(1)" ontouchend="ohdio.stopSpin()">
+              <i class="fa fa-solid fa-plus"></i>
             </span>
           </div>
         </div>
@@ -149,7 +147,7 @@
             "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/momentclassique/{}?context=web&pageNumber={}",
             "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/quandlejazzestla/{}?context=web&pageNumber={}",
           ];
-          self.progPages = [94, 233, 14, 250];
+          self.progPages = [94, 233, 14, 38];
           self.spinPage = ko.observable(1);
 
           self.refresh = async function () {
