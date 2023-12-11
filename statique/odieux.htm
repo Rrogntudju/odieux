@@ -101,11 +101,9 @@
 
         <div class="w3-container w3-teal">
           <div class="w3-cell">
-            <span class="w3-button w3-green w3-round-large" data-bind="click: setSpinPage.bind($root, -10)">-10</span>
-            <span class="w3-button w3-green w3-round-large" data-bind="click: setSpinPage.bind($root, -1)">-1</span>
-            <span class="w3-button w3-green w3-round-large" data-bind="click: setPage">Page <span data-bind="text: spinPage"></span></span>
-            <span class="w3-button w3-green w3-round-large" data-bind="click: setSpinPage.bind($root, 1)">+1</span>
-            <span class="w3-button w3-green w3-round-large" data-bind="click: setSpinPage.bind($root, 10)">+10</span>
+            <span class="w3-button w3-green w3-round-large" onmousedown="ohdio.startSpin(-1)" onmouseup="ohdio.stopSpin()">-</span>
+            <span class="w3-button w3-green w3-round-large" data-bind="click: setPage" id="spin">Page <span data-bind="text: spinPage"></span></span>
+            <span class="w3-button w3-green w3-round-large" onmousedown="ohdio.startSpin(1)" onmouseup="ohdio.stopSpin()">+</span>
           </div>
         </div>
 
@@ -117,6 +115,18 @@
       </footer>
 
       <script>
+
+  var counter;
+
+  function start() {
+    counter = setInterval(function() {
+      wrapper.innerHTML = count;
+      count++;
+    }, 500);
+  }
+  function end() {
+    clearInterval(counter)
+  }
         function ohdioViewModel() {
           let self = this;
           self.player = ko.observable("Stopped");
@@ -206,6 +216,22 @@
               vol = 10;
             }
             self.command("Volume", vol);
+          }
+
+          self.startSpin = async function (offset) {
+            self.setSpinPage(offset);
+            await new Promise((r) => {
+              self.handle1 = setTimeout(r, 500);
+            });
+            self.offset = offset;
+            self.handle2 = setInterval(() => {
+              self.setSpinPage(self.offset);
+            }, 15);
+          }
+
+          self.stopSpin = function () {
+            clearTimeout(self.handle1);
+            clearInterval(self.handle2);
           }
 
           self.setSpinPage = function (offset) {
