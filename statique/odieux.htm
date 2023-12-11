@@ -101,9 +101,17 @@
 
         <div class="w3-container w3-teal">
           <div class="w3-cell">
-            <span class="w3-button w3-green w3-round-large" onmousedown="ohdio.startSpin(-1)" onmouseup="ohdio.stopSpin()">-</span>
+            <span class="w3-button w3-green w3-round-large"
+              onmousedown="ohdio.startMouseSpin(-1)" onmouseup="ohdio.stopSpin()"
+              ontouchstart="ohdio.startTouchSpin(-1)" ontouchend="ohdio.stopSpin()">
+              -
+            </span>
             <span class="w3-button w3-green w3-round-large" data-bind="click: setPage" id="spin">Page <span data-bind="text: spinPage"></span></span>
-            <span class="w3-button w3-green w3-round-large" onmousedown="ohdio.startSpin(1)" onmouseup="ohdio.stopSpin()">+</span>
+            <span class="w3-button w3-green w3-round-large"
+              onmousedown="ohdio.startMouseSpin(1)" onmouseup="ohdio.stopSpin()"
+              ontouchstart="ohdio.startTouchSpin(1)" ontouchend="ohdio.stopSpin()">
+              +
+            </span>
           </div>
         </div>
 
@@ -115,18 +123,6 @@
       </footer>
 
       <script>
-
-  var counter;
-
-  function start() {
-    counter = setInterval(function() {
-      wrapper.innerHTML = count;
-      count++;
-    }, 500);
-  }
-  function end() {
-    clearInterval(counter)
-  }
         function ohdioViewModel() {
           let self = this;
           self.player = ko.observable("Stopped");
@@ -221,7 +217,7 @@
           self.startSpin = async function (offset) {
             self.setSpinPage(offset);
             await new Promise((r) => {
-              self.handle1 = setTimeout(r, 500);
+              self.handle1 = setTimeout(r, 400);
             });
             self.offset = offset;
             self.handle2 = setInterval(() => {
@@ -232,6 +228,19 @@
           self.stopSpin = function () {
             clearTimeout(self.handle1);
             clearInterval(self.handle2);
+          }
+
+          self.touch = false;
+
+          self.startTouchSpin = function (offset) {
+            self.touch = true;
+            self.startSpin(offset);
+          }
+
+          self.startMouseSpin = function (offset) {
+            if (!self.touch) {
+              self.startSpin(offset);
+            }
           }
 
           self.setSpinPage = function (offset) {
