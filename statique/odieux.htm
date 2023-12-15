@@ -225,10 +225,10 @@
 
           self.startSpin = async function (offset) {
             self.setSpinPage(offset);
-            await new Promise((r) => {
+            await new Promise(r => {
               self.handle1 = setTimeout(r, 400);
             });
-            self.handle2 = setInterval((offset) => {
+            self.handle2 = setInterval(offset => {
               self.setSpinPage(offset);
             }, 30, offset);
           }
@@ -289,7 +289,7 @@
               self.message(data.message);
               self.longCommand(false);
             })
-            .catch((error) => {
+            .catch(error => {
               self.message(error);
               self.longCommand(false);
             });
