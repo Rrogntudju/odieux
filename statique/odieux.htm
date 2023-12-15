@@ -228,10 +228,9 @@
             await new Promise((r) => {
               self.handle1 = setTimeout(r, 400);
             });
-            self.offset = offset;
-            self.handle2 = setInterval(() => {
-              self.setSpinPage(self.offset);
-            }, 30);
+            self.handle2 = setInterval((offset) => {
+              self.setSpinPage(offset);
+            }, 30, offset);
           }
 
           self.stopSpin = function () {
