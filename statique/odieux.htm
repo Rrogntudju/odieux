@@ -35,7 +35,7 @@
       <header>
         <div class="w3-container w3-teal scroll-menu" data-bind="foreach: programmes">
           <div class="w3-cell menu-item">
-            <h4 data-bind="text: titre, attr: { id: 'prog_' + idx }, click: $parent.selProg, css: { selected: $parent.prog() == idx }"></h4>
+            <h4 data-bind="text: titre, attr: { id: 'prog_' + i }, click: $parent.selProg, css: { selected: $parent.prog() == i }"></h4>
           </div>
         </div>
 
@@ -136,10 +136,10 @@
           });
           self.longCommand = ko.observable(false);
           self.programmes = [
-            {titre: "C'est si bon", idx: 0},
-            {titre: "C'est toute une musique", idx: 1},
-            {titre: "Moment classique", idx: 2},
-            {titre: "Quand le jazz est là", idx: 3},
+            {titre: "C'est si bon", i: 0},
+            {titre: "C'est toute une musique", i: 1},
+            {titre: "Moment classique", i: 2},
+            {titre: "Quand le jazz est là", i: 3},
           ];
           self.progUrl = [
             "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/cestsibon/{}?context=web&pageNumber={}",
@@ -182,8 +182,8 @@
           }
 
           self.selProg = function (programme) {
-            self.setProg(programme.idx);
-            let menuItem = document.getElementById("prog_" + programme.idx);
+            self.setProg(programme.i);
+            let menuItem = document.getElementById("prog_" + programme.i);
             menuItem.scrollIntoView({behavior: "smooth"});
           }
 
