@@ -102,12 +102,12 @@
         <div class="w3-container w3-teal">
           <div class="w3-cell">
             <span class="w3-button w3-green w3-round-large"
-              onmousedown="ohdio.startMouseSpin(-1)" onmouseup="ohdio.stopSpin()" ontouchstart="ohdio.startTouchSpin(-1)" ontouchend="ohdio.stopSpin()">
+              onmousedown="ohdio.minusSpin(event)" onmouseup="ohdio.stopSpin()" ontouchstart="ohdio.minusSpin(event)" ontouchend="ohdio.stopSpin()">
               <i class="fa fa-solid fa-minus"></i>
             </span>
             <span class="w3-button w3-green w3-round-large" data-bind="click: setPage" id="spin">Page <span data-bind="text: spinPage"></span></span>
             <span class="w3-button w3-green w3-round-large"
-              onmousedown="ohdio.startMouseSpin(1)" onmouseup="ohdio.stopSpin()" ontouchstart="ohdio.startTouchSpin(1)" ontouchend="ohdio.stopSpin()">
+              onmousedown="ohdio.plusSpin(event)" onmouseup="ohdio.stopSpin()" ontouchstart="ohdio.plusSpin(event)" ontouchend="ohdio.stopSpin()">
               <i class="fa fa-solid fa-plus"></i>
             </span>
           </div>
@@ -238,17 +238,14 @@
             clearInterval(self.handle2);
           }
 
-          self.touch = false;
-
-          self.startTouchSpin = function (offset) {
-            self.touch = true;
-            self.startSpin(offset);
+          self.minusSpin = function (event) {
+            event.preventDefault();
+            self.startSpin(-1);
           }
 
-          self.startMouseSpin = function (offset) {
-            if (!self.touch) {
-              self.startSpin(offset);
-            }
+          self.plusSpin = function (event) {
+            event.preventDefault();
+            self.startSpin(1);
           }
 
           self.command = async function(verb, param) {
