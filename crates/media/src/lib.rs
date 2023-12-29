@@ -47,10 +47,8 @@ pub async fn get_episodes(no: usize, url: &str) -> Result<Vec<Episode>> {
 mod tests {
     use super::*;
 
-    const CSB: &str =
-        "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/cestsibon/{}?context=web&pageNumber={}";
-    const TUM: &str =
-        "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/touteunemusique/{}?context=web&pageNumber={}";
+    const CSB: &str = "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/cestsibon/{}?context=web&pageNumber={}";
+    const TUM: &str = "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/touteunemusique/{}?context=web&pageNumber={}";
 
     #[tokio::test]
     async fn csb() {
