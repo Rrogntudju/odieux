@@ -1,87 +1,68 @@
-use hls_player::{OutputStream, Sink};
-use media::{get_episodes, Episode};
-use reqwest::Client;
-use serde::{Deserialize, Serialize};
-use std::cell::RefCell;
-use std::thread_local;
-use std::time::Duration;
+mod handler {
+    use hls_player::{OutputStream, Sink};
+    use media::{get_episodes, Episode};
+    use serde::{Deserialize, Serialize};
+    use std::cell::RefCell;
+    use std::thread_local;
 
-#[derive(Serialize, Clone, PartialEq)]
-enum PlayerState {
-    Playing,
-    Paused,
-    Stopped,
-}
-#[derive(Serialize, Clone)]
-struct State {
-    player: PlayerState,
-    volume: usize,
-    page: usize,
-    prog: usize,
-    episodes: Vec<Episode>,
-    message: String,
-    en_lecture: Episode,
-    en_lecture_prog: usize,
-}
-
-#[derive(Deserialize, PartialEq)]
-struct Pagination {
-    page: usize,
-    prog: usize,
-    url: String,
-}
-
-#[derive(Deserialize, PartialEq)]
-enum Command {
-    Start(Episode),
-    Volume(usize),
-    Pause,
-    Stop,
-    Play,
-    Random(Pagination),
-    Page(Pagination),
-    State,
-}
-
-thread_local! {
-    static SINK: RefCell<Option<Sink>> = RefCell::new(None);
-    static OUTPUT_STREAM: RefCell<Option<OutputStream>> = RefCell::new(None);
-    static STATE: RefCell<State> = RefCell::new(State {
-        player: PlayerState::Stopped,
-        volume: 2,
-        page: 0,
-        prog: 0,
-        episodes: Vec::new(),
-        message: String::default(),
-        en_lecture: Episode::default(),
-        en_lecture_prog: 0,
-    });
-}
-
-pub mod routers {
-    use crate::handlers;
-    use axum::{
-        routing::{get_service, post},
-        Router,
-    };
-    use std::path::PathBuf;
-    use tower_http::{limit::RequestBodyLimitLayer, services::ServeDir};
-
-    // nest_service enlève le préfixe «statique» avant de passer la requête à serveDir
-    pub fn app(path: PathBuf) -> Router {
-        Router::new()
-            .nest_service("/statique", get_service(ServeDir::new(path)))
-            .route("/command", post(handlers::execute))
-            .layer(RequestBodyLimitLayer::new(1024))
+    #[derive(Serialize, Clone, PartialEq)]
+    enum PlayerState {
+        Playing,
+        Paused,
+        Stopped,
     }
-}
+    #[derive(Serialize, Clone)]
+    struct State {
+        player: PlayerState,
+        volume: usize,
+        page: usize,
+        prog: usize,
+        episodes: Vec<Episode>,
+        message: String,
+        en_lecture: Episode,
+        en_lecture_prog: usize,
+    }
 
-mod handlers {
-    use super::*;
+    #[derive(Deserialize, PartialEq)]
+    pub struct Pagination {
+        page: usize,
+        prog: usize,
+        url: String,
+    }
+
+    #[derive(Deserialize, PartialEq)]
+    pub enum Command {
+        Start(Episode),
+        Volume(usize),
+        Pause,
+        Stop,
+        Play,
+        Random(Pagination),
+        Page(Pagination),
+        State,
+    }
+
+    thread_local! {
+        static SINK: RefCell<Option<Sink>> = RefCell::new(None);
+        static OUTPUT_STREAM: RefCell<Option<OutputStream>> = RefCell::new(None);
+        static STATE: RefCell<State> = RefCell::new(State {
+            player: PlayerState::Stopped,
+            volume: 2,
+            page: 0,
+            prog: 0,
+            episodes: Vec::new(),
+            message: String::default(),
+            en_lecture: Episode::default(),
+            en_lecture_prog: 0,
+        });
+    }
+
     use anyhow::{anyhow, Result};
     use axum::{extract::Json, response::IntoResponse};
     use rand::Rng;
+    use reqwest::Client;
     use serde_json::Value;
+    use std::time::Duration;
 
     const TIME_OUT: u64 = 30;
     const URL_VALIDEUR_OD: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianet&connectionType=hd&deviceType=ipad&idMedia={}&multibitrate=true&output=json&tech=hls";
@@ -135,7 +116,7 @@ mod handlers {
         }
     }
 
-    pub(crate) async fn execute(Json(command): Json<Command>) -> impl IntoResponse {
+    pub async fn execute(Json(command): Json<Command>) -> impl IntoResponse {
         if command != Command::State {
             STATE.with_borrow_mut(|state| state.message = String::default());
         }
@@ -201,9 +182,27 @@ mod handlers {
     }
 }
 
+pub mod router {
+    use super::handler::execute;
+    use axum::{
+        routing::{get_service, post},
+        Router,
+    };
+    use std::path::PathBuf;
+    use tower_http::{limit::RequestBodyLimitLayer, services::ServeDir};
+
+    // nest_service enlève le préfixe «statique» avant de passer la requête à serveDir
+    pub fn app(path: PathBuf) -> Router {
+        Router::new()
+            .nest_service("/statique", get_service(ServeDir::new(path)))
+            .route("/command", post(execute))
+            .layer(RequestBodyLimitLayer::new(1024))
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::routers::app;
+    use super::router::app;
     use axum::body::Body;
     use axum::http::{Request, StatusCode};
     use tower::util::ServiceExt;
