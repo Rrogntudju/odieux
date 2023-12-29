@@ -59,7 +59,7 @@ thread_local! {
 }
 
 pub mod routers {
-    use super::*;
+    use crate::handlers;
     use axum::{
         routing::{get_service, post},
         Router,
