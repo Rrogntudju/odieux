@@ -121,25 +121,21 @@ mod handler {
             STATE.with_borrow_mut(|state| state.message = String::default());
         }
         match command {
+            Command::State => {
+                // Vérifier si la lecture s'est terminée
+                if STATE.with_borrow(|state| state.en_lecture != Episode::default()) && SINK.with_borrow(|sink| sink.as_ref().unwrap().empty()) {
+                    if STATE.with_borrow(|state| state.en_lecture.titre == "En direct") {
+                        command_start(Episode {
+                            titre: "En direct".to_owned(),
+                            media_id: "".to_owned(),
+                        })
+                        .await
+                    } else {
+                        command_stop()
+                    }
+                }
+            }
             Command::Start(épisode) => command_start(épisode).await,
-            Command::Volume(vol) => {
-                if STATE.with_borrow(|state| state.player != PlayerState::Stopped) {
-                    SINK.with_borrow(|sink| sink.as_ref().unwrap().set_volume((vol as f32) / 2.0));
-                    STATE.with_borrow_mut(|state| state.volume = vol);
-                }
-            }
-            Command::Pause => {
-                if STATE.with_borrow(|state| state.player == PlayerState::Playing) {
-                    SINK.with_borrow(|sink| sink.as_ref().unwrap().pause());
-                    STATE.with_borrow_mut(|state| state.player = PlayerState::Paused);
-                }
-            }
-            Command::Play => {
-                if STATE.with_borrow(|state| state.player == PlayerState::Paused) {
-                    SINK.with_borrow(|sink| sink.as_ref().unwrap().play());
-                    STATE.with_borrow_mut(|state| state.player = PlayerState::Playing);
-                }
-            }
             Command::Page(pagination) => match get_episodes(pagination.page, &pagination.url).await {
                 Ok(épisodes) => STATE.with_borrow_mut(|state| {
                     state.episodes = épisodes;
@@ -158,23 +154,27 @@ mod handler {
                     Err(e) => STATE.with_borrow_mut(|state| state.message = format!("{e:#}")),
                 }
             }
+            Command::Volume(vol) => {
+                if STATE.with_borrow(|state| state.player != PlayerState::Stopped) {
+                    SINK.with_borrow(|sink| sink.as_ref().unwrap().set_volume((vol as f32) / 2.0));
+                    STATE.with_borrow_mut(|state| state.volume = vol);
+                }
+            }
+            Command::Play => {
+                if STATE.with_borrow(|state| state.player == PlayerState::Paused) {
+                    SINK.with_borrow(|sink| sink.as_ref().unwrap().play());
+                    STATE.with_borrow_mut(|state| state.player = PlayerState::Playing);
+                }
+            }
+            Command::Pause => {
+                if STATE.with_borrow(|state| state.player == PlayerState::Playing) {
+                    SINK.with_borrow(|sink| sink.as_ref().unwrap().pause());
+                    STATE.with_borrow_mut(|state| state.player = PlayerState::Paused);
+                }
+            }
             Command::Stop => {
                 if STATE.with_borrow(|state| state.player != PlayerState::Stopped) {
                     command_stop()
-                }
-            }
-            Command::State => {
-                // Vérifier si la lecture s'est terminée
-                if STATE.with_borrow(|state| state.en_lecture != Episode::default()) && SINK.with_borrow(|sink| sink.as_ref().unwrap().empty()) {
-                    if STATE.with_borrow(|state| state.en_lecture.titre == "En direct") {
-                        command_start(Episode {
-                            titre: "En direct".to_owned(),
-                            media_id: "".to_owned(),
-                        })
-                        .await
-                    } else {
-                        command_stop()
-                    }
                 }
             }
         }
