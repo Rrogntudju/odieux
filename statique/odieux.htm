@@ -3,6 +3,7 @@
     <head>
       <meta charset="utf-8"/>
       <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta name="apple-mobile-web-app-capable" content="yes">
       <script src="dist/knockout-3.5.1.js"></script>
       <link rel="stylesheet" href="dist/css/w3.css">
       <link rel="icon" type="image/x-icon" href="dist/favicon.ico"/>
@@ -93,15 +94,10 @@
       </div>
 
       <footer>
-        <div class="w3-container w3-teal">
-          <p>Page <span class="w3-badge w3-white" data-bind="text: page"></span>
-            <span class="fa fa-spinner fa-spin" data-bind="visible: longCommand"></span>
-          </p>
-        </div>
-
-        <div class="w3-container w3-teal">
-          <div class="w3-cell">
-            <span class="w3-button w3-green w3-round-large"
+        <div class="w3-container w3-teal" style="display: flex">
+          <p>Page <span class="w3-badge w3-white" data-bind="text: page"></span></p>
+          <div class="w3-cell" style="padding-left: 2em">
+            <p><span class="w3-button w3-green w3-round-large"
               onmousedown="ohdio.minusSpin(event)" onmouseup="ohdio.stopSpin()" ontouchstart="ohdio.minusSpin(event)" ontouchend="ohdio.stopSpin()">
               <i class="fa fa-solid fa-minus"></i>
             </span>
@@ -110,13 +106,12 @@
               onmousedown="ohdio.plusSpin(event)" onmouseup="ohdio.stopSpin()" ontouchstart="ohdio.plusSpin(event)" ontouchend="ohdio.stopSpin()">
               <i class="fa fa-solid fa-plus"></i>
             </span>
+            <span class="fa fa-spinner fa-spin" data-bind="visible: longCommand"></span></p>
           </div>
         </div>
 
         <div class="w3-container w3-teal">
-          <div class="w3-text-orange">
-            <p data-bind="text: message"></p>
-          </div>
+          <div class="w3-text-orange" data-bind="text: message"></div>
         </div>
       </footer>
 
