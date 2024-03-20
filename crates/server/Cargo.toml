@@ -11,7 +11,7 @@ tokio = {version = "1", features = ["macros"]}
 anyhow = "1"
 serde = { version ="1", features = ["derive"] }
 serde_json = "1"
-reqwest = "0.11"
+reqwest = "0.12"
 hls_player = {path = "../hls_player"}
 media = {path = "../media"}
 rand = "0.8"

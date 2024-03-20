@@ -7,7 +7,7 @@ edition = "2021"
 [dependencies]
 hls_handler = {path = "../hls_handler"}
 media = {path = "../media"}
-reqwest = "0.11"
+reqwest = "0.12"
 serde_json = "1"
 tokio = {version = "1", features = ["rt-multi-thread", "macros"]}
 
