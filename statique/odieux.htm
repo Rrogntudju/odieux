@@ -134,15 +134,21 @@
             {titre: "C'est si bon", i: 0},
             {titre: "C'est toute une musique", i: 1},
             {titre: "Moment classique", i: 2},
-            {titre: "Quand le jazz est là", i: 3},
+            {titre: "La table d'harmonie", i: 3},
+            {titre: "De tout choeur avec vous", i: 4},
+            {titre: "Quand le jazz est là", i: 5},
+            {titre: "Moment jazz", i: 6},
           ];
           self.progUrl = [
             "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/cestsibon/{}?context=web&pageNumber={}",
             "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/touteunemusique/{}?context=web&pageNumber={}",
             "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/momentclassique/{}?context=web&pageNumber={}",
+            "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/latabledharmonieimc/{}?context=web&pageNumber={}",
+            "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/de-tout-choeur-avec-vous-im/{}?context=web&pageNumber={}",
             "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/quandlejazzestla/{}?context=web&pageNumber={}",
+            "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/momentjazz/{}?context=web&pageNumber={}",
           ];
-          self.progPages = [13, 38, 14, 38];
+          self.progPages = [13, 38, 14, 11, 7, 38, 54];
           self.spinPage = ko.observable(1);
 
           self.refresh = async function () {
