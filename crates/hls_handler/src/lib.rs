@@ -266,8 +266,15 @@ async fn hls_on_demand2(media_url: Url, client: Client, tx: SyncSender<Message>)
     };
 
     let mut cache: HashMap<String, Vec<u8>> = HashMap::new();
+    let mut prec_uri = String::new(); // Problème de multiples uri de segment identiques
 
     for (_, media_segment) in media.segments {
+        if prec_uri == media_segment.uri().as_ref() {
+            continue;   // Avec un media correctement construit, on n'aboutit jamais ici...
+        } else {
+            prec_uri = media_segment.uri().to_string();
+        }
+
         let segment_url = match base_or_join(&media_url, media_segment.uri()).context("Échec: base_or_join de l'url media segment") {
             Ok(url) => url,
             Err(e) => {
