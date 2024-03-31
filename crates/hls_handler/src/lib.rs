@@ -266,7 +266,7 @@ async fn hls_on_demand2(media_url: Url, client: Client, tx: SyncSender<Message>)
     };
 
     let mut cache: HashMap<String, Vec<u8>> = HashMap::new();
-    let mut prec_uri = String::new(); // Problème de multiples uri de segment identiques
+    let mut prec_uri = String::new(); // Problème d'URIs identiques
 
     for (_, media_segment) in media.segments {
         if prec_uri == media_segment.uri().as_ref() {
