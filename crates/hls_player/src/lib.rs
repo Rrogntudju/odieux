@@ -2,16 +2,39 @@
 mod rxcursor;
 #[cfg(feature = "throttling")]
 mod rxcursor2;
-use anyhow::{bail, Context, Result};
-use rodio::Decoder;
+use std::fs::File;
+use std::io::Read;
+
+use anyhow::{Context, Result};
+use rodio::cpal::traits::HostTrait;
+use rodio::{cpal, Decoder, DeviceTrait};
 pub use rodio::{OutputStream, Sink};
 use rxcursor::RxCursor;
 
 pub fn start(url: &str) -> Result<(Sink, OutputStream)> {
     let rx = hls_handler::start(url)?;
-    let Ok((_output_stream, stream_handle)) = OutputStream::try_default() else {
-        bail!("La sortie audio est déjà utilisée");
+
+    let mut cfg = std::env::current_exe()?;
+    cfg.set_extension("cfg");
+
+    let (_output_stream, stream_handle) = if cfg.is_file() {
+        let mut cfg_file = File::open(cfg)?;
+        let mut device_name = String::new();
+        cfg_file.read_to_string(&mut device_name)?;
+
+        let host = cpal::default_host();
+        let mut devices = host.output_devices()?;
+        match devices.find(|device| device.name().unwrap_or(String::new()) == device_name) {
+            Some(device) => {
+                println!("Output device: {}", device.name().unwrap());
+                OutputStream::try_from_device(&device)?
+            }
+            None => OutputStream::try_default()?,
+        }
+    } else {
+        OutputStream::try_default()?
     };
+
     let sink = Sink::try_new(&stream_handle).context("Échec: création de Sink")?;
     let source = Decoder::new(RxCursor::new(rx)?).context("Échec: création de Decoder")?;
     sink.append(source);

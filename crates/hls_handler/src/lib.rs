@@ -270,7 +270,7 @@ async fn hls_on_demand2(media_url: Url, client: Client, tx: SyncSender<Message>)
 
     for (_, media_segment) in media.segments {
         if prec_uri == media_segment.uri().as_ref() {
-            continue;   // Avec un media correctement construit, on n'aboutit jamais ici...
+            continue; // Avec un media correctement construit, on n'aboutit jamais ici...
         } else {
             prec_uri = media_segment.uri().to_string();
         }
