@@ -26,7 +26,7 @@ pub fn start(url: &str) -> Result<(Sink, OutputStream)> {
         let mut devices = host.output_devices()?;
         match devices.find(|device| device.name().unwrap_or(String::new()) == device_name) {
             Some(device) => {
-                println!("Output device: {}", device.name().unwrap());
+                println!("Output device: {}", device_name);
                 OutputStream::try_from_device(&device)?
             }
             None => OutputStream::try_default()?,
