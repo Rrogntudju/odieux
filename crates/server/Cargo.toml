@@ -5,8 +5,8 @@ authors = ["Rrogntudju"]
 edition = "2021"
 
 [dependencies]
-axum = {version = "0.7", features = ["json"]}
-tower-http = {version = "0.5", features = ["fs", "limit"]}
+axum = {version = "0.8", features = ["json"]}
+tower-http = {version = "0.6", features = ["fs", "limit"]}
 tokio = {version = "1", features = ["macros"]}
 anyhow = "1"
 serde = { version ="1", features = ["derive"] }
@@ -17,4 +17,4 @@ media = {path = "../media"}
 rand = "0.8"
 
 [dev-dependencies]
-tower = { version = "0.4", features = ["util"] }
+tower = { version = "0.5", features = ["util"] }
