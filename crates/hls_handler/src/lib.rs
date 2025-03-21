@@ -1,4 +1,4 @@
-use anyhow::{anyhow, bail, Context, Error, Result};
+use anyhow::{Context, Error, Result, anyhow, bail};
 use hls_m3u8::tags::VariantStream;
 use hls_m3u8::types::EncryptionMethod;
 use hls_m3u8::{Decryptable, MasterPlaylist, MediaPlaylist};
@@ -6,7 +6,7 @@ use mpeg2ts::ts::{Pid, ReadTsPacket, TsPacketReader, TsPayload};
 use reqwest::Client;
 use std::collections::HashMap;
 use std::convert::TryFrom;
-use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
+use std::sync::mpsc::{Receiver, SyncSender, sync_channel};
 use std::thread;
 use std::time::{Duration, Instant};
 use url::{ParseError, Url};

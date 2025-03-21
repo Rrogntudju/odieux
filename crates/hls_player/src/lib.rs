@@ -7,7 +7,7 @@ use std::io::Read;
 
 use anyhow::{Context, Result};
 use rodio::cpal::traits::HostTrait;
-use rodio::{cpal, Decoder, DeviceTrait};
+use rodio::{Decoder, DeviceTrait, cpal};
 pub use rodio::{OutputStream, Sink};
 use rxcursor::RxCursor;
 

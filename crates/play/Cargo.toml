@@ -2,7 +2,7 @@
 name = "play"
 version = "0.1.0"
 authors = ["Rrogntudju"]
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 rodio = { version = "0.20", default-features = false, features = ["symphonia-aac"] }

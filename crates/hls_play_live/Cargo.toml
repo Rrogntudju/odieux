@@ -2,7 +2,7 @@
 name = "hls_play_live"
 version = "0.1.0"
 authors = ["Rrogntudju"]
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 hls_player = {path = "../hls_player"}

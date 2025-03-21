@@ -2,8 +2,8 @@ use anyhow::Result;
 use std::io::{Error, ErrorKind, Read, Seek, SeekFrom};
 use std::sync::mpsc::Receiver;
 use std::sync::{
-    atomic::{AtomicBool, Ordering},
     Arc, Mutex,
+    atomic::{AtomicBool, Ordering},
 };
 use std::thread;
 

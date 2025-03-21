@@ -2,7 +2,7 @@
 name = "odieux"
 version = "0.4.3"
 authors = ["Rrogntudju"]
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 axum = {version = "0.8", default-features = false}

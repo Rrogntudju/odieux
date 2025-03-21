@@ -2,7 +2,7 @@
 name = "server"
 version = "0.6.0"
 authors = ["Rrogntudju"]
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 axum = {version = "0.8", features = ["json"]}

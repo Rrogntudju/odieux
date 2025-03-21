@@ -6,8 +6,8 @@ use std::env::args;
 use std::error::Error;
 use std::io;
 use std::sync::{
-    atomic::{AtomicBool, Ordering},
     Arc,
+    atomic::{AtomicBool, Ordering},
 };
 use std::time::Duration;
 use tokio::fs::File;

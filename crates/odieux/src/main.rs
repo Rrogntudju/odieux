@@ -1,6 +1,6 @@
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use server::router::app;
-use std::env::{args, Args};
+use std::env::{Args, args};
 use std::net::SocketAddr;
 use std::path::PathBuf;
 use tokio::net::TcpListener;

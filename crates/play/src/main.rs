@@ -1,4 +1,4 @@
-use rodio::{decoder::Decoder, OutputStream, Sink};
+use rodio::{OutputStream, Sink, decoder::Decoder};
 use std::env::args;
 use std::error::Error;
 use std::fs::File;

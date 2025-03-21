@@ -1,6 +1,6 @@
 mod handler {
     use hls_player::{OutputStream, Sink};
-    use media::{get_episodes, Episode};
+    use media::{Episode, get_episodes};
     use serde::{Deserialize, Serialize};
     use std::cell::RefCell;
     use std::thread_local;
@@ -57,7 +57,7 @@ mod handler {
         });
     }
 
-    use anyhow::{anyhow, Result};
+    use anyhow::{Result, anyhow};
     use axum::{extract::Json, response::IntoResponse};
     use rand::Rng;
     use reqwest::Client;
@@ -185,8 +185,8 @@ mod handler {
 pub mod router {
     use super::handler::execute;
     use axum::{
-        routing::{get_service, post},
         Router,
+        routing::{get_service, post},
     };
     use std::path::PathBuf;
     use tower_http::{limit::RequestBodyLimitLayer, services::ServeDir};

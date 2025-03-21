@@ -2,7 +2,7 @@
 name = "hls2file"
 version = "0.3.1"
 authors = ["Rrogntudju"]
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 hls_handler = {path = "../hls_handler"}
