@@ -12,7 +12,7 @@ const PARAMS: &str = r##"opname=programmeById&variables={"params":{"context":"we
 #[derive(Deserialize, Serialize, Default, Clone, PartialEq)]
 pub struct Episode {
     pub titre: String,
-    pub media_id: String,
+    pub id: String,
 }
 
 pub async fn get_episodes(prog_id: usize, no: usize) -> Result<Vec<Episode>> {
