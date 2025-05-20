@@ -30,16 +30,15 @@ pub async fn get_episodes(prog_id: usize, page_no: usize) -> Result<Vec<Episode>
         }
     };
     let valeur: Value = serde_json::from_str(&page)?;
-    let items = valeur["content"]["contentDetail"]["items"]
+    let items = valeur["data"]["programmeById"]["content"]["contentDetail"]["items"]
         .as_array()
         .context("items n'est pas un array")?;
     let mut épisodes = Vec::new();
     for item in items {
         ensure!(item.is_object(), "item n'est pas un objet");
-        let media = &item["media2"];
         épisodes.push(Episode {
-            titre: media["title"].as_str().unwrap_or_default().to_owned(),
-            media_id: media["id"].as_str().unwrap_or_default().to_owned(),
+            titre: item["title"].as_str().unwrap_or_default().to_owned(),
+            id: item["playlistItemId"]["globalId2"]["Id"].as_str().unwrap_or_default().to_owned(),
         });
     }
     ensure!(!épisodes.is_empty(), "La page {page_no} n'existe pas");
