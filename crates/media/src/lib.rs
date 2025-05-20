@@ -17,7 +17,7 @@ pub struct Episode {
 
 pub async fn get_episodes(prog_id: usize, page_no: usize) -> Result<Vec<Episode>> {
     let client = Client::builder().timeout(Duration::from_secs(TIME_OUT)).build()?;
-    let params = format!(r##"opname=programmeById&variables={{"params":{{"context":"web","forceWithoutCueSheet":false,"id":{prog_id},"pageNumber":{page_no}}}"##);
+    let params = format!(r##"opname=programmeById&variables={{"params":{{"context":"web","forceWithoutCueSheet":false,"id":{prog_id},"pageNumber":{page_no}}}}}"##);
     let url = [GRAPHQL, "?", &encode(&params)].concat();
     let page = match client.get(&url).header("Content-Type", "application/json").send().await {
         Ok(response) => response.text().await?,
