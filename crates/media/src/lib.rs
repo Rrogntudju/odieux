@@ -6,6 +6,8 @@ use std::default::Default;
 use std::time::Duration;
 
 const TIME_OUT: u64 = 30;
+const GRAPHQL: &str = "https://services.radio-canada.ca/bff/audio/graphql";
+const PARAMS: &str = r##"opname=programmeById&variables={"params":{"context":"web","forceWithoutCueSheet":false,"id":{1},"pageNumber":{2}}}"##;
 
 #[derive(Deserialize, Serialize, Default, Clone, PartialEq)]
 pub struct Episode {
@@ -13,9 +15,9 @@ pub struct Episode {
     pub media_id: String,
 }
 
-pub async fn get_episodes(no: usize, url: &str) -> Result<Vec<Episode>> {
+pub async fn get_episodes(prog_id: usize, no: usize) -> Result<Vec<Episode>> {
     let client = Client::builder().timeout(Duration::from_secs(TIME_OUT)).build()?;
-    let url = url.replace("{}", &format!("{no}"));
+    let params = PARAMS.replace("{1}", &format!("{prog_id}")).replace("{2}", &format!("{no}"));
     let page = match client.get(&url).send().await {
         Ok(response) => response.text().await?,
         Err(e) => {
