@@ -4,10 +4,10 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::default::Default;
 use std::time::Duration;
+use urlencoding::encode;
 
 const TIME_OUT: u64 = 30;
 const GRAPHQL: &str = "https://services.radio-canada.ca/bff/audio/graphql";
-const PARAMS: &str = r##"opname=programmeById&variables={"params":{"context":"web","forceWithoutCueSheet":false,"id":{1},"pageNumber":{2}}}"##;
 
 #[derive(Deserialize, Serialize, Default, Clone, PartialEq)]
 pub struct Episode {
@@ -15,14 +15,15 @@ pub struct Episode {
     pub id: String,
 }
 
-pub async fn get_episodes(prog_id: usize, no: usize) -> Result<Vec<Episode>> {
+pub async fn get_episodes(prog_id: usize, page_no: usize) -> Result<Vec<Episode>> {
     let client = Client::builder().timeout(Duration::from_secs(TIME_OUT)).build()?;
-    let params = PARAMS.replace("{1}", &format!("{prog_id}")).replace("{2}", &format!("{no}"));
-    let page = match client.get(&url).send().await {
+    let params = format!(r##"opname=programmeById&variables={{"params":{{"context":"web","forceWithoutCueSheet":false,"id":{prog_id},"pageNumber":{page_no}}}"##);
+    let url = [GRAPHQL, "?", &encode(&params)].concat();
+    let page = match client.get(&url).header("Content-Type", "application/json").send().await {
         Ok(response) => response.text().await?,
         Err(e) => {
             if e.status() == Some(StatusCode::NOT_FOUND) {
-                bail!("La page {no} n'existe pas");
+                bail!("La page {page_no} n'existe pas");
             } else {
                 bail!(e);
             }
@@ -41,7 +42,7 @@ pub async fn get_episodes(prog_id: usize, no: usize) -> Result<Vec<Episode>> {
             media_id: media["id"].as_str().unwrap_or_default().to_owned(),
         });
     }
-    ensure!(!épisodes.is_empty(), "La page {no} n'existe pas");
+    ensure!(!épisodes.is_empty(), "La page {page_no} n'existe pas");
     Ok(épisodes)
 }
 
