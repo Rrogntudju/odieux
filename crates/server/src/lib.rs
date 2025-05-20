@@ -92,7 +92,7 @@ mod handler {
         command_stop();
         let result = if épisode.titre == "En direct" {
             start_player(None).await
-        } else if épisode.media_id.is_empty() {
+        } else if épisode.id.is_empty() {
             Err(anyhow!("Aucune musique diffusée disponible"))
         } else {
             start_player(Some(&épisode.media_id)).await
@@ -127,7 +127,7 @@ mod handler {
                     if STATE.with_borrow(|state| state.en_lecture.titre == "En direct") {
                         command_start(Episode {
                             titre: "En direct".to_owned(),
-                            media_id: "".to_owned(),
+                            id: "".to_owned(),
                         })
                         .await
                     } else {

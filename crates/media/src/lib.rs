@@ -29,6 +29,7 @@ pub async fn get_episodes(prog_id: usize, page_no: usize) -> Result<Vec<Episode>
             }
         }
     };
+    dbg!(&page);
     let valeur: Value = serde_json::from_str(&page)?;
     let items = valeur["data"]["programmeById"]["content"]["contentDetail"]["items"]
         .as_array()
@@ -49,11 +50,9 @@ pub async fn get_episodes(prog_id: usize, page_no: usize) -> Result<Vec<Episode>
 mod tests {
     use super::*;
 
-    const CSB: &str = "https://services.radio-canada.ca/neuro/sphere/v1/audio/apps/products/programmes-v2/cestsibon/{}?context=web&pageNumber={}";
-
     #[tokio::test]
     async fn csb() {
-        match get_episodes(13, CSB).await {
+        match get_episodes(1161, 13).await {
             Ok(_) => assert!(true),
             Err(e) => {
                 println!("{e:?}");
