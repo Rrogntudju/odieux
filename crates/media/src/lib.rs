@@ -19,9 +19,16 @@ pub struct Episode {
 pub async fn get_episodes(prog_id: usize, page_no: usize) -> Result<Vec<Episode>> {
     let client = Client::builder().timeout(Duration::from_secs(TIME_OUT)).build()?;
     let opname = "programmeById";
-    let extensions = format!(r#"{{"persistedQuery":{{"version":1,"sha256Hash":"2d92832867f9f3b685fff3e5f213c3ff3414d02c74ee461580842cb6e31dedfd"}}}}"#);
+    let extensions =
+        format!(r#"{{"persistedQuery":{{"version":1,"sha256Hash":"2d92832867f9f3b685fff3e5f213c3ff3414d02c74ee461580842cb6e31dedfd"}}}}"#);
     let variables = format!(r#"{{"params":{{"context":"web","forceWithoutCueSheet":false,"id":{prog_id},"pageNumber":{page_no}}}}}"#);
-    let url = format!("{}?opname={}&extensions={}&variables={}", GRAPHQL, opname, &encode(&extensions), &encode(&variables));
+    let url = format!(
+        "{}?opname={}&extensions={}&variables={}",
+        GRAPHQL,
+        opname,
+        &encode(&extensions),
+        &encode(&variables)
+    );
     let page = match client.get(&url).header("Content-Type", "application/json").send().await {
         Ok(response) => response.text().await?,
         Err(e) => {
@@ -62,7 +69,9 @@ pub async fn get_media_id(épisode_id: &str) -> Result<String> {
         }
     };
     let valeur: Value = serde_json::from_str(&data)?;
-    let media_id = valeur["data"]["playbackListByGlobalId"]["items"][0]["mediaPlaybackItem"]["mediaId"].as_str().unwrap_or_default();
+    let media_id = valeur["data"]["playbackListByGlobalId"]["items"][0]["mediaPlaybackItem"]["mediaId"]
+        .as_str()
+        .unwrap_or_default();
     Ok(media_id.to_owned())
 }
 
@@ -72,8 +81,7 @@ mod tests {
 
     #[tokio::test]
     async fn épisodes() {
-        match get_episodes(1161, 13)
-        .await {
+        match get_episodes(1161, 13).await {
             Ok(_) => assert!(true),
             Err(e) => {
                 println!("{e:?}");
@@ -84,8 +92,7 @@ mod tests {
 
     #[tokio::test]
     async fn media_id() {
-        match get_media_id("963208")
-        .await {
+        match get_media_id("963208").await {
             Ok(media_id) => assert_eq!(media_id, "10362937"),
             Err(e) => {
                 println!("{e:?}");

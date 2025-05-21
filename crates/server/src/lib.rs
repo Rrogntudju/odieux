@@ -1,6 +1,6 @@
 mod handler {
     use hls_player::{OutputStream, Sink};
-    use media::{Episode, get_episodes};
+    use media::{Episode, get_episodes, get_media_id};
     use serde::{Deserialize, Serialize};
     use std::cell::RefCell;
     use std::thread_local;
@@ -95,7 +95,7 @@ mod handler {
         } else if épisode.id.is_empty() {
             Err(anyhow!("Aucune musique diffusée disponible"))
         } else {
-            start_player(Some(&épisode.media_id)).await
+            start_player(Some(&épisode.id)).await
         };
         match result {
             Ok((new_sink, new_os)) => {
