@@ -86,7 +86,7 @@ mod tests {
     async fn media_id() {
         match get_media_id("963208")
         .await {
-            Ok(_) => assert!(true),
+            Ok(media_id) => assert_eq!(media_id, "10362937"),
             Err(e) => {
                 println!("{e:?}");
                 assert!(false);
