@@ -48,9 +48,9 @@ pub async fn get_episodes(prog_id: usize, page_no: usize) -> Result<Vec<Episode>
     Ok(épisodes)
 }
 
-pub async fn get_media_id(épisode_id: usize) -> Result<usize> {
+pub async fn get_media_id(épisode_id: String) -> Result<String> {
     let client = Client::builder().timeout(Duration::from_secs(TIME_OUT)).build()?;
-    let post = POST.replace("{}", &épisode_id.to_string());
+    let post = POST.replace("{}", &épisode_id);
     let data = match client.post(GRAPHQL).header("Content-Type", "application/json").body(post).send().await {
         Ok(response) => response.text().await?,
         Err(e) => {
@@ -62,8 +62,8 @@ pub async fn get_media_id(épisode_id: usize) -> Result<usize> {
         }
     };
     let valeur: Value = serde_json::from_str(&data)?;
-    let media_id = valeur["data"]["playbackListByGlobalId"]["items"][0]["mediaPlaybackItem"]["mediaId"]["id"].as_u64().context("media_id n'est pas un u64")?;
-    Ok(media_id as usize)
+    let media_id = valeur["data"]["playbackListByGlobalId"]["items"][0]["mediaPlaybackItem"]["mediaId"].as_str().unwrap_or_default();
+    Ok(media_id.to_owned())
 }
 
 #[cfg(test)]
@@ -84,7 +84,7 @@ mod tests {
 
     #[tokio::test]
     async fn media_id() {
-        match get_media_id(963208)
+        match get_media_id("963208".to_owned())
         .await {
             Ok(_) => assert!(true),
             Err(e) => {
