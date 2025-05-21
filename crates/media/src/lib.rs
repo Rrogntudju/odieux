@@ -48,9 +48,9 @@ pub async fn get_episodes(prog_id: usize, page_no: usize) -> Result<Vec<Episode>
     Ok(épisodes)
 }
 
-pub async fn get_media_id(épisode_id: String) -> Result<String> {
+pub async fn get_media_id(épisode_id: &str) -> Result<String> {
     let client = Client::builder().timeout(Duration::from_secs(TIME_OUT)).build()?;
-    let post = POST.replace("{}", &épisode_id);
+    let post = POST.replace("{}", épisode_id);
     let data = match client.post(GRAPHQL).header("Content-Type", "application/json").body(post).send().await {
         Ok(response) => response.text().await?,
         Err(e) => {
@@ -84,7 +84,7 @@ mod tests {
 
     #[tokio::test]
     async fn media_id() {
-        match get_media_id("963208".to_owned())
+        match get_media_id("963208")
         .await {
             Ok(_) => assert!(true),
             Err(e) => {
