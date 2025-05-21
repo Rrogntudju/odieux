@@ -8,6 +8,7 @@ use urlencoding::encode;
 
 const TIME_OUT: u64 = 30;
 const GRAPHQL: &str = "https://services.radio-canada.ca/bff/audio/graphql";
+const POST: &str = include_str!("post.txt");
 
 #[derive(Deserialize, Serialize, Default, Clone, PartialEq)]
 pub struct Episode {
