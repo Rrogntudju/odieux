@@ -47,14 +47,19 @@ pub async fn get_episodes(prog_id: usize, page_no: usize) -> Result<Vec<Episode>
     Ok(épisodes)
 }
 
+pub async fn get_media(id: usize) -> Result<usize> {
+
+Ok(0)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[tokio::test]
     async fn csb() {
-        match get_episodes(1161, 13
-        ).await {
+        match get_episodes(1161, 13)
+        .await {
             Ok(_) => assert!(true),
             Err(e) => {
                 println!("{e:?}");
