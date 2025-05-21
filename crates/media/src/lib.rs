@@ -21,7 +21,6 @@ pub async fn get_episodes(prog_id: usize, page_no: usize) -> Result<Vec<Episode>
     let extensions = format!(r#"{{"persistedQuery":{{"version":1,"sha256Hash":"2d92832867f9f3b685fff3e5f213c3ff3414d02c74ee461580842cb6e31dedfd"}}}}"#);
     let variables = format!(r#"{{"params":{{"context":"web","forceWithoutCueSheet":false,"id":{prog_id},"pageNumber":{page_no}}}}}"#);
     let url = format!("{}?opname={}&extensions={}&variables={}", GRAPHQL, opname, &encode(&extensions), &encode(&variables));
-    dbg!(&url);
     let page = match client.get(&url).header("Content-Type", "application/json").send().await {
         Ok(response) => response.text().await?,
         Err(e) => {
@@ -32,7 +31,6 @@ pub async fn get_episodes(prog_id: usize, page_no: usize) -> Result<Vec<Episode>
             }
         }
     };
-    dbg!(&page);
     let valeur: Value = serde_json::from_str(&page)?;
     let items = valeur["data"]["programmeById"]["content"]["contentDetail"]["items"]
         .as_array()
@@ -55,7 +53,8 @@ mod tests {
 
     #[tokio::test]
     async fn csb() {
-        match get_episodes(1161, 1).await {
+        match get_episodes(1161, 13
+        ).await {
             Ok(_) => assert!(true),
             Err(e) => {
                 println!("{e:?}");
