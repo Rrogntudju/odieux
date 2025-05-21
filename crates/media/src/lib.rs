@@ -48,9 +48,22 @@ pub async fn get_episodes(prog_id: usize, page_no: usize) -> Result<Vec<Episode>
     Ok(épisodes)
 }
 
-pub async fn get_media(id: usize) -> Result<usize> {
-
-Ok(0)
+pub async fn get_media_id(épisode_id: usize) -> Result<usize> {
+    let client = Client::builder().timeout(Duration::from_secs(TIME_OUT)).build()?;
+    let post = POST.replace("{}", &épisode_id.to_string());
+    let data = match client.post(GRAPHQL).header("Content-Type", "application/json").body(post).send().await {
+        Ok(response) => response.text().await?,
+        Err(e) => {
+            if e.status() == Some(StatusCode::NOT_FOUND) {
+                bail!("L'épisode {épisode_id} n'existe pas");
+            } else {
+                bail!(e);
+            }
+        }
+    };
+    let valeur: Value = serde_json::from_str(&data)?;
+    let media_id = valeur["data"]["playbackListByGlobalId"]["items"][0]["mediaPlaybackItem"]["mediaId"]["id"].as_u64().context("media_id n'est pas un u64")?;
+    Ok(media_id as usize)
 }
 
 #[cfg(test)]
@@ -58,8 +71,20 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn csb() {
+    async fn épisodes() {
         match get_episodes(1161, 13)
+        .await {
+            Ok(_) => assert!(true),
+            Err(e) => {
+                println!("{e:?}");
+                assert!(false);
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn media_id() {
+        match get_media_id(963208)
         .await {
             Ok(_) => assert!(true),
             Err(e) => {
