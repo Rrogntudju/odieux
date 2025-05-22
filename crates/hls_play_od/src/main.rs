@@ -28,7 +28,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     };
 
     let épisodes = get_episodes(prog, page).await?;
-    let no = épisode_no.parse::<usize>()?.clamp(1, épisodes.len());
+    let no = épisode_no.parse::<usize>()?.clamp(1, épisodes.len()) - 1;
     let media_id = get_media_id(&épisodes[no].id).await?;
 
     let url = URL_VALIDEUR.replace("{}", &media_id);

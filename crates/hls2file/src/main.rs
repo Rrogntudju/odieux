@@ -1,4 +1,4 @@
-use media::get_episodes;
+use media::{get_media_id, get_episodes};
 use reqwest::Client;
 use serde_json::Value;
 use std::env;
@@ -20,32 +20,28 @@ const URL_VALIDEUR_LIVE: &str = "https://services.radio-canada.ca/media/validati
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     let (url, titre) = if args().len() > 1 {
-        let erreur = "Args: <url du programme> <page> <épisode>";
+        let erreur = "Args: <id du programme> <page> <no de l'épisode>";
         let mut args = args();
         let prog = match args.nth(1) {
-            Some(arg) => arg.to_lowercase(),
+            Some(arg) => arg.parse::<usize>().unwrap_or_default(),
             None => return Err(erreur.into()),
         };
 
         let page = match args.next() {
+            Some(arg) => arg.parse::<usize>().unwrap_or_default(),
+            None => return Err(erreur.into()),
+        };
+
+        let épisode_no = match args.next() {
             Some(arg) => arg,
             None => return Err(erreur.into()),
         };
 
-        let num = match args.next() {
-            Some(arg) => arg,
-            None => return Err(erreur.into()),
-        };
+        let épisodes = get_episodes(prog, page).await?;
+        let no = épisode_no.parse::<usize>()?.clamp(1, épisodes.len()) - 1;
+        let media_id = get_media_id(&épisodes[no].id).await?;
 
-        let page = page.parse::<usize>()?;
-        let épisodes = get_episodes(page, &prog).await?;
-
-        let num = num.parse::<usize>()?.clamp(1, épisodes.len());
-        let media_id = &épisodes[num - 1].media_id;
-        if media_id.is_empty() {
-            return Err("Aucune musique diffusée disponible".into());
-        }
-        (URL_VALIDEUR_OD.replace("{}", media_id), épisodes[num - 1].titre.trim().to_owned())
+        (URL_VALIDEUR_OD.replace("{}", &media_id), épisodes[no].titre.trim().to_owned())
     } else {
         (URL_VALIDEUR_LIVE.to_owned(), "direct".to_owned())
     };
