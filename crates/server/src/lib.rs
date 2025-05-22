@@ -69,8 +69,8 @@ mod handler {
 
     async fn start_player(episode_id: Option<&str>) -> Result<(Sink, OutputStream)> {
         let url = match episode_id {
-            Some(id) => {
-                let media_id = get_media_id(id).await?;
+            Some(episode_id) => {
+                let media_id = get_media_id(episode_id).await?;
                 URL_VALIDEUR_OD.replace("{}", &media_id)
             }
             None => URL_VALIDEUR_LIVE.to_owned(),
