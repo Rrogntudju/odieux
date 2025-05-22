@@ -124,22 +124,23 @@
           self.prog = ko.observable(0);
           self.épisodes = ko.observableArray([]);
           self.message = ko.observable("");
-          self.enLecture = ko.observable({titre: "", media_id: ""});
+          self.enLecture = ko.observable({titre: "", episode_id: ""});
           self.programme = ko.observable({titre: ""});
           self.playerOff = ko.computed(function () {
             return self.enLecture().titre == "";
           });
           self.longCommand = ko.observable(false);
           self.programmes = [
-            {titre: "C'est si bon", i: 0, id: "1161"},
-            {titre: "C'est toute une musique", i: 1, id: "1161"},
-            {titre: "Moment classique", i: 2, id: "1161"},
-            {titre: "La table d'harmonie", i: 3, id: "1161"},
-            {titre: "De tout choeur avec vous", i: 4, id: "1161"},
-            {titre: "Quand le jazz est là", i: 5, id: "1161"},
-            {titre: "Moment jazz", i: 6, id: "1161"},
+            {titre: "C'est si bon", i: 0},
+            {titre: "C'est toute une musique", i: 1},
+            {titre: "Moment classique", i: 2},
+            {titre: "La table d'harmonie", i: 3},
+            {titre: "De tout choeur avec vous", i: 4},
+            {titre: "Quand le jazz est là", i: 5},
+            {titre: "Moment jazz", i: 6},
           ];
           self.progPages = [13, 38, 14, 11, 7, 38, 54];
+          self.progIds = [1161, 1161, 1161, 1161, 1161, 1161, 1161];
           self.spinPage = ko.observable(1);
 
           self.refresh = async function () {
@@ -160,17 +161,17 @@
 
           self.random = function () {
             self.longCommand(true);
-            self.command("Random", {page: self.progPages[self.prog()], prog: self.prog(), url: self.progUrl[self.prog()]});
+            self.command("Random", {page_no: self.progPages[self.prog()], prog_id: self.progIds[self.prog()]});
           }
 
           self.live = function () {
             self.longCommand(true);
-            self.command("Start", {titre: "En direct", media_id: ""});
+            self.command("Start", {titre: "En direct", episode_id: ""});
           }
 
           self.setPage = function () {
             self.longCommand(true);
-            self.command("Page", {page: self.spinPage(), prog: self.prog(), url: self.progUrl[self.prog()]});
+            self.command("Page", {page_no: self.spinPage(), prog_id: self.progIds[self.prog()]});
           }
 
           self.selProg = function (programme) {

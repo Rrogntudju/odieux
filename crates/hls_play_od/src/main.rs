@@ -10,7 +10,7 @@ const URL_VALIDEUR: &str = "https://services.radio-canada.ca/media/validation/v2
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let erreur = "Args: <id du programme> <page> <no de l'episode>";
+    let erreur = "Args: <id du programme> <no de la page> <no de l'episode>";
     let mut args = args();
     let prog = match args.nth(1) {
         Some(arg) => arg.parse::<usize>().unwrap_or_default(),
