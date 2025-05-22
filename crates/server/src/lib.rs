@@ -15,8 +15,8 @@ mod handler {
     struct State {
         player: PlayerState,
         volume: usize,
-        page: usize,
-        prog: usize,
+        page_no: usize,
+        prog_id: usize,
         episodes: Vec<Episode>,
         message: String,
         en_lecture: Episode,
@@ -25,9 +25,8 @@ mod handler {
 
     #[derive(Deserialize, PartialEq)]
     pub struct Pagination {
-        page: usize,
-        prog: usize,
-        url: String,
+        page_no: usize,
+        prog_id: usize,
     }
 
     #[derive(Deserialize, PartialEq)]
@@ -48,8 +47,8 @@ mod handler {
         static STATE: RefCell<State> = RefCell::new(State {
             player: PlayerState::Stopped,
             volume: 2,
-            page: 0,
-            prog: 0,
+            page_no: 0,
+            prog_id: 0,
             episodes: Vec::new(),
             message: String::default(),
             en_lecture: Episode::default(),
@@ -68,9 +67,13 @@ mod handler {
     const URL_VALIDEUR_OD: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianet&connectionType=hd&deviceType=ipad&idMedia={}&multibitrate=true&output=json&tech=hls&manifestVersion=2";
     const URL_VALIDEUR_LIVE: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianetlive&connectionType=hd&deviceType=ipad&idMedia=cbvx&multibitrate=true&output=json&tech=hls&manifestVersion=2";
 
-    async fn start_player(id: Option<&str>) -> Result<(Sink, OutputStream)> {
-        let url = match id {
-            Some(id) => URL_VALIDEUR_OD.replace("{}", id),
+    async fn start_player(épisode_id: Option<&str>) -> Result<(Sink, OutputStream)> {
+
+        let url = match épisode_id {
+            Some(id) => {
+                let media_id = get_media_id(id).await?;
+                URL_VALIDEUR_OD.replace("{}", &media_id)
+            },
             None => URL_VALIDEUR_LIVE.to_owned(),
         };
         let client = Client::builder().timeout(Duration::from_secs(TIME_OUT)).build()?;
@@ -104,7 +107,7 @@ mod handler {
                 STATE.with_borrow_mut(|state| {
                     state.player = PlayerState::Playing;
                     state.en_lecture = épisode;
-                    state.en_lecture_prog = state.prog;
+                    state.en_lecture_prog = state.prog_id;
                     SINK.with_borrow(|sink| sink.as_ref().unwrap().set_volume((state.volume as f32) / 2.0));
                 });
             }
@@ -136,17 +139,17 @@ mod handler {
                 }
             }
             Command::Start(épisode) => command_start(épisode).await,
-            Command::Page(pagination) => match get_episodes(pagination.page, &pagination.url).await {
+            Command::Page(pagination) => match get_episodes(pagination.prog_id, pagination.page_no).await {
                 Ok(épisodes) => STATE.with_borrow_mut(|state| {
                     state.episodes = épisodes;
-                    state.page = pagination.page;
-                    state.prog = pagination.prog;
+                    state.page_no = pagination.page_no;
+                    state.prog_id = pagination.prog_id;
                 }),
                 Err(e) => STATE.with_borrow_mut(|state| state.message = format!("{e:#}")),
             },
             Command::Random(pagination) => {
-                let page: usize = rand::thread_rng().gen_range(1..=pagination.page);
-                match get_episodes(page, &pagination.url).await {
+                let page_no: usize = rand::thread_rng().gen_range(1..=pagination.page_no);
+                match get_episodes(pagination.prog_id, page_no).await {
                     Ok(mut épisodes) => {
                         let i = rand::thread_rng().gen_range(0..épisodes.len());
                         command_start(épisodes.swap_remove(i)).await;
