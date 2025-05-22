@@ -4,7 +4,7 @@ use std::error::Error;
 use std::time::Duration;
 
 const TIME_OUT: u64 = 10;
-const URL_VALIDEUR: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianetlive&connectionType=hd&deviceType=ipad&idMedia=cbvx&multibitrate=true&output=json&tech=hls";
+const URL_VALIDEUR: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianetlive&connectionType=hd&deviceType=ipad&idMedia=cbvx&multibitrate=true&output=json&tech=hls&manifestVersion=2";
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
