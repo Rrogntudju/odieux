@@ -67,13 +67,12 @@ mod handler {
     const URL_VALIDEUR_OD: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianet&connectionType=hd&deviceType=ipad&idMedia={}&multibitrate=true&output=json&tech=hls&manifestVersion=2";
     const URL_VALIDEUR_LIVE: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianetlive&connectionType=hd&deviceType=ipad&idMedia=cbvx&multibitrate=true&output=json&tech=hls&manifestVersion=2";
 
-    async fn start_player(épisode_id: Option<&str>) -> Result<(Sink, OutputStream)> {
-
-        let url = match épisode_id {
+    async fn start_player(episode_id: Option<&str>) -> Result<(Sink, OutputStream)> {
+        let url = match episode_id {
             Some(id) => {
                 let media_id = get_media_id(id).await?;
                 URL_VALIDEUR_OD.replace("{}", &media_id)
-            },
+            }
             None => URL_VALIDEUR_LIVE.to_owned(),
         };
         let client = Client::builder().timeout(Duration::from_secs(TIME_OUT)).build()?;
@@ -91,14 +90,14 @@ mod handler {
         });
     }
 
-    async fn command_start(épisode: Episode) {
+    async fn command_start(episode: Episode) {
         command_stop();
-        let result = if épisode.titre == "En direct" {
+        let result = if episode.titre == "En direct" {
             start_player(None).await
-        } else if épisode.id.is_empty() {
+        } else if episode.id.is_empty() {
             Err(anyhow!("Aucune musique diffusée disponible"))
         } else {
-            start_player(Some(&épisode.id)).await
+            start_player(Some(&episode.id)).await
         };
         match result {
             Ok((new_sink, new_os)) => {
@@ -106,7 +105,7 @@ mod handler {
                 OUTPUT_STREAM.set(Some(new_os));
                 STATE.with_borrow_mut(|state| {
                     state.player = PlayerState::Playing;
-                    state.en_lecture = épisode;
+                    state.en_lecture = episode;
                     state.en_lecture_prog = state.prog_id;
                     SINK.with_borrow(|sink| sink.as_ref().unwrap().set_volume((state.volume as f32) / 2.0));
                 });
@@ -138,10 +137,10 @@ mod handler {
                     }
                 }
             }
-            Command::Start(épisode) => command_start(épisode).await,
+            Command::Start(episode) => command_start(episode).await,
             Command::Page(pagination) => match get_episodes(pagination.prog_id, pagination.page_no).await {
-                Ok(épisodes) => STATE.with_borrow_mut(|state| {
-                    state.episodes = épisodes;
+                Ok(episodes) => STATE.with_borrow_mut(|state| {
+                    state.episodes = episodes;
                     state.page_no = pagination.page_no;
                     state.prog_id = pagination.prog_id;
                 }),
@@ -150,9 +149,9 @@ mod handler {
             Command::Random(pagination) => {
                 let page_no: usize = rand::thread_rng().gen_range(1..=pagination.page_no);
                 match get_episodes(pagination.prog_id, page_no).await {
-                    Ok(mut épisodes) => {
-                        let i = rand::thread_rng().gen_range(0..épisodes.len());
-                        command_start(épisodes.swap_remove(i)).await;
+                    Ok(mut episodes) => {
+                        let i = rand::thread_rng().gen_range(0..episodes.len());
+                        command_start(episodes.swap_remove(i)).await;
                     }
                     Err(e) => STATE.with_borrow_mut(|state| state.message = format!("{e:#}")),
                 }

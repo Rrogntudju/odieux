@@ -1,4 +1,4 @@
-use media::{get_media_id, get_episodes};
+use media::{get_episodes, get_media_id};
 use reqwest::Client;
 use serde_json::Value;
 use std::env;
@@ -20,7 +20,7 @@ const URL_VALIDEUR_LIVE: &str = "https://services.radio-canada.ca/media/validati
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     let (url, titre) = if args().len() > 1 {
-        let erreur = "Args: <id du programme> <page> <no de l'épisode>";
+        let erreur = "Args: <id du programme> <page> <no de l'episode>";
         let mut args = args();
         let prog = match args.nth(1) {
             Some(arg) => arg.parse::<usize>().unwrap_or_default(),
@@ -32,16 +32,16 @@ async fn main() -> Result<(), Box<dyn Error>> {
             None => return Err(erreur.into()),
         };
 
-        let épisode_no = match args.next() {
+        let episode_no = match args.next() {
             Some(arg) => arg,
             None => return Err(erreur.into()),
         };
 
-        let épisodes = get_episodes(prog, page).await?;
-        let no = épisode_no.parse::<usize>()?.clamp(1, épisodes.len()) - 1;
-        let media_id = get_media_id(&épisodes[no].id).await?;
+        let episodes = get_episodes(prog, page).await?;
+        let no = episode_no.parse::<usize>()?.clamp(1, episodes.len()) - 1;
+        let media_id = get_media_id(&episodes[no].id).await?;
 
-        (URL_VALIDEUR_OD.replace("{}", &media_id), épisodes[no].titre.trim().to_owned())
+        (URL_VALIDEUR_OD.replace("{}", &media_id), episodes[no].titre.trim().to_owned())
     } else {
         (URL_VALIDEUR_LIVE.to_owned(), "direct".to_owned())
     };

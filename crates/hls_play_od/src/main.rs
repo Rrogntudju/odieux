@@ -10,7 +10,7 @@ const URL_VALIDEUR: &str = "https://services.radio-canada.ca/media/validation/v2
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let erreur = "Args: <id du programme> <page> <no de l'épisode>";
+    let erreur = "Args: <id du programme> <page> <no de l'episode>";
     let mut args = args();
     let prog = match args.nth(1) {
         Some(arg) => arg.parse::<usize>().unwrap_or_default(),
@@ -22,14 +22,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
         None => return Err(erreur.into()),
     };
 
-    let épisode_no = match args.next() {
+    let episode_no = match args.next() {
         Some(arg) => arg,
         None => return Err(erreur.into()),
     };
 
-    let épisodes = get_episodes(prog, page).await?;
-    let no = épisode_no.parse::<usize>()?.clamp(1, épisodes.len()) - 1;
-    let media_id = get_media_id(&épisodes[no].id).await?;
+    let episodes = get_episodes(prog, page).await?;
+    let no = episode_no.parse::<usize>()?.clamp(1, episodes.len()) - 1;
+    let media_id = get_media_id(&episodes[no].id).await?;
 
     let url = URL_VALIDEUR.replace("{}", &media_id);
     let client = Client::builder().timeout(Duration::from_secs(TIME_OUT)).build()?;
