@@ -16,7 +16,7 @@ mod handler {
         player: PlayerState,
         volume: usize,
         page_no: usize,
-        prog_id: usize,
+        prog: usize,
         episodes: Vec<Episode>,
         message: String,
         en_lecture: Episode,
@@ -26,6 +26,7 @@ mod handler {
     #[derive(Deserialize, PartialEq)]
     pub struct Pagination {
         page_no: usize,
+        prog: usize,
         prog_id: usize,
     }
 
@@ -48,7 +49,7 @@ mod handler {
             player: PlayerState::Stopped,
             volume: 2,
             page_no: 0,
-            prog_id: 0,
+            prog: 0,
             episodes: Vec::new(),
             message: String::default(),
             en_lecture: Episode::default(),
@@ -106,7 +107,7 @@ mod handler {
                 STATE.with_borrow_mut(|state| {
                     state.player = PlayerState::Playing;
                     state.en_lecture = episode;
-                    state.en_lecture_prog = state.prog_id;
+                    state.en_lecture_prog = state.prog;
                     SINK.with_borrow(|sink| sink.as_ref().unwrap().set_volume((state.volume as f32) / 2.0));
                 });
             }
@@ -142,7 +143,7 @@ mod handler {
                 Ok(episodes) => STATE.with_borrow_mut(|state| {
                     state.episodes = episodes;
                     state.page_no = pagination.page_no;
-                    state.prog_id = pagination.prog_id;
+                    state.prog = pagination.prog;
                 }),
                 Err(e) => STATE.with_borrow_mut(|state| state.message = format!("{e:#}")),
             },
