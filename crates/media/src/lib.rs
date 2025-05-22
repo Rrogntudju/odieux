@@ -20,7 +20,7 @@ pub async fn get_episodes(prog_id: usize, page_no: usize) -> Result<Vec<Episode>
     let client = Client::builder().timeout(Duration::from_secs(TIME_OUT)).build()?;
     let opname = "programmeById";
     let extensions =
-        format!(r#"{{"persistedQuery":{{"version":1,"sha256Hash":"2d92832867f9f3b685fff3e5f213c3ff3414d02c74ee461580842cb6e31dedfd"}}}}"#);
+        r#"{{"persistedQuery":{{"version":1,"sha256Hash":"2d92832867f9f3b685fff3e5f213c3ff3414d02c74ee461580842cb6e31dedfd"}}}}"#.to_string();
     let variables = format!(r#"{{"params":{{"context":"web","forceWithoutCueSheet":false,"id":{prog_id},"pageNumber":{page_no}}}}}"#);
     let url = format!(
         "{}?opname={}&extensions={}&variables={}",

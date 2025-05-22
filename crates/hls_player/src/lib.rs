@@ -24,7 +24,7 @@ pub fn start(url: &str) -> Result<(Sink, OutputStream)> {
 
         let host = cpal::default_host();
         let mut devices = host.output_devices()?;
-        match devices.find(|device| device.name().unwrap_or(String::new()) == device_name) {
+        match devices.find(|device| device.name().unwrap_or_default() == device_name) {
             Some(device) => {
                 println!("Output device: {device_name}");
                 OutputStream::try_from_device(&device)?

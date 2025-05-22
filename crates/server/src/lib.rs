@@ -42,8 +42,8 @@ mod handler {
     }
 
     thread_local! {
-        static SINK: RefCell<Option<Sink>> = RefCell::new(None);
-        static OUTPUT_STREAM: RefCell<Option<OutputStream>> = RefCell::new(None);
+        static SINK: RefCell<Option<Sink>> = const { RefCell::new(None) };
+        static OUTPUT_STREAM: RefCell<Option<OutputStream>> = const { RefCell::new(None) };
         static STATE: RefCell<State> = RefCell::new(State {
             player: PlayerState::Stopped,
             volume: 2,
