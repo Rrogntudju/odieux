@@ -161,7 +161,7 @@
 
           self.random = function () {
             self.longCommand(true);
-            self.command("Random", {page_no: self.progPages[self.prog()], prog: 0, prog_id: self.progIds[self.prog()]});
+            self.command("Random", {page_no: self.progPages[self.prog()], prog: self.prog(), prog_id: self.progIds[self.prog()]});
           }
 
           self.live = function () {
