@@ -10,7 +10,7 @@ const TIME_OUT: u64 = 30;
 const GRAPHQL: &str = "https://services.radio-canada.ca/bff/audio/graphql";
 const POST: &str = include_str!("post.txt");
 
-#[derive(Deserialize, Serialize, Default, Clone, PartialEq)]
+#[derive(Deserialize, Serialize, Default, Clone, PartialEq, Debug)]
 pub struct Episode {
     pub titre: String,
     pub id: String,
@@ -49,9 +49,16 @@ pub async fn get_episodes(prog_id: usize, page_no: usize) -> Result<Vec<Episode>
     let mut épisodes = Vec::new();
     for item in items {
         ensure!(item.is_object(), "item n'est pas un objet");
+        
+        let titre = item["title"].as_str().unwrap_or_default();
+        ensure!(!titre.is_empty(), "le titre est nul");
+
+        let id = item["playlistItemId"]["globalId2"]["id"].as_str().unwrap_or_default();
+        ensure!(!id.is_empty(), "l'id est nul");
+
         épisodes.push(Episode {
-            titre: item["title"].as_str().unwrap_or_default().to_owned(),
-            id: item["playlistItemId"]["globalId2"]["Id"].as_str().unwrap_or_default().to_owned(),
+            titre: titre.to_owned(),
+            id: id.to_owned(),
         });
     }
     ensure!(!épisodes.is_empty(), "La page {page_no} n'existe pas");
@@ -75,6 +82,7 @@ pub async fn get_media_id(épisode_id: &str) -> Result<String> {
     let media_id = valeur["data"]["playbackListByGlobalId"]["items"][0]["mediaPlaybackItem"]["mediaId"]
         .as_str()
         .unwrap_or_default();
+    ensure!(!media_id.is_empty(), "le media_id est nul");
     Ok(media_id.to_owned())
 }
 
