@@ -10,14 +10,14 @@ use rodio::cpal::traits::HostTrait;
 use rodio::{Decoder, DeviceTrait, OutputStreamBuilder, cpal};
 pub use rodio::{OutputStream, Sink};
 use rxcursor::RxCursor;
-
+  
 pub fn start(url: &str) -> Result<(Sink, OutputStream)> {
     let rx = hls_handler::start(url)?;
 
     let mut cfg = std::env::current_exe()?;
     cfg.set_extension("cfg");
 
-    let stream_handle = if cfg.is_file() {
+    let output_stream = if cfg.is_file() {
         let mut cfg_file = File::open(cfg)?;
         let mut device_name = String::new();
         cfg_file.read_to_string(&mut device_name)?;
@@ -35,11 +35,11 @@ pub fn start(url: &str) -> Result<(Sink, OutputStream)> {
         OutputStreamBuilder::open_default_stream()?
     };
 
-    let sink = Sink::connect_new(stream_handle.mixer());
+    let sink = Sink::connect_new(output_stream.mixer());
     let source = Decoder::new(RxCursor::new(rx)?).context("Échec: création de Decoder")?;
     sink.append(source);
 
-    Ok((sink, stream_handle))
+    Ok((sink, output_stream))
 }
 
 #[cfg(test)]
