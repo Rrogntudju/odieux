@@ -148,10 +148,10 @@ mod handler {
                 Err(e) => STATE.with_borrow_mut(|state| state.message = format!("{e:#}")),
             },
             Command::Random(pagination) => {
-                let page_no: usize = rand::thread_rng().gen_range(1..=pagination.page_no);
+                let page_no: usize = rand::rng().random_range(1..=pagination.page_no);
                 match get_episodes(pagination.prog_id, page_no).await {
                     Ok(mut episodes) => {
-                        let i = rand::thread_rng().gen_range(0..episodes.len());
+                        let i = rand::rng().random_range(0..episodes.len());
                         command_start(episodes.swap_remove(i)).await;
                     }
                     Err(e) => STATE.with_borrow_mut(|state| state.message = format!("{e:#}")),
