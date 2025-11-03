@@ -19,7 +19,7 @@ pub struct Episode {
 pub async fn get_episodes(prog_id: usize, page_no: usize) -> Result<Vec<Episode>> {
     let client = Client::builder().timeout(Duration::from_secs(TIME_OUT)).build()?;
     let opname = "programmeById";
-    
+
     // Le format! est nécessaire pour que {{}} devienne {}
     let extensions =
         format!(r#"{{"persistedQuery":{{"version":1,"sha256Hash":"2d92832867f9f3b685fff3e5f213c3ff3414d02c74ee461580842cb6e31dedfd"}}}}"#);
@@ -49,7 +49,7 @@ pub async fn get_episodes(prog_id: usize, page_no: usize) -> Result<Vec<Episode>
     let mut épisodes = Vec::new();
     for item in items {
         ensure!(item.is_object(), "item n'est pas un objet");
-        
+
         let titre = item["title"].as_str().unwrap_or_default();
         ensure!(!titre.is_empty(), "le titre est nul");
 

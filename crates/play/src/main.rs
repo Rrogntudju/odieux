@@ -10,7 +10,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         None => return Err("Fournir le chemin du fichier aac".into()),
     };
 
-    let output_stream  = OutputStreamBuilder::open_default_stream()?;
+    let output_stream = OutputStreamBuilder::open_default_stream()?;
     let sink = Sink::connect_new(output_stream.mixer());
     let source = Decoder::new(BufReader::new(File::open(arg)?))?;
     sink.append(source);

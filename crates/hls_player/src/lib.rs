@@ -10,7 +10,7 @@ use rodio::cpal::traits::HostTrait;
 use rodio::{Decoder, DeviceTrait, OutputStreamBuilder, cpal};
 pub use rodio::{OutputStream, Sink};
 use rxcursor::RxCursor;
-  
+
 pub fn start(url: &str) -> Result<(Sink, OutputStream)> {
     let rx = hls_handler::start(url)?;
 
