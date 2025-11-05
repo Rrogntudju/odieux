@@ -396,6 +396,7 @@ async fn hls_live(media_url: Url, client: Client, tx: SyncSender<Message>) {
     }
 }
 
+// HTTP Live Streaming (HLS)
 async fn handle_hls(master_url: Url, client: Client, tx: SyncSender<Message>) {
     let response = match get(master_url.as_str(), &client).await {
         Ok(response) => String::from_utf8(response).unwrap_or_default(),
