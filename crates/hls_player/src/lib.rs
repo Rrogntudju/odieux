@@ -22,8 +22,7 @@ pub fn start(url: &str) -> Result<(Sink, OutputStream)> {
         let mut device_name = String::new();
         cfg_file.read_to_string(&mut device_name)?;
 
-        let host = cpal::default_host();
-        let mut devices = host.output_devices()?;
+        let mut devices = cpal::default_host().output_devices()?;
         match devices.find(|device| device.name().unwrap_or_default() == device_name) {
             Some(device) => {
                 println!("Output device: {device_name}");
