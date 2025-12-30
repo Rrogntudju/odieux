@@ -108,7 +108,7 @@ mod handler {
                     state.player = PlayerState::Playing;
                     state.en_lecture = episode;
                     state.en_lecture_prog = state.prog;
-                    SINK.with_borrow(|sink| sink.as_ref().unwrap().set_volume(state.volume as f32));
+                    SINK.with_borrow(|sink| sink.as_ref().unwrap().set_volume(state.volume as f32 / 4.0));
                 });
             }
             Err(e) => {
@@ -159,7 +159,7 @@ mod handler {
             }
             Command::Volume(vol) => {
                 if STATE.with_borrow(|state| state.player != PlayerState::Stopped) {
-                    SINK.with_borrow(|sink| sink.as_ref().unwrap().set_volume(vol as f32));
+                    SINK.with_borrow(|sink| sink.as_ref().unwrap().set_volume(vol as f32 / 4.0));
                     STATE.with_borrow_mut(|state| state.volume = vol);
                 }
             }
