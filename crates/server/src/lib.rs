@@ -159,7 +159,7 @@ mod handler {
             }
             Command::Volume(vol) => {
                 if STATE.with_borrow(|state| state.player != PlayerState::Stopped) {
-                    SINK.with_borrow(|sink| sink.as_ref().unwrap().set_volume((vol as f32) / 2.0));
+                    SINK.with_borrow(|sink| sink.as_ref().unwrap().set_volume(vol as f32));
                     STATE.with_borrow_mut(|state| state.volume = vol);
                 }
             }
