@@ -108,7 +108,7 @@ mod handler {
                     state.player = PlayerState::Playing;
                     state.en_lecture = episode;
                     state.en_lecture_prog = state.prog;
-                    SINK.with_borrow(|sink| sink.as_ref().unwrap().set_volume((state.volume as f32) / 2.0));
+                    SINK.with_borrow(|sink| sink.as_ref().unwrap().set_volume(state.volume as f32));
                 });
             }
             Err(e) => {
