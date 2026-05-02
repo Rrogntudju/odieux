@@ -5,10 +5,10 @@ authors = ["Rrogntudju"]
 edition = "2024"
 
 [dependencies]
-mpeg2ts = "0.3"
+mpeg2ts = "0.5"
 hls_m3u8 = "0.5"
 url = "2"
 anyhow = "1"
 libaes = "0.7"
-reqwest = "0.12"
+reqwest = "0.13"
 tokio = "1"
