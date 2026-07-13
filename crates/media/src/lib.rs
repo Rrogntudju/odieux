@@ -22,9 +22,9 @@ pub async fn get_episodes(prog_id: usize, page_no: usize) -> Result<Vec<Episode>
 
     // Le format! est nécessaire pour que {{}} devienne {}
     let extensions =
-        format!(r#"{{"persistedQuery":{{"version":1,"sha256Hash":"2d92832867f9f3b685fff3e5f213c3ff3414d02c74ee461580842cb6e31dedfd"}}}}"#);
+        format!(r#"{{"persistedQuery":{{"version":1,"sha256Hash":"246ae53bd719ea2ac74d753b3cda2d54cbe9186ae4b12b0c76e9e5c18b275fcc"}}}}"#);
 
-    let variables = format!(r#"{{"params":{{"context":"web","forceWithoutCueSheet":false,"id":{prog_id},"pageNumber":{page_no}}}}}"#);
+    let variables = format!(r#"{{"params":{{"device":"Web","id":{prog_id},"pageNumber":{page_no}}}}}"#);
     let url = format!(
         "{}?opname={}&extensions={}&variables={}",
         GRAPHQL,
@@ -42,18 +42,19 @@ pub async fn get_episodes(prog_id: usize, page_no: usize) -> Result<Vec<Episode>
             }
         }
     };
+
     let valeur: Value = serde_json::from_str(&page)?;
-    let items = valeur["data"]["programmeById"]["content"]["contentDetail"]["items"]
+    let items = valeur["data"]["program"]["episodes"]
         .as_array()
-        .context("items n'est pas un array")?;
+        .context("episodes n'est pas un array")?;
     let mut épisodes = Vec::new();
     for item in items {
         ensure!(item.is_object(), "item n'est pas un objet");
 
-        let titre = item["title"].as_str().unwrap_or_default();
+        let titre = item["appShare"]["title"].as_str().unwrap_or_default();
         ensure!(!titre.is_empty(), "le titre est nul");
 
-        let id = item["playlistItemId"]["globalId2"]["id"].as_str().unwrap_or_default();
+        let id = item["globalId"]["id"].as_str().unwrap_or_default();
         ensure!(!id.is_empty(), "l'id est nul");
 
         épisodes.push(Episode {
@@ -92,7 +93,7 @@ mod tests {
 
     #[tokio::test]
     async fn épisodes() {
-        match get_episodes(1161, 13).await {
+        match get_episodes(5325, 1).await {
             Ok(_) => assert!(true),
             Err(e) => {
                 println!("{e:?}");
@@ -103,8 +104,8 @@ mod tests {
 
     #[tokio::test]
     async fn media_id() {
-        match get_media_id("963208").await {
-            Ok(media_id) => assert_eq!(media_id, "10362937"),
+        match get_media_id("1094362").await {
+            Ok(media_id) => assert_eq!(media_id, "10515519"),
             Err(e) => {
                 println!("{e:?}");
                 assert!(false);
