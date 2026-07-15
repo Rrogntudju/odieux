@@ -130,7 +130,7 @@ mod handler {
                     if STATE.with_borrow(|state| state.en_lecture.titre == "En direct") {
                         command_start(Episode {
                             titre: "En direct".to_owned(),
-                            id: "".to_owned(),
+                            media_id: "".to_owned(),
                         })
                         .await
                     } else {
@@ -139,7 +139,7 @@ mod handler {
                 }
             }
             Command::Start(episode) => command_start(episode).await,
-            Command::Page(pagination) => match get_episodes(pagination.prog_id, pagination.page_no).await {
+            Command::Page(pagination) => match get_episodes(pagination.prog_id, 1).await {
                 Ok(episodes) => STATE.with_borrow_mut(|state| {
                     state.episodes = episodes;
                     state.page_no = pagination.page_no;

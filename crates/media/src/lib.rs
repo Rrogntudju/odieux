@@ -13,7 +13,7 @@ const POST: &str = include_str!("post.json");
 #[derive(Deserialize, Serialize, Default, Clone, PartialEq, Debug)]
 pub struct Episode {
     pub titre: String,
-    pub id: String,
+    pub media_id: String,
 }
 
 pub async fn get_episodes(prog_id: usize, page_no: usize) -> Result<Vec<Episode>> {
@@ -32,21 +32,23 @@ pub async fn get_episodes(prog_id: usize, page_no: usize) -> Result<Vec<Episode>
         &encode(&extensions),
         &encode(&variables)
     );
-    let page = match client.get(&url).header("Content-Type", "application/json").send().await {
+
+    let programme = match client.get(&url).header("Content-Type", "application/json").send().await {
         Ok(response) => response.text().await?,
         Err(e) => {
             if e.status() == Some(StatusCode::NOT_FOUND) {
-                bail!("La page {page_no} n'existe pas");
+                bail!("Le programme {prog_id} ou la page {page_no} n'existe pas");
             } else {
                 bail!(e);
             }
         }
     };
 
-    let valeur: Value = serde_json::from_str(&page)?;
+    let valeur: Value = serde_json::from_str(&programme)?;
     let items = valeur["data"]["program"]["episodes"]
         .as_array()
         .context("episodes n'est pas un array")?;
+
     let mut épisodes = Vec::new();
     for item in items {
         ensure!(item.is_object(), "item n'est pas un objet");
@@ -54,15 +56,15 @@ pub async fn get_episodes(prog_id: usize, page_no: usize) -> Result<Vec<Episode>
         let titre = item["appShare"]["title"].as_str().unwrap_or_default();
         ensure!(!titre.is_empty(), "le titre est nul");
 
-        let id = item["globalId"]["id"].as_str().unwrap_or_default();
-        ensure!(!id.is_empty(), "l'id est nul");
+        let media_id = item["mediaIds"][0].as_str().unwrap_or_default();
+        ensure!(!media_id.is_empty(), "le media_id est nul");
 
         épisodes.push(Episode {
             titre: titre.to_owned(),
-            id: id.to_owned(),
+            media_id: media_id.to_owned(),
         });
     }
-    ensure!(!épisodes.is_empty(), "La page {page_no} n'existe pas");
+
     Ok(épisodes)
 }
 
@@ -93,7 +95,7 @@ mod tests {
 
     #[tokio::test]
     async fn épisodes() {
-        match get_episodes(5325, 1).await {
+        match get_episodes(5325, 4).await {
             Ok(_) => assert!(true),
             Err(e) => {
                 println!("{e:?}");
