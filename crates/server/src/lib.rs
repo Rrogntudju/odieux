@@ -38,7 +38,7 @@ mod handler {
         Pause,
         Stop,
         Play,
-        Random(Pagination),
+        Random,
         Page(Pagination),
         State,
     }
@@ -154,19 +154,13 @@ mod handler {
                     state.page_no = pagination.page_no;
                     state.prog = pagination.prog;
                     let inf = (state.page_no - 1) * 5;
-                    let sup = (inf + 4).clamp(4, 49);
+                    let sup = (inf + 5).clamp(5, 50);
                     state.page_episodes.clone_from_slice(&state.episodes[inf..sup]);
                 })
             }
-            Command::Random(pagination) => {
-                let page_no: usize = rand::rng().random_range(1..=pagination.page_no);
-                match get_episodes(pagination.prog_id, page_no).await {
-                    Ok(mut episodes) => {
-                        let i = rand::rng().random_range(0..episodes.len());
-                        command_start(episodes.swap_remove(i)).await;
-                    }
-                    Err(e) => STATE.with_borrow_mut(|state| state.message = format!("{e:#}")),
-                }
+            Command::Random => {
+                let episode = STATE.with_borrow(|state| state.episodes[rand::rng().random_range(0..state.episodes.len())].clone());
+                command_start(episode).await;
             }
             Command::Volume(vol) => {
                 if STATE.with_borrow(|state| state.player != PlayerState::Stopped) {
