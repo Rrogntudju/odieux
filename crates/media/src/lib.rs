@@ -16,6 +16,7 @@ pub struct Episode {
     pub media_id: String,
 }
 
+// Chaque page du programme contient jusqu'à 50 épisodes (2026/07/14)
 pub async fn get_episodes(prog_id: usize, page_no: usize) -> Result<Vec<Episode>> {
     let client = Client::builder().timeout(Duration::from_secs(TIME_OUT)).build()?;
     let opname = "programmeById";
@@ -95,7 +96,7 @@ mod tests {
 
     #[tokio::test]
     async fn épisodes() {
-        match get_episodes(5325, 4).await {
+        match get_episodes(5325, 1).await {
             Ok(_) => assert!(true),
             Err(e) => {
                 println!("{e:?}");

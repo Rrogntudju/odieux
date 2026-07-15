@@ -18,6 +18,7 @@ mod handler {
         page_no: usize,
         prog: usize,
         episodes: Vec<Episode>,
+        page_episodes: Vec<Episode>,
         message: String,
         en_lecture: Episode,
         en_lecture_prog: usize,
@@ -51,6 +52,7 @@ mod handler {
             page_no: 0,
             prog: 0,
             episodes: Vec::new(),
+            page_episodes: Vec::new(),
             message: String::default(),
             en_lecture: Episode::default(),
             en_lecture_prog: 0,
@@ -95,10 +97,10 @@ mod handler {
         command_stop();
         let result = if episode.titre == "En direct" {
             start_player(None).await
-        } else if episode.id.is_empty() {
+        } else if episode.media_id.is_empty() {
             Err(anyhow!("Aucune musique diffusée disponible"))
         } else {
-            start_player(Some(&episode.id)).await
+            start_player(Some(&episode.media_id)).await
         };
         match result {
             Ok((new_sink, new_os)) => {
@@ -139,14 +141,23 @@ mod handler {
                 }
             }
             Command::Start(episode) => command_start(episode).await,
-            Command::Page(pagination) => match get_episodes(pagination.prog_id, 1).await {
-                Ok(episodes) => STATE.with_borrow_mut(|state| {
-                    state.episodes = episodes;
+            Command::Page(pagination) => {
+                if STATE.with_borrow(|state| state.prog != pagination.prog) {
+                    match get_episodes(pagination.prog_id, 1).await {
+                        Ok(episodes) => STATE.with_borrow_mut(|state| {
+                            state.episodes = episodes;
+                        }),
+                        Err(e) => STATE.with_borrow_mut(|state| state.message = format!("{e:#}")),
+                    }
+                }
+                STATE.with_borrow_mut(|state| {
                     state.page_no = pagination.page_no;
                     state.prog = pagination.prog;
-                }),
-                Err(e) => STATE.with_borrow_mut(|state| state.message = format!("{e:#}")),
-            },
+                    let inf = (state.page_no - 1) * 5;
+                    let sup = (inf + 4).clamp(4, 49);
+                    state.page_episodes.clone_from_slice(&state.episodes[inf..sup]);
+                })
+            }
             Command::Random(pagination) => {
                 let page_no: usize = rand::rng().random_range(1..=pagination.page_no);
                 match get_episodes(pagination.prog_id, page_no).await {
