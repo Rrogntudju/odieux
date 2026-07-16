@@ -151,11 +151,14 @@ mod handler {
                     }
                 }
                 STATE.with_borrow_mut(|state| {
-                    state.page_no = pagination.page_no;
-                    state.prog = pagination.prog;
-                    let inf = (state.page_no - 1) * 5;
-                    let sup = (inf + 5).clamp(5, 50);
-                    state.page_episodes.clone_from_slice(&state.episodes[inf..sup]);
+                    if state.message != String::default() {
+                        state.page_no = pagination.page_no;
+                        state.prog = pagination.prog;
+                        let page_len = state.episodes.len().clamp(1, 5);
+                        let inf = (state.page_no - 1) * page_len;
+                        let sup = (inf + page_len).clamp(page_len, state.episodes.len());
+                        state.page_episodes.clone_from_slice(&state.episodes[inf..sup]);
+                    }
                 })
             }
             Command::Random => {
