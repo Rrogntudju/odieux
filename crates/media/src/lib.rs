@@ -44,7 +44,7 @@ pub async fn get_episodes(prog_id: usize, page_no: usize) -> Result<Vec<Episode>
             }
         }
     };
-
+dbg!(&programme);
     let valeur: Value = serde_json::from_str(&programme)?;
     let items = valeur["data"]["program"]["episodes"]
         .as_array()
@@ -56,7 +56,7 @@ pub async fn get_episodes(prog_id: usize, page_no: usize) -> Result<Vec<Episode>
 
         let titre = item["appShare"]["title"].as_str().unwrap_or_default();
         ensure!(!titre.is_empty(), "le titre est nul");
-        dbg!(&item["mediaIds"]);
+
         let media_id = item["mediaIds"][0].as_u64().unwrap_or(0);
         ensure!(!media_id != 0, "le media_id est nul");
 

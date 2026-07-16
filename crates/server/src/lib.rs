@@ -1,6 +1,6 @@
 mod handler {
     use hls_player::{OutputStream, Sink};
-    use media::{Episode, get_episodes, get_media_id};
+    use media::{Episode, get_episodes};
     use serde::{Deserialize, Serialize};
     use std::cell::RefCell;
     use std::thread_local;
@@ -16,7 +16,7 @@ mod handler {
         player: PlayerState,
         volume: usize,
         page_no: usize,
-        prog: usize,
+        prog: usize,    /* indice du programme */
         episodes: Vec<Episode>,
         page_episodes: Vec<Episode>,
         message: String,
@@ -70,12 +70,9 @@ mod handler {
     const URL_VALIDEUR_OD: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianet&connectionType=hd&deviceType=ipad&idMedia={}&multibitrate=true&output=json&tech=hls&manifestVersion=2";
     const URL_VALIDEUR_LIVE: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianetlive&connectionType=hd&deviceType=ipad&idMedia=cbvx&multibitrate=true&output=json&tech=hls&manifestVersion=2";
 
-    async fn start_player(episode_id: Option<&str>) -> Result<(Sink, OutputStream)> {
-        let url = match episode_id {
-            Some(episode_id) => {
-                let media_id = get_media_id(episode_id).await?;
-                URL_VALIDEUR_OD.replace("{}", &media_id)
-            }
+    async fn start_player(media_id: Option<&str>) -> Result<(Sink, OutputStream)> {
+        let url = match media_id {
+            Some(media_id) =>  URL_VALIDEUR_OD.replace("{}", &media_id),
             None => URL_VALIDEUR_LIVE.to_owned(),
         };
         let client = Client::builder().timeout(Duration::from_secs(TIME_OUT)).build()?;
@@ -146,6 +143,7 @@ mod handler {
                     match get_episodes(pagination.prog_id, 1).await {
                         Ok(episodes) => STATE.with_borrow_mut(|state| {
                             state.episodes = episodes;
+                            state.prog = pagination.prog;
                         }),
                         Err(e) => STATE.with_borrow_mut(|state| state.message = format!("{e:#}")),
                     }
@@ -153,7 +151,6 @@ mod handler {
                 STATE.with_borrow_mut(|state| {
                     if state.message == String::default() {
                         state.page_no = pagination.page_no;
-                        state.prog = pagination.prog;
                         let page_len = state.episodes.len().clamp(1, 5);
                         let inf = (state.page_no - 1) * page_len;
                         let sup = (inf + page_len).clamp(page_len, state.episodes.len());
