@@ -56,13 +56,13 @@ pub async fn get_episodes(prog_id: usize, page_no: usize) -> Result<Vec<Episode>
 
         let titre = item["appShare"]["title"].as_str().unwrap_or_default();
         ensure!(!titre.is_empty(), "le titre est nul");
-
-        let media_id = item["mediaIds"][0].as_str().unwrap_or_default();
-        ensure!(!media_id.is_empty(), "le media_id est nul");
+        dbg!(&item["mediaIds"]);
+        let media_id = item["mediaIds"][0].as_u64().unwrap_or(0);
+        ensure!(!media_id != 0, "le media_id est nul");
 
         épisodes.push(Episode {
             titre: titre.to_owned(),
-            media_id: media_id.to_owned(),
+            media_id: media_id.to_string(),
         });
     }
 

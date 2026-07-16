@@ -151,7 +151,7 @@ mod handler {
                     }
                 }
                 STATE.with_borrow_mut(|state| {
-                    if state.message != String::default() {
+                    if state.message == String::default() {
                         state.page_no = pagination.page_no;
                         state.prog = pagination.prog;
                         let page_len = state.episodes.len().clamp(1, 5);

@@ -1,4 +1,4 @@
-use media::{get_episodes, get_media_id};
+use media::get_episodes;
 use reqwest::Client;
 use serde_json::Value;
 use std::env::args;
@@ -29,7 +29,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let episodes = get_episodes(prog, page).await?;
     let no = episode_no.parse::<usize>()?.clamp(1, episodes.len()) - 1;
-    let media_id = get_media_id(&episodes[no].id).await?;
+    let media_id = episodes[no].media_id.clone();
 
     let url = URL_VALIDEUR.replace("{}", &media_id);
     let client = Client::builder().timeout(Duration::from_secs(TIME_OUT)).build()?;
