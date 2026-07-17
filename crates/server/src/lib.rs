@@ -166,9 +166,7 @@ mod handler {
                         Err(e) => STATE.with_borrow_mut(|state| state.message = format!("{e:#}")),
                     }
                 }
-
-                
-                
+                STATE.with_borrow_mut(|state| PAGES.with_borrow(|pages| state.episodes = pages[pagination.page_no - 1].clone() ));
             }
             Command::Random => {
                 let episode = PAGES.with_borrow(|pages| {

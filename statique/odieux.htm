@@ -122,7 +122,6 @@
           self.volume = ko.observable(2);
           self.page = ko.observable(0);
           self.prog = ko.observable(0);
-          self.progPages(1);
           self.épisodes = ko.observableArray([]);
           self.pages = ko.observableArray([]);
           self.message = ko.observable("");
@@ -139,6 +138,7 @@
             {titre: "De tout choeur avec vous", i: 3},
             {titre: "Quand le jazz est là", i: 4},
           ];
+          self.progPages(1);
           self.progIds = [1161, 5325, 7784, 1610, 769];
           self.spinPage = ko.observable(1);
 
