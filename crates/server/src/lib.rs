@@ -17,8 +17,7 @@ mod handler {
         volume: usize,
         page_no: usize,
         prog: usize,    /* indice du programme */
-        episodes: Vec<Episode>,
-        page_episodes: Vec<Episode>,
+        pages: Vec<Vec<Episode>>,
         message: String,
         en_lecture: Episode,
         en_lecture_prog: usize,
@@ -51,8 +50,7 @@ mod handler {
             volume: 2,
             page_no: 0,
             prog: 0,
-            episodes: Vec::new(),
-            page_episodes: Vec::new(),
+            pages: Vec::new(),
             message: String::default(),
             en_lecture: Episode::default(),
             en_lecture_prog: 0,
@@ -142,28 +140,31 @@ mod handler {
                 if STATE.with_borrow(|state| state.prog != pagination.prog || state.page_no == 0) {
                     match get_episodes(pagination.prog_id, 1).await {
                         Ok(episodes) => STATE.with_borrow_mut(|state| {
-                            state.episodes = episodes;
+                            let mut pages = Vec::new();
+                            let mut page = Vec::new();
+                            let mut page_nb = 0;
+                            for episode in episodes {
+                                page_nb += 1;
+                                if page_nb <= 5 {
+                                    page.push(episode);
+                                } else {
+                                    pages.push(page);
+                                    page = Vec::new();
+                                    page_nb = 0;
+                                }
+                            }
+                            state.pages = pages;
                             state.prog = pagination.prog;
                         }),
                         Err(e) => STATE.with_borrow_mut(|state| state.message = format!("{e:#}")),
                     }
                 }
-                STATE.with_borrow_mut(|state| {
-                    if state.message == String::default() {
-                        state.page_no = pagination.page_no;
-                        state.page_episodes = Vec::new();
-                        
-                        let page_len = state.episodes.len().clamp(1, 5);
-                        let inf = (state.page_no - 1) * page_len;
-                        let sup = (inf + page_len).clamp(page_len, state.episodes.len());
-                        for episode in &state.episodes[inf..sup] {
-                            state.page_episodes.push(episode.clone());
-                        }
-                    }
-                })
             }
             Command::Random => {
-                let episode = STATE.with_borrow(|state| state.episodes[rand::rng().random_range(0..state.episodes.len())].clone());
+                let episode = STATE.with_borrow(|state| {
+                    let episodes = state.pages.iter().flatten().collect::<Vec<&Episode>>();   
+                    episodes[rand::rng().random_range(0..episodes.len())].clone()
+                });
                 command_start(episode).await;
             }
             Command::Volume(vol) => {
