@@ -139,7 +139,7 @@ mod handler {
             }
             Command::Start(episode) => command_start(episode).await,
             Command::Page(pagination) => {
-                if STATE.with_borrow(|state| state.prog != pagination.prog) {
+                if STATE.with_borrow(|state| state.prog != pagination.prog || state.page_no == 0) {
                     match get_episodes(pagination.prog_id, 1).await {
                         Ok(episodes) => STATE.with_borrow_mut(|state| {
                             state.episodes = episodes;
@@ -151,10 +151,14 @@ mod handler {
                 STATE.with_borrow_mut(|state| {
                     if state.message == String::default() {
                         state.page_no = pagination.page_no;
+                        state.page_episodes = Vec::new();
+                        
                         let page_len = state.episodes.len().clamp(1, 5);
                         let inf = (state.page_no - 1) * page_len;
                         let sup = (inf + page_len).clamp(page_len, state.episodes.len());
-                        state.page_episodes.clone_from_slice(&state.episodes[inf..sup]);
+                        for episode in &state.episodes[inf..sup] {
+                            state.page_episodes.push(episode.clone());
+                        }
                     }
                 })
             }

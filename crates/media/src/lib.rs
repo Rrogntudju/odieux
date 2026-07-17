@@ -44,7 +44,7 @@ pub async fn get_episodes(prog_id: usize, page_no: usize) -> Result<Vec<Episode>
             }
         }
     };
-dbg!(&programme);
+    
     let valeur: Value = serde_json::from_str(&programme)?;
     let items = valeur["data"]["program"]["episodes"]
         .as_array()

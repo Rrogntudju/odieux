@@ -267,7 +267,7 @@
                 menuItem.scrollIntoView({behavior: "smooth"});
               }
               self.épisodes.removeAll();
-              ko.utils.arrayPushAll(self.épisodes, data.episodes);
+              ko.utils.arrayPushAll(self.épisodes, data.page_episodes);
               self.enLecture(data.en_lecture);
               if (data.en_lecture.titre == "" || data.en_lecture.titre == "En direct") {
                 self.programme({titre: ""});
