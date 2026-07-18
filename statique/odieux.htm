@@ -138,7 +138,7 @@
             {titre: "De tout choeur avec vous", i: 3},
             {titre: "Quand le jazz est là", i: 4},
           ];
-          self.progPages(1);
+          self.progPages = 1;;
           self.progIds = [1161, 5325, 7784, 1610, 769];
           self.spinPage = ko.observable(1);
 
@@ -165,7 +165,7 @@
 
           self.live = function () {
             self.longCommand(true);
-            self.command("Start", {titre: "En direct", id: ""});
+            self.command("Start", {titre: "En direct", media_id: ""});
           }
 
           self.setPage = function () {
@@ -269,7 +269,7 @@
               }
               self.épisodes.removeAll();
               ko.utils.arrayPushAll(self.épisodes, data.episodes);
-              self.progPages(data.prog_pages);
+              self.progPages = data.prog_pages;
               self.enLecture(data.en_lecture);
               if (data.en_lecture.titre == "" || data.en_lecture.titre == "En direct") {
                 self.programme({titre: ""});

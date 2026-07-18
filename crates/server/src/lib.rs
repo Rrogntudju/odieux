@@ -16,7 +16,7 @@ mod handler {
         player: PlayerState,
         volume: usize,
         page_no: usize,
-        prog: usize,    /* indice du programme */
+        prog: usize, /* indice du programme */
         prog_pages: usize,
         episodes: Vec<Episode>,
         message: String,
@@ -62,7 +62,7 @@ mod handler {
 
     use anyhow::{Result, anyhow};
     use axum::{extract::Json, response::IntoResponse};
-    use rand::Rng;
+    use rand::RngExt;
     use reqwest::Client;
     use serde_json::Value;
     use std::time::Duration;
@@ -73,7 +73,7 @@ mod handler {
 
     async fn start_player(media_id: Option<&str>) -> Result<(Sink, OutputStream)> {
         let url = match media_id {
-            Some(media_id) =>  URL_VALIDEUR_OD.replace("{}", &media_id),
+            Some(media_id) => URL_VALIDEUR_OD.replace("{}", &media_id),
             None => URL_VALIDEUR_LIVE.to_owned(),
         };
         let client = Client::builder().timeout(Duration::from_secs(TIME_OUT)).build()?;
@@ -158,19 +158,25 @@ mod handler {
                             if page_nb != 0 {
                                 pages.push(page);
                             }
-                            
+
                             state.prog = pagination.prog;
                             state.prog_pages = pages.len();
-                            PAGES.with_borrow_mut(|pages_| pages_.append(&mut pages));
+                            PAGES.with_borrow_mut(|pages_| {
+                                pages_.clear();
+                                pages_.append(&mut pages);
+                            });
                         }),
                         Err(e) => STATE.with_borrow_mut(|state| state.message = format!("{e:#}")),
                     }
                 }
-                STATE.with_borrow_mut(|state| PAGES.with_borrow(|pages| state.episodes = pages[pagination.page_no - 1].clone() ));
+                STATE.with_borrow_mut(|state| {
+                    PAGES.with_borrow(|pages| state.episodes = pages[pagination.page_no - 1].clone());
+                    state.page_no = pagination.page_no;
+                })
             }
             Command::Random => {
                 let episode = PAGES.with_borrow(|pages| {
-                    let episodes = pages.iter().flatten().collect::<Vec<&Episode>>();   
+                    let episodes = pages.iter().flatten().collect::<Vec<&Episode>>();
                     episodes[rand::rng().random_range(0..episodes.len())].clone()
                 });
                 command_start(episode).await;
