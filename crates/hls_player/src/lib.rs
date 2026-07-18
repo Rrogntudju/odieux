@@ -8,7 +8,7 @@ use std::io::Read;
 use anyhow::{Context, Result};
 use rodio::cpal::traits::HostTrait;
 use rodio::{Decoder, DeviceTrait, cpal};
-pub use rodio::{OutputStream, Sink};
+pub use rodio::{OutputStream, OutputStreamBuilder, Sink};
 use rxcursor::RxCursor;
 
 pub fn start(url: &str) -> Result<(Sink, OutputStream)> {
