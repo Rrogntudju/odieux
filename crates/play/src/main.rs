@@ -1,4 +1,4 @@
-use rodio::{OutputStreamBuilder, Sink, decoder::Decoder};
+use rodio::{DeviceSinkBuilder, Decoder, Player};
 use std::env::args;
 use std::error::Error;
 use std::fs::File;
@@ -10,11 +10,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         None => return Err("Fournir le chemin du fichier aac".into()),
     };
 
-    let output_stream = OutputStreamBuilder::open_default_stream()?;
-    let sink = Sink::connect_new(output_stream.mixer());
+    let sink = DeviceSinkBuilder::open_default_sink()?;
+    let player = Player::connect_new(&sink.mixer());
     let source = Decoder::new(BufReader::new(File::open(arg)?))?;
-    sink.append(source);
-    sink.sleep_until_end();
+    player.append(source);
+    player.sleep_until_end();
 
     Ok(())
 }

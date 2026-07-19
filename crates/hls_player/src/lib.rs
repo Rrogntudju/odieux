@@ -8,7 +8,7 @@ use std::io::Read;
 use anyhow::{Context, Result};
 use rodio::cpal::traits::HostTrait;
 use rodio::{Decoder, DeviceTrait, cpal, DeviceSinkBuilder};
-pub use rodio::MixerDeviceSink;
+pub use rodio::{MixerDeviceSink, Player};
 use rxcursor::RxCursor;
 
 pub fn start(url: &str) -> Result<MixerDeviceSink> {
@@ -35,9 +35,8 @@ pub fn start(url: &str) -> Result<MixerDeviceSink> {
     };
 
     let sink = builder.open_sink_or_fallback()?;
-    let mixer = sink.mixer();
     let source = Decoder::new(RxCursor::new(rx)?).context("Échec: création de Decoder")?;
-    mixer.add(source);
+    sink.mixer().add(source);
 
     Ok(sink)
 }
@@ -49,8 +48,8 @@ mod tests {
 
     #[test]
     fn ohdio() {
-        let (player, _output_stream) = match start("Fournir un url master.m3u8 validé") {
-            Ok((s, o)) => (s, o),
+        let player = match start("Fournir un url master.m3u8 validé") {
+            Ok(sink) => rodio::Player::connect_new(sink.mixer()),
             Err(e) => {
                 println!("{e:?}");
                 return assert!(false);
