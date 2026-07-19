@@ -1,4 +1,4 @@
-use rodio::{DeviceSinkBuilder, Decoder, Player};
+use rodio::{Decoder, DeviceSinkBuilder, Player};
 use std::env::args;
 use std::error::Error;
 use std::fs::File;

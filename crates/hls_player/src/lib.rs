@@ -7,7 +7,7 @@ use std::io::Read;
 
 use anyhow::{Context, Result};
 use rodio::cpal::traits::HostTrait;
-use rodio::{Decoder, DeviceTrait, cpal, DeviceSinkBuilder};
+use rodio::{Decoder, DeviceSinkBuilder, DeviceTrait, cpal};
 pub use rodio::{MixerDeviceSink, Player};
 use rxcursor::RxCursor;
 
@@ -28,7 +28,7 @@ pub fn start(url: &str) -> Result<MixerDeviceSink> {
                 println!("Output device: {device_name}");
                 DeviceSinkBuilder::from_device(device)?
             }
-            None => DeviceSinkBuilder::from_default_device()?
+            None => DeviceSinkBuilder::from_default_device()?,
         }
     } else {
         DeviceSinkBuilder::from_default_device()?

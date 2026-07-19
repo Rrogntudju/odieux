@@ -12,8 +12,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let response = client.get(URL_VALIDEUR).send().await?.text().await?;
     let value: Value = serde_json::from_str(&response)?;
     let sink = hls_player::start(value["url"].as_str().unwrap_or_default())?;
-    hls_player::Player::connect_new(sink.mixer()).play();
-    std::thread::sleep(std::time::Duration::from_secs(30));
+    let player = hls_player::Player::connect_new(sink.mixer());
+    player.sleep_until_end();
 
     Ok(())
 }
