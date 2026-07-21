@@ -17,6 +17,7 @@ mod handler {
         volume: usize,
         page_no: usize,
         prog: usize, /* indice du programme */
+        prog_id: usize,
         prog_pages: usize,
         episodes: Vec<Episode>,
         message: String,
@@ -51,6 +52,7 @@ mod handler {
             volume: 2,
             page_no: 0,
             prog: 0,
+            prog_id: 0,
             prog_pages: 0,
             episodes: Vec::new(),
             message: String::default(),
@@ -140,7 +142,8 @@ mod handler {
             }
             Command::Start(episode) => command_start(episode).await,
             Command::Page(pagination) => {
-                if STATE.with_borrow(|state| state.prog != pagination.prog || state.page_no == 0) {
+                let mut erreur = false;
+                if STATE.with_borrow(|state| state.prog_id != pagination.prog_id) {
                     match get_episodes(pagination.prog_id, 1).await {
                         Ok(episodes) => STATE.with_borrow_mut(|state| {
                             let mut pages = Vec::new();
@@ -160,19 +163,27 @@ mod handler {
                             }
 
                             state.prog = pagination.prog;
+                            state.prog_id = pagination.prog_id;
                             state.prog_pages = pages.len();
                             PAGES.with_borrow_mut(|pages_| {
                                 pages_.clear();
                                 pages_.append(&mut pages);
                             });
                         }),
-                        Err(e) => STATE.with_borrow_mut(|state| state.message = format!("{e:#}")),
+                        Err(e) => { 
+                            STATE.with_borrow_mut(|state| state.message = format!("{e:#}"));
+                            erreur = true;
+                        }
                     }
                 }
-                STATE.with_borrow_mut(|state| {
-                    PAGES.with_borrow(|pages| state.episodes = pages[pagination.page_no - 1].clone());
-                    state.page_no = pagination.page_no;
-                })
+                if !erreur {
+                    STATE.with_borrow_mut(|state| {
+                        {
+                            PAGES.with_borrow(|pages| state.episodes = pages[pagination.page_no - 1].clone());
+                            state.page_no = pagination.page_no;
+                        }
+                    })
+                }
             }
             Command::Random => {
                 let episode = PAGES.with_borrow(|pages| {
