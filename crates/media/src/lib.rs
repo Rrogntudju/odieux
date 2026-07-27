@@ -67,6 +67,7 @@ pub async fn get_episodes(prog_id: usize, page_no: usize) -> Result<Vec<Episode>
     Ok(épisodes)
 }
 
+// N'est plus utilisé depuis 2026/07/14
 pub async fn get_media_id(épisode_id: &str) -> Result<String> {
     let client = Client::builder().timeout(Duration::from_secs(TIME_OUT)).build()?;
     let post = POST.replace("{}", épisode_id);
