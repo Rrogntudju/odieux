@@ -8,37 +8,35 @@ use std::io::Read;
 use anyhow::{Context, Result};
 use rodio::cpal::traits::HostTrait;
 use rodio::{Decoder, DeviceTrait, cpal};
-pub use rodio::{OutputStream, OutputStreamBuilder, Sink};
+pub use rodio::{MixerDeviceSink, DeviceSinkBuilder, Player};
 use rxcursor::RxCursor;
 
-pub fn start(url: &str) -> Result<(Sink, OutputStream)> {
+pub fn start(url: &str) -> Result<(Player, MixerDeviceSink)> {
     let rx = hls_handler::start(url)?;
 
     let mut cfg = std::env::current_exe()?;
     cfg.set_extension("cfg");
-
-    let output_stream = if cfg.is_file() {
+    let mut sink = DeviceSinkBuilder::open_default_sink()?;
+    if cfg.is_file() {
         let mut cfg_file = File::open(cfg)?;
         let mut device_name = String::new();
         cfg_file.read_to_string(&mut device_name)?;
 
-        let mut devices = cpal::default_host().output_devices()?;
-        match devices.find(|device| device.name().unwrap_or_default() == device_name) {
-            Some(device) => {
+        let devices = cpal::default_host().output_devices()?;
+        for device in devices { 
+            if device.description()?.name() == device_name {
                 println!("Output device: {device_name}");
-                OutputStreamBuilder::from_device(device)?.open_stream()?
-            }
-            None => OutputStreamBuilder::open_default_stream()?,
+                sink = DeviceSinkBuilder::from_device(device)?.open_stream()?;
+                break;
+            }    
         }
-    } else {
-        OutputStreamBuilder::open_default_stream()?
     };
 
-    let sink = Sink::connect_new(output_stream.mixer());
+    let player = Player::connect_new(sink.mixer());
     let source = Decoder::new(RxCursor::new(rx)?).context("Échec: création de Decoder")?;
-    sink.append(source);
+    player.append(source);
 
-    Ok((sink, output_stream))
+    Ok((player, sink))
 }
 
 #[cfg(test)]

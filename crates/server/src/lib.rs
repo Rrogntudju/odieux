@@ -1,5 +1,5 @@
 mod handler {
-    use hls_player::{OutputStream, Sink};
+    use hls_player::{MixerDeviceSink, Player};
     use media::{Episode, get_episodes};
     use serde::{Deserialize, Serialize};
     use std::cell::RefCell;
@@ -45,8 +45,8 @@ mod handler {
     }
 
     thread_local! {
-        static SINK: RefCell<Option<Sink>> = const { RefCell::new(None) };
-        static OUTPUT_STREAM: RefCell<Option<OutputStream>> = const { RefCell::new(None) };
+        static PLAYER: RefCell<Option<Player>> = const { RefCell::new(None) };
+        static OUTPUT_STREAM: RefCell<Option<MixerDeviceSink>> = const { RefCell::new(None) };
         static STATE: RefCell<State> = RefCell::new(State {
             player: PlayerState::Stopped,
             volume: 2,
@@ -73,7 +73,7 @@ mod handler {
     const URL_VALIDEUR_OD: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianet&connectionType=hd&deviceType=ipad&idMedia={}&multibitrate=true&output=json&tech=hls&manifestVersion=2";
     const URL_VALIDEUR_LIVE: &str = "https://services.radio-canada.ca/media/validation/v2/?appCode=medianetlive&connectionType=hd&deviceType=ipad&idMedia=cbvx&multibitrate=true&output=json&tech=hls&manifestVersion=2";
 
-    async fn start_player(media_id: Option<&str>) -> Result<(Sink, OutputStream)> {
+    async fn start_player(media_id: Option<&str>) -> Result<(Player, MixerDeviceSink)> {
         let url = match media_id {
             Some(media_id) => URL_VALIDEUR_OD.replace("{}", &media_id),
             None => URL_VALIDEUR_LIVE.to_owned(),
@@ -86,7 +86,7 @@ mod handler {
 
     fn command_stop() {
         OUTPUT_STREAM.set(None);
-        SINK.set(None);
+        PLAYER.set(None);
         STATE.with_borrow_mut(|state| {
             state.player = PlayerState::Stopped;
             state.en_lecture = Episode::default();
@@ -103,14 +103,14 @@ mod handler {
             start_player(Some(&episode.media_id)).await
         };
         match result {
-            Ok((new_sink, new_os)) => {
-                SINK.set(Some(new_sink));
-                OUTPUT_STREAM.set(Some(new_os));
+            Ok((new_player, new_sink)) => {
+                PLAYER.set(Some(new_player));
+                OUTPUT_STREAM.set(Some(new_sink));
                 STATE.with_borrow_mut(|state| {
                     state.player = PlayerState::Playing;
                     state.en_lecture = episode;
                     state.en_lecture_prog = state.prog;
-                    SINK.with_borrow(|sink| sink.as_ref().unwrap().set_volume(state.volume as f32 / 4.0));
+                    PLAYER.with_borrow(|player| player.as_ref().unwrap().set_volume(state.volume as f32 / 4.0));
                 });
             }
             Err(e) => {
@@ -128,7 +128,8 @@ mod handler {
         match command {
             Command::State => {
                 // Vérifier si la lecture s'est terminée
-                if STATE.with_borrow(|state| state.en_lecture != Episode::default()) && SINK.with_borrow(|sink| sink.as_ref().unwrap().empty()) {
+                if STATE.with_borrow(|state| state.en_lecture != Episode::default()) && PLAYER.with_borrow(|player| player.as_ref().unwrap().empty())
+                {
                     if STATE.with_borrow(|state| state.en_lecture.titre == "En direct") {
                         command_start(Episode {
                             titre: "En direct".to_owned(),
@@ -170,7 +171,7 @@ mod handler {
                                 pages_.append(&mut pages);
                             });
                         }),
-                        Err(e) => { 
+                        Err(e) => {
                             STATE.with_borrow_mut(|state| state.message = format!("{e:#}"));
                             erreur = true;
                         }
@@ -178,10 +179,8 @@ mod handler {
                 }
                 if !erreur {
                     STATE.with_borrow_mut(|state| {
-                        {
-                            PAGES.with_borrow(|pages| state.episodes = pages[pagination.page_no - 1].clone());
-                            state.page_no = pagination.page_no;
-                        }
+                        PAGES.with_borrow(|pages| state.episodes = pages[pagination.page_no - 1].clone());
+                        state.page_no = pagination.page_no;
                     })
                 }
             }
@@ -194,19 +193,19 @@ mod handler {
             }
             Command::Volume(vol) => {
                 if STATE.with_borrow(|state| state.player != PlayerState::Stopped) {
-                    SINK.with_borrow(|sink| sink.as_ref().unwrap().set_volume(vol as f32 / 4.0));
+                    PLAYER.with_borrow(|player| player.as_ref().unwrap().set_volume(vol as f32 / 4.0));
                     STATE.with_borrow_mut(|state| state.volume = vol);
                 }
             }
             Command::Play => {
                 if STATE.with_borrow(|state| state.player == PlayerState::Paused) {
-                    SINK.with_borrow(|sink| sink.as_ref().unwrap().play());
+                    PLAYER.with_borrow(|player| player.as_ref().unwrap().play());
                     STATE.with_borrow_mut(|state| state.player = PlayerState::Playing);
                 }
             }
             Command::Pause => {
                 if STATE.with_borrow(|state| state.player == PlayerState::Playing) {
-                    SINK.with_borrow(|sink| sink.as_ref().unwrap().pause());
+                    PLAYER.with_borrow(|player| player.as_ref().unwrap().pause());
                     STATE.with_borrow_mut(|state| state.player = PlayerState::Paused);
                 }
             }
