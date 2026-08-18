@@ -59,7 +59,7 @@ async fn get(url: &str, client: &Client) -> Result<Vec<u8>> {
     }
 }
 
-// Le segment est un fichier MPEG-TS encrypté qui contient du AAC
+// Le segment est un fichier MPEG2-TS encrypté qui contient du AAC
 async fn hls_on_demand1(media_url: Url, client: Client, tx: SyncSender<Message>) {
     let response = match get(media_url.as_str(), &client).await {
         Ok(response) => String::from_utf8(response).unwrap_or_default(),
@@ -342,6 +342,7 @@ async fn hls_on_demand2(media_url: Url, client: Client, tx: SyncSender<Message>)
     }
 }
 
+// Le segment est un fichier MPEG2-TS qui contient du AAC
 async fn hls_live(media_url: Url, client: Client, tx: SyncSender<Message>) {
     let mut sequence = String::new();
     loop {
@@ -381,7 +382,108 @@ async fn hls_live(media_url: Url, client: Client, tx: SyncSender<Message>) {
                         return;
                     }
                 };
-                if tx.send(Ok(segment_response)).is_err() {
+
+                let mut ts = TsPacketReader::new(segment_response.as_slice());
+        
+                // Obtenir le pid du premier programme
+                let mut state = InitState::Pid0;
+                let program_pid = loop {
+                    let packet = match ts.read_ts_packet().context("Échec: lecture d'un paquet TS") {
+                        Ok(packet) => match packet {
+                            Some(packet) => packet,
+                            None => {
+                                tx.send(Err(anyhow!("Fin prématurée des paquets"))).unwrap_or_default();
+                                return;
+                            }
+                        },
+                        Err(e) => {
+                            tx.send(Err(e)).unwrap_or_default();
+                            return;
+                        }
+                    };
+        
+                    match state {
+                        InitState::Pid0 => {
+                            match packet.header.pid.as_u16() {
+                                0 => match packet.payload {
+                                    Some(payload) => match payload {
+                                        TsPayload::Pat(pat) => {
+                                            state = InitState::Pmt(pat.table[0].program_map_pid);
+                                            continue;
+                                        }
+                                        _ => {
+                                            tx.send(Err(anyhow!("Pas de PAT dans le PID 0"))).unwrap_or_default();
+                                            return;
+                                        }
+                                    },
+                                    None => {
+                                        tx.send(Err(anyhow!("Pas de payload dans le PID 0"))).unwrap_or_default();
+                                        return;
+                                    }
+                                },
+                                1..=31 | 8191 => continue,
+                                _ => {
+                                    tx.send(Err(anyhow!("Pas de PID 0"))).unwrap_or_default();
+                                    return;
+                                }
+                            };
+                        }
+                        InitState::Pmt(pid) => {
+                            if packet.header.pid == pid {
+                                match packet.payload {
+                                    Some(payload) => match payload {
+                                        TsPayload::Pmt(pmt) => break pmt.es_info[0].elementary_pid,
+                                        _ => {
+                                            tx.send(Err(anyhow!("Pas de PMT dans le PID {}", pid.as_u16()))).unwrap_or_default();
+                                            return;
+                                        }
+                                    },
+                                    None => {
+                                        tx.send(Err(anyhow!("Pas de payload dans le PID {}", pid.as_u16()))).unwrap_or_default();
+                                        return;
+                                    }
+                                }
+                            } else {
+                                tx.send(Err(anyhow!("Pas de PID {}", pid.as_u16()))).unwrap_or_default();
+                                return;
+                            };
+                        }
+                    }
+                };
+        
+                let mut stream: Vec<u8> = Vec::new();
+        
+                loop {
+                    let packet = match ts.read_ts_packet().context("Échec: lecture d'un paquet TS") {
+                        Ok(packet) => {
+                            match packet {
+                                Some(packet) => packet,
+                                None => break, // End of packets
+                            }
+                        }
+                        Err(e) => {
+                            tx.send(Err(e)).unwrap_or_default();
+                            return;
+                        }
+                    };
+        
+                    if packet.header.pid == program_pid {
+                        let data = match packet.payload {
+                            Some(payload) => match payload {
+                                TsPayload::PesStart(pes) => pes.data,
+                                TsPayload::Raw(data) => data,
+                                _ => continue,
+                            },
+                            None => {
+                                tx.send(Err(anyhow!("Pas de payload"))).unwrap_or_default();
+                                return;
+                            }
+                        };
+                        stream.extend_from_slice(&data[..]);
+                    }
+                }
+                
+                if tx.send(Ok(stream)).is_err() {
                     return; // rx was dropped
                 }
                 changed = true;

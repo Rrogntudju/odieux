@@ -46,7 +46,7 @@ mod handler {
 
     thread_local! {
         static PLAYER: RefCell<Option<Player>> = const { RefCell::new(None) };
-        static OUTPUT_STREAM: RefCell<Option<MixerDeviceSink>> = const { RefCell::new(None) };
+        static SINK: RefCell<Option<MixerDeviceSink>> = const { RefCell::new(None) };
         static STATE: RefCell<State> = RefCell::new(State {
             player: PlayerState::Stopped,
             volume: 2,
@@ -85,7 +85,7 @@ mod handler {
     }
 
     fn command_stop() {
-        OUTPUT_STREAM.set(None);
+        SINK.set(None);
         PLAYER.set(None);
         STATE.with_borrow_mut(|state| {
             state.player = PlayerState::Stopped;
@@ -105,7 +105,7 @@ mod handler {
         match result {
             Ok((new_player, new_sink)) => {
                 PLAYER.set(Some(new_player));
-                OUTPUT_STREAM.set(Some(new_sink));
+                SINK.set(Some(new_sink));
                 STATE.with_borrow_mut(|state| {
                     state.player = PlayerState::Playing;
                     state.en_lecture = episode;

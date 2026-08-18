@@ -5,7 +5,7 @@ authors = ["Rrogntudju"]
 edition = "2024"
 
 [dependencies]
-rodio = { version = "0.22", default-features = false, features = ["playback", "symphonia-aac"] }
+rodio = "0.22"
 anyhow = "1"
 hls_handler = {path = "../hls_handler"}
 
