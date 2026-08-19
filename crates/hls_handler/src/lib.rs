@@ -343,7 +343,7 @@ async fn hls_on_demand2(media_url: Url, client: Client, tx: SyncSender<Message>)
 }
 
 // Le segment est un fichier MPEG2-TS ID3v2
-// Non fonctionnel tant que la feature ID3v2 n'est activée dans symphonia par rodio... 
+// Non fonctionnel tant que rodio ne passera pas à la version 6 de symphonia
 // https://www.w3.org/TR/media-timed-events/#http-live-streaming 
 async fn hls_live(media_url: Url, client: Client, tx: SyncSender<Message>) {
     let mut sequence = String::new();
