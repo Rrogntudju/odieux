@@ -23,7 +23,7 @@ pub async fn get_episodes(prog_id: usize, page_no: usize) -> Result<Vec<Episode>
 
     // Le format! est nécessaire pour que {{}} devienne {}
     let extensions =
-        format!(r#"{{"persistedQuery":{{"version":1,"sha256Hash":"246ae53bd719ea2ac74d753b3cda2d54cbe9186ae4b12b0c76e9e5c18b275fcc"}}}}"#);
+        format!(r#"{{"persistedQuery":{{"version":1,"sha256Hash":"8aab6fa465968cefee6d31643c85170454dc79fe942ec56c0269fcde03fb83c3"}}}}"#);
 
     let variables = format!(r#"{{"params":{{"device":"Web","id":{prog_id},"pageNumber":{page_no}}}}}"#);
     let url = format!(

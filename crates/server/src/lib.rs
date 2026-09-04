@@ -103,8 +103,9 @@ mod handler {
             start_player(Some(&episode.media_id)).await
         };
         match result {
-            Ok((new_player, new_sink)) => {
+            Ok((new_player, mut new_sink)) => {
                 PLAYER.set(Some(new_player));
+                new_sink.log_on_drop(false);
                 SINK.set(Some(new_sink));
                 STATE.with_borrow_mut(|state| {
                     state.player = PlayerState::Playing;
