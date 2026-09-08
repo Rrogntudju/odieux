@@ -1,4 +1,4 @@
-use anyhow::{Context, Result, bail, ensure};
+use anyhow::{Context, Result, anyhow, ensure};
 use reqwest::{Client, StatusCode};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -33,16 +33,20 @@ pub async fn get_episodes(prog_id: usize, page_no: usize) -> Result<Vec<Episode>
         &encode(&variables)
     );
 
-    let programme = match client.get(&url).header("Content-Type", "application/json").send().await {
-        Ok(response) => response.text().await?,
-        Err(e) => {
+    let programme = client
+        .get(&url)
+        .header("Content-Type", "application/json")
+        .send()
+        .await?
+        .text()
+        .await
+        .or_else(|e| {
             if e.status() == Some(StatusCode::NOT_FOUND) {
-                bail!("Le programme {prog_id} ou la page {page_no} n'existe pas");
+                Err(anyhow!("Le programme {prog_id} ou la page {page_no} n'existe pas"))
             } else {
-                bail!(e);
+                Err(anyhow!(e))
             }
-        }
-    };
+        })?;
 
     let valeur: Value = serde_json::from_str(&programme)?;
     let items = valeur["data"]["program"]["episodes"].as_array().context("episodes n'est pas un array")?;

@@ -8,7 +8,7 @@ use std::io::Read;
 use anyhow::{Context, Result};
 use rodio::cpal::traits::HostTrait;
 use rodio::{Decoder, DeviceTrait, cpal};
-pub use rodio::{MixerDeviceSink, DeviceSinkBuilder, Player};
+pub use rodio::{DeviceSinkBuilder, MixerDeviceSink, Player};
 use rxcursor::RxCursor;
 
 pub fn start(url: &str) -> Result<(Player, MixerDeviceSink)> {
@@ -23,12 +23,12 @@ pub fn start(url: &str) -> Result<(Player, MixerDeviceSink)> {
         cfg_file.read_to_string(&mut device_name)?;
 
         let devices = cpal::default_host().output_devices()?;
-        for device in devices { 
+        for device in devices {
             if device.description()?.name() == device_name {
                 println!("Output device: {device_name}");
                 sink = DeviceSinkBuilder::from_device(device)?.open_stream()?;
                 break;
-            }    
+            }
         }
     };
 
