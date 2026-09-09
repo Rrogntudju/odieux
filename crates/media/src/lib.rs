@@ -41,11 +41,11 @@ pub async fn get_episodes(prog_id: usize, page_no: usize) -> Result<Vec<Episode>
         .text()
         .await
         .or_else(|e| {
-            if e.status() == Some(StatusCode::NOT_FOUND) {
-                Err(anyhow!("Le programme {prog_id} ou la page {page_no} n'existe pas"))
+            Err(if e.status() == Some(StatusCode::NOT_FOUND) {
+                anyhow!("Le programme {prog_id} ou la page {page_no} n'existe pas")
             } else {
-                Err(anyhow!(e))
-            }
+                anyhow!(e)
+            })
         })?;
 
     let valeur: Value = serde_json::from_str(&programme)?;
